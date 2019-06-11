@@ -1,0 +1,7 @@
+{
+  "extends": ["standard", "plugin:prettier/recommended"],
+  "rules": {
+    "promise/param-names": "off",
+    "handle-callback-err": 0
+  }
+}
