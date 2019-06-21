@@ -2,9 +2,9 @@
   "name": "vwo-node-sdk",
   "version": "1.0.0",
   "description": "VWO node sdk",
-  "main": "lib/index.node",
+  "main": "lib/index",
   "scripts": {
-    "check:versions": "node -e 'require(\"./scripts/check-versions\")()'",
+    "check:versions": "node -e 'require(\"./scripts/check-versions\")'",
     "lint": "yarn check:versions && eslint '**/*.js' --fix",
     "prettier": "./node_modules/prettier/bin-prettier.js --write",
     "postinstall": "cp git-hooks/* .git/hooks/ && chmod -R +x .git/hooks",
@@ -22,7 +22,6 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "chalk": "^2.4.2",
     "eslint": "^4.19.1",
     "eslint-config-prettier": "^2.9.0",
     "eslint-config-standard": "^11.0.0",
