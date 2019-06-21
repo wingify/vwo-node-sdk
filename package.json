@@ -1,5 +1,5 @@
 {
-  "name": "vwo-node-sdk",
+  "name": "@vwo/node-sdk",
   "version": "1.0.0",
   "description": "VWO node sdk",
   "main": "lib/index",
