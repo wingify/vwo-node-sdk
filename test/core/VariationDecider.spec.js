@@ -1,5 +1,106 @@
-require('../../lib/core/VariationDecider');
+const VariationDecider = require('../../lib/core/VariationDecider');
+const CampaignUtil = require('../../lib/utils/CampaignUtil');
 
-test('adds 1 + 2 to equal 3', () => {
-  expect(3).toBe(3);
+let userId;
+let dummyCampaign;
+
+beforeEach(() => {
+  userId = Math.random().toString();
+  dummyCampaign = Object.assign(
+    {},
+    {
+      goals: [
+        {
+          identifier: 'GOAL_NEW',
+          id: 203,
+          type: 'CUSTOM_GOAL'
+        }
+      ],
+      variations: [
+        {
+          id: '1',
+          name: 'Control',
+          weight: 40
+        },
+        {
+          id: '2',
+          name: 'Variation-1',
+          weight: 60
+        }
+      ],
+      id: 22,
+      percentTraffic: 50,
+      key: 'UNIQUE_KEY',
+      status: 'RUNNING',
+      type: 'VISUAL_AB'
+    }
+  );
+
+  // Assign variation-level bucketing first
+  CampaignUtil.setVariationAllocation(dummyCampaign);
+});
+
+describe('VariationDecider', () => {
+  describe('method: getVariationAllotted', () => {
+    test('should return false if no userId is passed', () => {
+      const result = VariationDecider.getVariationAllotted(null, dummyCampaign);
+
+      expect(result.variationId).toBe(null);
+      expect(result.variationName).toBe(null);
+    });
+
+    test('should return true if user becomes a part of campaign after validating traffic allocation', () => {
+      userId = 'Allie';
+      // Allie, with above campaign settings, will get hashValue:362121553 and bucketValue:1688
+      // So, MUST be a part of campaign as per campaign percentTraffic
+      const result = VariationDecider.getVariationAllotted(userId, dummyCampaign);
+
+      expect(result.variationId).toBe('1');
+      expect(result.variationName).toBe('Control');
+    });
+
+    test('should return false if user becomes a part of campaign after validating traffic allocation', () => {
+      userId = 'Lucian';
+      // Bob, with above campaign settings, will get hashValue:2251780191 and bucketValue:53
+      // So, must NOT be a part of campaign as per campaign percentTraffic
+      const result = VariationDecider.getVariationAllotted(userId, dummyCampaign);
+
+      expect(result.variationId).toBe(null);
+      expect(result.variationName).toBe(null);
+    });
+  });
+
+  describe('method: getVariationIdOfCampaignForUser', () => {
+    test('should return null if no campaign is passed', () => {
+      const result = VariationDecider.getVariationIdOfCampaignForUser(userId, null);
+
+      expect(result).toBe(null);
+    });
+
+    test('should return null if no userId is passed', () => {
+      const result = VariationDecider.getVariationIdOfCampaignForUser(null, dummyCampaign);
+
+      expect(result).toBe(null);
+    });
+
+    test('should return variation depending on in which bucket user falls', () => {
+      userId = 'Sarah';
+      // Bob, with above campaign settings, will get hashValue:69650962 and bucketValue:326
+      // So, MUST be a part of Control, as per campaign settings
+
+      const result = VariationDecider.getVariationIdOfCampaignForUser(userId, dummyCampaign);
+
+      expect(result.name).toBe('Control');
+    });
+
+    test('should return variation depending on in which bucket user falls', () => {
+      userId = 'Varun';
+      // Bob, with above campaign settings, will get hashValue:2025462540 and bucketValue:9433
+      // So, MUST be a part of Variation, as per campaign settings
+
+      const result = VariationDecider.getVariationIdOfCampaignForUser(userId, dummyCampaign);
+
+      expect(result.name).toBe('Variation-1');
+    });
+  });
 });
