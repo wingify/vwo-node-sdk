@@ -20,11 +20,11 @@
   "author": "dev@wingify.com",
   "license": "MIT",
   "dependencies": {
-    "@hapi/joi": "^15.0.3",
     "murmurhash": "^0.0.2",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "ajv": "^6.10.0",
     "eslint": "^4.19.1",
     "eslint-config-prettier": "^2.9.0",
     "eslint-config-standard": "^11.0.0",
