@@ -70,15 +70,15 @@ describe('VariationDecider', () => {
     });
   });
 
-  describe('method: getVariationIdOfCampaignForUser', () => {
+  describe('method: getVariationOfCampaignForUser', () => {
     test('should return null if no campaign is passed', () => {
-      const result = VariationDecider.getVariationIdOfCampaignForUser(userId, null);
+      const result = VariationDecider.getVariationOfCampaignForUser(userId, null);
 
       expect(result).toBe(null);
     });
 
     test('should return null if no userId is passed', () => {
-      const result = VariationDecider.getVariationIdOfCampaignForUser(null, dummyCampaign);
+      const result = VariationDecider.getVariationOfCampaignForUser(null, dummyCampaign);
 
       expect(result).toBe(null);
     });
@@ -88,7 +88,7 @@ describe('VariationDecider', () => {
       // Bob, with above campaign settings, will get hashValue:69650962 and bucketValue:326
       // So, MUST be a part of Control, as per campaign settings
 
-      const result = VariationDecider.getVariationIdOfCampaignForUser(userId, dummyCampaign);
+      const result = VariationDecider.getVariationOfCampaignForUser(userId, dummyCampaign);
 
       expect(result.name).toBe('Control');
     });
@@ -98,7 +98,7 @@ describe('VariationDecider', () => {
       // Bob, with above campaign settings, will get hashValue:2025462540 and bucketValue:9433
       // So, MUST be a part of Variation, as per campaign settings
 
-      const result = VariationDecider.getVariationIdOfCampaignForUser(userId, dummyCampaign);
+      const result = VariationDecider.getVariationOfCampaignForUser(userId, dummyCampaign);
 
       expect(result.name).toBe('Variation-1');
     });
