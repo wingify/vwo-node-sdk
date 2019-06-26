@@ -1,17 +1,17 @@
 {
   "name": "vwo-node-sdk",
-  "version": "0.1.0-alpha.0",
+  "version": "0.1.0-alpha.1",
   "description": "VWO node sdk",
   "main": "lib/index",
   "scripts": {
     "check:versions": "node -e 'require(\"./scripts/check-versions\")'",
+    "coverage": "jest --config=jest.config.prod.js --coverage --coverageReporters=text-lcov",
+    "coveralls": "yarn coverage | coveralls",
     "lint": "yarn check:versions && eslint '**/*.js' --fix",
     "prettier": "./node_modules/prettier/bin-prettier.js --write",
-    "postinstall": "cp git-hooks/* .git/hooks/ && chmod -R +x .git/hooks",
+    "start": "yarn install && cp git-hooks/* .git/hooks/ && chmod -R +x .git/hooks",
     "test:dev": "jest --config=jest.config.dev.js --watch --debug --colors --errorOnDeprecated",
-    "test:prod": "jest --config=jest.config.prod.js",
-    "coverage": "jest --config=jest.config.prod.js --coverage --coverageReporters=text-lcov",
-    "coveralls": "yarn coverage | coveralls"
+    "test:prod": "jest --config=jest.config.prod.js"
   },
   "repository": {
     "type": "git",
