@@ -1,6 +1,6 @@
 {
   "name": "vwo-node-sdk",
-  "version": "0.1.0-alpha.3",
+  "version": "0.1.0-alpha.4",
   "description": "VWO node sdk",
   "main": "lib/index",
   "scripts": {
@@ -63,7 +63,6 @@
   },
   "engineStrict": true,
   "engines": {
-    "node": ">= 6.10.0",
-    "yarn": ">= 1.10.1"
+    "node": ">= 6.10.0"
   }
 }
