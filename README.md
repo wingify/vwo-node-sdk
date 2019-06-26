@@ -1,5 +1,7 @@
 # VWO Node SDK
 
+[![npm version](https://badge.fury.io/js/vwo-node-sdk.svg)](https://www.npmjs.com/package/vwo-node-sdk) [![Build Status](http://img.shields.io/travis/wingify/vwo-node-sdk/master.svg?style=flat)](http://travis-ci.org/wingify/vwo-node-sdk) [![Coverage Status](https://coveralls.io/repos/github/wingify/vwo-node-sdk/badge.svg?branch=master)](https://coveralls.io/github/wingify/vwo-node-sdk?branch=master)
+
 This open source library allows you to A/B Test your Website at server-side.
 
 ## Requirements
