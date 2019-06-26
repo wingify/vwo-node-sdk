@@ -1,21 +1,22 @@
 {
   "name": "vwo-node-sdk",
-  "version": "0.1.0-alpha.4",
-  "description": "VWO node sdk",
+  "version": "0.1.0-alpha.5",
+  "description": "VWO Node SDK for server-side A/B Testing",
   "main": "lib/index",
   "scripts": {
     "check:versions": "node -e 'require(\"./scripts/check-versions\")'",
-    "coverage": "jest --config=jest.config.prod.js --coverage --coverageReporters=text-lcov",
+    "coverage": "jest --config=jest.config.prod.js --coverage --coverageReporters=text-lcov && cat ./coverage/lcov.info",
     "coveralls": "yarn coverage | coveralls",
     "lint": "yarn check:versions && eslint '**/*.js' --fix",
     "prettier": "./node_modules/prettier/bin-prettier.js --write",
     "start": "yarn install && cp git-hooks/* .git/hooks/ && chmod -R +x .git/hooks",
     "test:dev": "jest --config=jest.config.dev.js --watch --debug --colors --errorOnDeprecated",
-    "test:prod": "jest --config=jest.config.prod.js"
+    "test:prod": "jest --config=jest.config.prod.js",
+    "test": "yarn test:prod"
   },
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/wingify/vwo-node-sdk"
   },
   "author": "dev@wingify.com",
   "license": "MIT",
@@ -25,6 +26,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "coveralls": "^3.0.4",
     "eslint": "^4.19.1",
     "eslint-config-prettier": "^2.9.0",
     "eslint-config-standard": "^11.0.0",
