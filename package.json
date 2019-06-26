@@ -1,0 +1,69 @@
+{
+  "name": "@vwo/node-sdk",
+  "version": "0.1.0-alpha.0",
+  "description": "VWO node sdk",
+  "main": "lib/index",
+  "scripts": {
+    "check:versions": "node -e 'require(\"./scripts/check-versions\")'",
+    "lint": "yarn check:versions && eslint '**/*.js' --fix",
+    "prettier": "./node_modules/prettier/bin-prettier.js --write",
+    "postinstall": "cp git-hooks/* .git/hooks/ && chmod -R +x .git/hooks",
+    "test:dev": "jest --config=jest.config.dev.js --watch --debug --colors --errorOnDeprecated",
+    "test:prod": "jest --config=jest.config.prod.js",
+    "coverage": "jest --config=jest.config.prod.js --coverage --coverageReporters=text-lcov",
+    "coveralls": "yarn coverage | coveralls"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "author": "dev@wingify.com",
+  "license": "MIT",
+  "dependencies": {
+    "murmurhash": "^0.0.2",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "ajv": "^6.10.0",
+    "eslint": "^4.19.1",
+    "eslint-config-prettier": "^2.9.0",
+    "eslint-config-standard": "^11.0.0",
+    "eslint-plugin-import": "^2.10.0",
+    "eslint-plugin-node": "^6.0.1",
+    "eslint-plugin-prettier": "^2.6.0",
+    "eslint-plugin-promise": "^3.7.0",
+    "eslint-plugin-standard": "^3.0.1",
+    "husky": "^1.3.1",
+    "jest": "^24.8.0",
+    "lint-staged": "^8.1.3",
+    "prettier": "^1.16.4",
+    "semver": "^6.1.1",
+    "shelljs": "^0.8.3"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "yarn lint"
+    }
+  },
+  "lint-staged": {
+    "globOptions": {
+      "matchBase": false
+    },
+    "linters": {
+      "**/*.js": [
+        "prettier",
+        "git add"
+      ],
+      "**/*.{json,md}": [
+        "prettier",
+        "git add"
+      ]
+    }
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": ">= 6.10.0",
+    "yarn": ">= 1.10.1"
+  }
+}
