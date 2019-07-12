@@ -1,6 +1,6 @@
 {
   "name": "vwo-node-sdk",
-  "version": "0.1.0-alpha.8",
+  "version": "0.1.0-alpha.9",
   "description": "VWO Node SDK for server-side A/B Testing",
   "main": "lib/index",
   "scripts": {
