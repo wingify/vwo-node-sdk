@@ -16,6 +16,27 @@ Refer [Official VWO Documentation](https://developers.vwo.com/reference#server-s
 
 [vwo-node-sdk-example](https://github.com/wingify/vwo-node-sdk-example)
 
+## Credits
+
+We use the following open-source projects which are published under MIT License. Thanks to the authors and maintainers of the corresponding projects.
+
+* [murmurhash](https://github.com/perezd/node-murmurhash) by [@perezd](https://github.com/perezd)
+* [uuid](https://github.com/kelektiv/node-uuid) by [@Kelektiv](https://github.com/kelektiv)
+* [ajv](https://github.com/epoberezkin/ajv) by [@epoberezki](https://github.com/epoberezkin)
+* [lodash.deepClone](https://www.npmjs.com/package/lodash.clonedeep) by [@lodash](https://github.com/lodash)
+
+## Authors
+
+[Varun Malhotra](https://github.com/softvar) [@s0ftvar](https://twitter.com/s0ftvar)
+
+## Contributing
+
+Please go through our [contributing guidelines](https://github.com/wingify/vwo-node-sdk/blob/master/CONTRIBUTING.md)
+
+## Code of Conduct
+
+[Code of Conduct](https://github.com/wingify/vwo-node-sdk/blob/master/CODE_OF_CONDUCT.md)
+
 ## License
 
 ```text
