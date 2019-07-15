@@ -2,7 +2,6 @@
   "name": "vwo-node-sdk",
   "version": "0.1.0-alpha.9",
   "description": "VWO Node SDK for server-side A/B Testing",
-  "main": "lib/index",
   "scripts": {
     "check:versions": "node -e 'require(\"./scripts/check-versions\")'",
     "coverage": "jest --config=jest.config.prod.js --coverage --coverageReporters=text-lcov && cat ./coverage/lcov.info",
@@ -20,6 +19,15 @@
   },
   "author": "dev@wingify.com",
   "license": "MIT",
+  "main": "lib/index",
+  "files": [
+    "package.json",
+    "yarn.lock",
+    "lib/**/*",
+    "LICENSE",
+    "README.md",
+    "CONTRIBUTING.md"
+  ],
   "dependencies": {
     "ajv": "^6.10.0",
     "lodash.clonedeep": "^4.5.0",
