@@ -1,5 +1,4 @@
 const VWO = require('../../lib/VWO');
-const CachingUtil = require('../../lib/utils/CachingUtil');
 const ImpressionUtil = require('../../lib/utils/ImpressionUtil');
 const logging = require('../../lib/logging');
 
@@ -20,7 +19,6 @@ const mockFn = jest.fn();
 const logger = logging.getLogger();
 
 let vwoClientInstance;
-let spyResetCache;
 let spyImpressionEvent;
 let spyEventQueue;
 let userId;
@@ -42,7 +40,6 @@ beforeEach(() => {
     userProfileService
   });
 
-  spyResetCache = jest.spyOn(CachingUtil, 'resetCache');
   spyImpressionEvent = jest.spyOn(ImpressionUtil, 'buildEvent');
 });
 
@@ -68,9 +65,7 @@ describe('Class VWO', () => {
     test('should process settingsFile if it is provided and is valid', () => {
       expect(vwoClientInstance.projectConfigManager).toBeDefined();
       expect(vwoClientInstance.eventQueue).toBeDefined();
-      expect(spyResetCache).toHaveBeenCalled();
 
-      spyResetCache.mockRestore();
     });
   });
 
@@ -102,7 +97,7 @@ describe('Class VWO', () => {
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const variationName = vwoClientInstance.activate(campaignKey, users[j]);
 
         expect(variationName).toBe(settings[campaignKey][i].variation);
@@ -124,7 +119,7 @@ describe('Class VWO', () => {
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const variationName = vwoClientInstance.activate(campaignKey, users[j]);
 
         expect(variationName).toBe(settings[campaignKey][i].variation);
@@ -146,7 +141,7 @@ describe('Class VWO', () => {
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const variationName = vwoClientInstance.activate(campaignKey, users[j]);
 
         expect(variationName).toBe(settings[campaignKey][i].variation);
@@ -168,7 +163,7 @@ describe('Class VWO', () => {
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const variationName = vwoClientInstance.activate(campaignKey, users[j]);
 
         expect(variationName).toBe(settings[campaignKey][i].variation);
@@ -190,7 +185,7 @@ describe('Class VWO', () => {
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const variationName = vwoClientInstance.activate(campaignKey, users[j]);
 
         expect(variationName).toBe(settings[campaignKey][i].variation);
@@ -212,7 +207,7 @@ describe('Class VWO', () => {
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const variationName = vwoClientInstance.activate(campaignKey, users[j]);
 
         expect(variationName).toBe(settings[campaignKey][i].variation);
@@ -250,7 +245,7 @@ describe('Class VWO', () => {
         userProfileService
       });
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
@@ -264,7 +259,7 @@ describe('Class VWO', () => {
         userProfileService
       });
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
@@ -278,7 +273,7 @@ describe('Class VWO', () => {
         userProfileService
       });
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
@@ -292,7 +287,7 @@ describe('Class VWO', () => {
         userProfileService
       });
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
@@ -306,7 +301,7 @@ describe('Class VWO', () => {
         userProfileService
       });
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
@@ -320,7 +315,7 @@ describe('Class VWO', () => {
         userProfileService
       });
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
@@ -362,7 +357,7 @@ describe('Class VWO', () => {
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier);
 
         if (isTracked) {
@@ -386,7 +381,7 @@ describe('Class VWO', () => {
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier);
 
         if (isTracked) {
@@ -410,7 +405,7 @@ describe('Class VWO', () => {
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier);
 
         if (isTracked) {
@@ -434,7 +429,7 @@ describe('Class VWO', () => {
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier);
 
         if (isTracked) {
@@ -458,7 +453,7 @@ describe('Class VWO', () => {
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier);
 
         if (isTracked) {
@@ -482,7 +477,7 @@ describe('Class VWO', () => {
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
-      for (let i = 0, j = 0; i < settings[campaignKey].length, j < users.length; i++, j++) {
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier);
 
         if (isTracked) {
