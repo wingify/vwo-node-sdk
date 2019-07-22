@@ -9,5 +9,9 @@ module.exports = {
   displayName: {
     name: 'VWO NODE SDK',
     color: 'pink'
-  }
+  },
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/test/test-utils/'
+  ]
 };
