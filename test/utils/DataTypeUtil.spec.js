@@ -56,4 +56,17 @@ describe('DataTypeUtil', () => {
       expect(DataTypeUtil.isFunction(val)).toBe(true);
     });
   });
+
+  describe('method: isBoolean', () => {
+    it('should return false if string is not provided', () => {
+      const val = 123;
+
+      expect(DataTypeUtil.isBoolean(val)).toBe(false);
+    });
+
+    it('should return true if string is provided', () => {
+      expect(DataTypeUtil.isBoolean(true)).toBe(true);
+      expect(DataTypeUtil.isBoolean(false)).toBe(true);
+    });
+  });
 });

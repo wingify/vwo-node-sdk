@@ -5,7 +5,7 @@ let output;
 describe('LogMessageUtil', () => {
   describe('method: build', () => {
     it('should output correct string', () => {
-      const template = '{text1} is some {text2}. {text3} will be {text4}.'
+      const template = '{text1} is some {text2}. {text3} will be {text4}.';
       const expectation = 'This is some template. Placeholder will be replaced.';
 
       output = LogMessageUtil.build(template, {
@@ -19,14 +19,14 @@ describe('LogMessageUtil', () => {
     });
 
     it('should output correct string', () => {
-      const template = '{text1} is some {text2}. {text3} will be {text4}.'
+      const template = '{text1} is some {text2}. {text3} will be {text4}.';
       const expectation = '123 is some . Placeholder will be replaced.';
 
       output = LogMessageUtil.build(template, {
         text1: 123,
         text2: null,
-        text3: function () {
-          return 'Placeholder'
+        text3: function() {
+          return 'Placeholder';
         },
         text4: 'replaced'
       });
