@@ -2,9 +2,7 @@ const ProjectConfigManager = require('../../lib/services/ProjectConfigManager');
 const logging = require('../../lib/logging');
 const logger = logging.getLogger();
 
-const {
-  settingsFile1
-} = require('../test-utils/data/settingsFiles');
+const { settingsFile1 } = require('../test-utils/data/settingsFiles');
 
 let projectConfigManager;
 let globalConfig = {
@@ -48,12 +46,14 @@ describe('Service ProjectConfigManager', () => {
     it('should return false if settingsFile has bad campaign schema', () => {
       const config = {
         settingsFile: {
-          campaigns: [{
-            id: 'SHOULD_BE_NUMBER',
-            variations: {
-              oh: 'SHOULD_BE_ARRAY_OF_OBJECTS'
+          campaigns: [
+            {
+              id: 'SHOULD_BE_NUMBER',
+              variations: {
+                oh: 'SHOULD_BE_ARRAY_OF_OBJECTS'
+              }
             }
-          }]
+          ]
         },
         logger
       };
@@ -67,13 +67,17 @@ describe('Service ProjectConfigManager', () => {
     it('should return false if settingsFile has bad campaign variation schema', () => {
       const config = {
         settingsFile: {
-          campaigns: [{
-            id: 1,
-            variations: [{
-              id: 'SHOULD_BE_NUMBER',
-              name: 123 // should be string
-            }]
-          }]
+          campaigns: [
+            {
+              id: 1,
+              variations: [
+                {
+                  id: 'SHOULD_BE_NUMBER',
+                  name: 123 // should be string
+                }
+              ]
+            }
+          ]
         },
         logger
       };
@@ -87,13 +91,15 @@ describe('Service ProjectConfigManager', () => {
     it('should return false if settingsFile has bad campaign goal schema', () => {
       const config = {
         settingsFile: {
-          campaigns: [{
-            id: 'Hello',
-            goals: {
-              id: 'SHOULD_BE_NUMBER',
-              identifier: 12 // should be a string
+          campaigns: [
+            {
+              id: 'Hello',
+              goals: {
+                id: 'SHOULD_BE_NUMBER',
+                identifier: 12 // should be a string
+              }
             }
-          }]
+          ]
         },
         logger
       };
@@ -105,7 +111,7 @@ describe('Service ProjectConfigManager', () => {
     });
 
     it('should return true if config is valid', () => {
-      const spyInvalidateSettingsFileMethod = jest.spyOn(projectConfigManager, 'validateSettingsFile')
+      const spyInvalidateSettingsFileMethod = jest.spyOn(projectConfigManager, 'validateSettingsFile');
       const isValid = projectConfigManager.isSettingsFileValid(globalConfig);
 
       expect(isValid).toBe(true);
@@ -115,7 +121,7 @@ describe('Service ProjectConfigManager', () => {
 
   describe('method: validateSettingsFile', () => {
     it('should validate the settingsFile schema', () => {
-      const isValid = projectConfigManager.validateSettingsFile(globalConfig.settingsFile)
+      const isValid = projectConfigManager.validateSettingsFile(globalConfig.settingsFile);
 
       expect(isValid).toBe(true);
     });
@@ -123,7 +129,7 @@ describe('Service ProjectConfigManager', () => {
 
   describe('metho: processsettingsFile', () => {
     it('should call _setVariationBucketing for each campaign in settingsFile', () => {
-      const spySetVariationBucketingMethod = jest.spyOn(projectConfigManager, '_setVariationBucketing')
+      const spySetVariationBucketingMethod = jest.spyOn(projectConfigManager, '_setVariationBucketing');
       const spyLog = jest.spyOn(globalConfig.logger, 'log');
 
       projectConfigManager.processsettingsFile(globalConfig);
@@ -142,5 +148,5 @@ describe('Service ProjectConfigManager', () => {
     it('should return settingsFile', () => {
       expect(projectConfigManager.getSettingsFile()).toEqual(globalConfig.settingsFile);
     });
-  })
+  });
 });
