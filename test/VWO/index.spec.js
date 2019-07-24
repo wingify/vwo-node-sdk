@@ -65,7 +65,6 @@ describe('Class VWO', () => {
     test('should process settingsFile if it is provided and is valid', () => {
       expect(vwoClientInstance.projectConfigManager).toBeDefined();
       expect(vwoClientInstance.eventQueue).toBeDefined();
-
     });
   });
 
