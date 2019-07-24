@@ -5,9 +5,7 @@ const ProjectConfigManager = require('../../lib/services/ProjectConfigManager');
 const logging = require('../../lib/logging');
 const logger = logging.getLogger();
 
-const {
-  settingsFile1
-} = require('../test-utils/data/settingsFiles');
+const { settingsFile1 } = require('../test-utils/data/settingsFiles');
 
 const globalConfig = {
   settingsFile: settingsFile1,
@@ -64,7 +62,7 @@ describe('VariationDecisionUtil', () => {
 
     it('should return variation if data found in campaignBucketMap', () => {
       const campaignBucketMap = {
-        'DEV_TEST_1': {
+        DEV_TEST_1: {
           variationName: 'Control'
         }
       };
@@ -105,13 +103,13 @@ describe('VariationDecisionUtil', () => {
           return {
             userId: userId,
             campaignBucketMap: {
-              'DEV_TEST_1': {
+              DEV_TEST_1: {
                 variationName: 'Control'
               }
             }
-          }
+          };
         }
-      }
+      };
 
       const config = Object.assign({}, globalConfig, { userProfileService });
 
@@ -132,13 +130,13 @@ describe('VariationDecisionUtil', () => {
           return {
             userId: userId,
             campaignBucketMap: {
-              'DEV_TEST_1': {
+              DEV_TEST_1: {
                 variationName: 'Control - Garbage added'
               }
             }
-          }
+          };
         }
-      }
+      };
 
       const config = Object.assign({}, globalConfig, { userProfileService });
 
@@ -160,9 +158,7 @@ describe('VariationDecisionUtil', () => {
 
     it('should return UPS stored data even if end-user manipulated it', () => {
       const userProfileService = {
-        save: () => {
-
-        }
+        save: () => {}
       };
       const config = Object.assign({}, globalConfig, { userProfileService });
 

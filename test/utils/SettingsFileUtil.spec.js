@@ -27,4 +27,4 @@ describe('SettingsFileUtil', () => {
       expect(typeof settingsFilePromise).toBe('object');
     });
   });
-})
+});
