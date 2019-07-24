@@ -6,7 +6,7 @@ describe('DataTypeUtil', () => {
       const obj = {
         a: 1,
         b: 2
-      }
+      };
       const newObj = FunctionUtil.cloneObject(obj);
 
       // change obj

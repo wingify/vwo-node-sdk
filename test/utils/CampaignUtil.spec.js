@@ -26,7 +26,7 @@ describe('CampaignUtil', () => {
       expect(CampaignUtil._getVariationBucketRange(80)).toBe(8000);
       expect(CampaignUtil._getVariationBucketRange(90)).toBe(9000);
       expect(CampaignUtil._getVariationBucketRange(100)).toBe(10000);
-    })
+    });
   });
 
   describe('method: getCampaign', () => {
@@ -71,13 +71,16 @@ describe('CampaignUtil', () => {
   describe('method: setVariationAllocation', () => {
     it('should set the correct start and end range for every variation of a campaign passed', () => {
       const campaignWithTwoVariation = {
-        variations: [{
-          id: 1,
-          weight: 50
-        }, {
-          id: 2,
-          weight: 50
-        }]
+        variations: [
+          {
+            id: 1,
+            weight: 50
+          },
+          {
+            id: 2,
+            weight: 50
+          }
+        ]
       };
 
       CampaignUtil.setVariationAllocation(campaignWithTwoVariation);
@@ -88,13 +91,16 @@ describe('CampaignUtil', () => {
       expect(campaignWithTwoVariation.variations[1].endVariationAllocation).toBe(10000);
 
       const campaignWithTwoVariationAndUnevenSplit = {
-        variations: [{
-          id: 1,
-          weight: 10.1
-        }, {
-          id: 2,
-          weight: 89.9
-        }]
+        variations: [
+          {
+            id: 1,
+            weight: 10.1
+          },
+          {
+            id: 2,
+            weight: 89.9
+          }
+        ]
       };
 
       CampaignUtil.setVariationAllocation(campaignWithTwoVariationAndUnevenSplit);
@@ -104,15 +110,17 @@ describe('CampaignUtil', () => {
       expect(campaignWithTwoVariationAndUnevenSplit.variations[1].startVariationAllocation).toBe(1011);
       expect(campaignWithTwoVariationAndUnevenSplit.variations[1].endVariationAllocation).toBe(10000);
 
-
       const campaignWithTwoVariationAndOneDisabled = {
-        variations: [{
-          id: 1,
-          weight: 0
-        }, {
-          id: 2,
-          weight: 100
-        }]
+        variations: [
+          {
+            id: 1,
+            weight: 0
+          },
+          {
+            id: 2,
+            weight: 100
+          }
+        ]
       };
 
       CampaignUtil.setVariationAllocation(campaignWithTwoVariationAndOneDisabled);
@@ -123,16 +131,20 @@ describe('CampaignUtil', () => {
       expect(campaignWithTwoVariationAndOneDisabled.variations[1].endVariationAllocation).toBe(10000);
 
       const campaignWithThreeVariations = {
-        variations: [{
-          id: 1,
-          weight: 33.3333
-        }, {
-          id: 2,
-          weight: 33.3333
-        }, {
-          id: 3,
-          weight: 33.3333
-        }]
+        variations: [
+          {
+            id: 1,
+            weight: 33.3333
+          },
+          {
+            id: 2,
+            weight: 33.3333
+          },
+          {
+            id: 3,
+            weight: 33.3333
+          }
+        ]
       };
 
       CampaignUtil.setVariationAllocation(campaignWithThreeVariations);
@@ -145,16 +157,20 @@ describe('CampaignUtil', () => {
       expect(campaignWithThreeVariations.variations[2].endVariationAllocation).toBe(10002);
 
       const campaignWithThreeVariationsWithUnevenSplit = {
-        variations: [{
-          id: 1,
-          weight: 10.1
-        }, {
-          id: 2,
-          weight: 50.5
-        }, {
-          id: 3,
-          weight: 39.4
-        }]
+        variations: [
+          {
+            id: 1,
+            weight: 10.1
+          },
+          {
+            id: 2,
+            weight: 50.5
+          },
+          {
+            id: 3,
+            weight: 39.4
+          }
+        ]
       };
 
       CampaignUtil.setVariationAllocation(campaignWithThreeVariationsWithUnevenSplit);
@@ -167,19 +183,24 @@ describe('CampaignUtil', () => {
       expect(campaignWithThreeVariationsWithUnevenSplit.variations[2].endVariationAllocation).toBe(10000);
 
       const campaignWithFourVariations = {
-        variations: [{
-          id: 1,
-          weight: 25
-        }, {
-          id: 2,
-          weight: 25
-        }, {
-          id: 3,
-          weight: 30
-        }, {
-          id: 4,
-          weight: 20
-        }]
+        variations: [
+          {
+            id: 1,
+            weight: 25
+          },
+          {
+            id: 2,
+            weight: 25
+          },
+          {
+            id: 3,
+            weight: 30
+          },
+          {
+            id: 4,
+            weight: 20
+          }
+        ]
       };
 
       CampaignUtil.setVariationAllocation(campaignWithFourVariations);

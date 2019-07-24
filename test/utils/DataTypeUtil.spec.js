@@ -37,7 +37,7 @@ describe('DataTypeUtil', () => {
     });
 
     it('should return true if object is provided', () => {
-      const val = {a: 1};
+      const val = { a: 1 };
 
       expect(DataTypeUtil.isObject(val)).toBe(true);
     });
@@ -45,13 +45,13 @@ describe('DataTypeUtil', () => {
 
   describe('method: isFunction', () => {
     it('should return false if number is not provided', () => {
-      const val = {a:1};
+      const val = { a: 1 };
 
       expect(DataTypeUtil.isFunction(val)).toBe(false);
     });
 
     it('should return true if number is provided', () => {
-      const val = function () {};
+      const val = function() {};
 
       expect(DataTypeUtil.isFunction(val)).toBe(true);
     });
