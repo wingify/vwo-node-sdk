@@ -13,7 +13,7 @@ describe('ValidateUtil', () => {
       expect(ValidateUtil.isValidValue(111)).toBe(true);
 
       expect(ValidateUtil.isValidValue({})).toBe(true);
-      expect(ValidateUtil.isValidValue(function () {})).toBe(true);
+      expect(ValidateUtil.isValidValue(function() {})).toBe(true);
     });
   });
 
@@ -46,7 +46,7 @@ describe('ValidateUtil', () => {
 
     it('should return true if value is defined', () => {
       expect(ValidateUtil.isValidFunction('111')).toBe(false);
-      expect(ValidateUtil.isValidFunction(function () {})).toBe(true);
+      expect(ValidateUtil.isValidFunction(function() {})).toBe(true);
     });
   });
 

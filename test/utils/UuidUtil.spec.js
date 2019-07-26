@@ -24,6 +24,6 @@ describe('UuidUtil', () => {
 
     it('should return a UUID', () => {
       expect(UuidUtil.generate('Alice', namespace).length).toBe(36);
-    })
+    });
   });
 });
