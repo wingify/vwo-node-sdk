@@ -4,7 +4,7 @@
   "description": "VWO Node SDK for server-side A/B Testing",
   "scripts": {
     "check:versions": "node -e 'require(\"./scripts/check-versions\")'",
-    "coverage": "jest --config=jest.config.prod.js --coverage --coverageReporters=text-lcov && cat ./coverage/lcov.info",
+    "coverage": "jest --config=jest.config.prod.js --detectOpenHandles --coverage --coverageReporters=text-lcov && cat ./coverage/lcov.info",
     "coveralls": "yarn coverage | coveralls",
     "lint": "yarn check:versions && eslint '**/*.js' --fix",
     "prettier": "./node_modules/prettier/bin-prettier.js --write",
