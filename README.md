@@ -1,6 +1,9 @@
 # VWO Node SDK
 
-[![npm version](https://badge.fury.io/js/vwo-node-sdk.svg)](https://www.npmjs.com/package/vwo-node-sdk) [![Build Status](http://img.shields.io/travis/wingify/vwo-node-sdk/master.svg?style=flat)](http://travis-ci.org/wingify/vwo-node-sdk) [![Coverage Status](https://coveralls.io/repos/github/wingify/vwo-node-sdk/badge.svg?branch=master)](https://coveralls.io/github/wingify/vwo-node-sdk?branch=master)
+[![npm version](https://badge.fury.io/js/vwo-node-sdk.svg)](https://www.npmjs.com/package/vwo-node-sdk)
+[![Build Status](http://img.shields.io/travis/wingify/vwo-node-sdk/master.svg?style=flat)](http://travis-ci.org/wingify/vwo-node-sdk)
+[![Coverage Status](https://coveralls.io/repos/github/wingify/vwo-node-sdk/badge.svg?branch=master)](https://coveralls.io/github/wingify/vwo-node-sdk?branch=master)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 
 This open source library allows you to A/B Test your Website at server-side.
 
@@ -16,14 +19,9 @@ Refer [Official VWO Documentation](https://developers.vwo.com/reference#server-s
 
 [vwo-node-sdk-example](https://github.com/wingify/vwo-node-sdk-example)
 
-## Credits
+## Third-party Resources and Credits
 
-We use the following open-source projects which are published under MIT License. Thanks to the authors and maintainers of the corresponding projects.
-
-* [murmurhash](https://github.com/perezd/node-murmurhash) by [@perezd](https://github.com/perezd)
-* [uuid](https://github.com/kelektiv/node-uuid) by [@Kelektiv](https://github.com/kelektiv)
-* [ajv](https://github.com/epoberezkin/ajv) by [@epoberezki](https://github.com/epoberezkin)
-* [lodash.deepClone](https://www.npmjs.com/package/lodash.clonedeep) by [@lodash](https://github.com/lodash)
+Refer [third-party-attributions.txt](https://github.com/wingify/vwo-node-sdk/blob/master/third-party-attributions.txt)
 
 ## Authors
 
@@ -39,26 +37,6 @@ Please go through our [contributing guidelines](https://github.com/wingify/vwo-n
 
 ## License
 
-```text
-    MIT License
+[Apache License, Version 2.0](https://github.com/wingify/vwo-node-sdk/blob/master/LICENSE)
 
-    Copyright (c) 2019 Wingify Software Pvt. Ltd.
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to deal
-    in the Software without restriction, including without limitation the rights
-    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-    copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in all
-    copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-    SOFTWARE.
-```
+Copyright 2019 Wingify Software Pvt. Ltd.

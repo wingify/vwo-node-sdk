@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 
 /**
- * Git COMMIT-MSG hook for validating commit message
- * See https://docs.google.com/document/d/1rk04jEuGfk9kYzfqCuOlPTSJw3hEDZJTBN5E5f1SALo/edit
+ * Name: validate-commit-message.
+ * Description: Validate commit message before git commit
+ * Authors: Angular Team (Note: this script was originally written by Vojta for AngularJS)
+ * URL: https://github.com/angular/angular/blob/master/tools/validate-commit-message/validate-commit-message.js
+ * LICENSE: MIT License
  *
- * Installation:
- * >> cd <angular-repo>
- * >> ln -s ../../validate-commit-msg.js .git/hooks/commit-msg
+ * Copyright Google Inc. All Rights Reserved.
+ *
+ * Use of this source code is governed by an MIT-style license that can be
+ * found in the LICENSE file at https://angular.io/license
  */
 
 'use strict';
