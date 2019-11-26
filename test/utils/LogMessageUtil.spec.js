@@ -1,5 +1,53 @@
-require('../../lib/utils/LogMessageUtil');
+/**
+ * Copyright 2019 Wingify Software Pvt. Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-test('adds 1 + 2 to equal 3', () => {
-  expect(3).toBe(3);
+const LogMessageUtil = require('../../lib/utils/LogMessageUtil');
+
+let output;
+
+describe('LogMessageUtil', () => {
+  describe('method: build', () => {
+    it('should output correct string', () => {
+      const template = '{text1} is some {text2}. {text3} will be {text4}.';
+      const expectation = 'This is some template. Placeholder will be replaced.';
+
+      output = LogMessageUtil.build(template, {
+        text1: 'This',
+        text2: 'template',
+        text3: 'Placeholder',
+        text4: 'replaced'
+      });
+
+      expect(output).toBe(expectation);
+    });
+
+    it('should output correct string', () => {
+      const template = '{text1} is some {text2}. {text3} will be {text4}.';
+      const expectation = '123 is some . Placeholder will be replaced.';
+
+      output = LogMessageUtil.build(template, {
+        text1: 123,
+        text2: null,
+        text3: function() {
+          return 'Placeholder';
+        },
+        text4: 'replaced'
+      });
+
+      expect(output).toBe(expectation);
+    });
+  });
 });

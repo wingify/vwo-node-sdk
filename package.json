@@ -1,11 +1,11 @@
 {
   "name": "vwo-node-sdk",
-  "version": "0.1.0-alpha.9",
+  "version": "1.3.0",
   "description": "VWO Node SDK for server-side A/B Testing",
-  "main": "lib/index",
   "scripts": {
     "check:versions": "node -e 'require(\"./scripts/check-versions\")'",
-    "coverage": "jest --config=jest.config.prod.js --coverage --coverageReporters=text-lcov && cat ./coverage/lcov.info",
+    "check:license": "yarn check:versions && node -e 'require(\"./scripts/check-license\")'",
+    "coverage": "jest --config=jest.config.prod.js --detectOpenHandles --coverage --coverageReporters=text-lcov && cat ./coverage/lcov.info",
     "coveralls": "yarn coverage | coveralls",
     "lint": "yarn check:versions && eslint '**/*.js' --fix",
     "prettier": "./node_modules/prettier/bin-prettier.js --write",
@@ -19,7 +19,16 @@
     "url": "https://github.com/wingify/vwo-node-sdk"
   },
   "author": "dev@wingify.com",
-  "license": "MIT",
+  "license": "Apache-2.0",
+  "main": "lib/index",
+  "files": [
+    "package.json",
+    "yarn.lock",
+    "lib/**/*",
+    "LICENSE",
+    "README.md",
+    "CONTRIBUTING.md"
+  ],
   "dependencies": {
     "ajv": "^6.10.0",
     "lodash.clonedeep": "^4.5.0",
@@ -46,7 +55,7 @@
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged",
-      "pre-push": "yarn lint"
+      "pre-push": "yarn lint && yarn check:license"
     }
   },
   "lint-staged": {
@@ -55,6 +64,7 @@
     },
     "linters": {
       "**/*.js": [
+        "yarn lint",
         "prettier",
         "git add"
       ],
