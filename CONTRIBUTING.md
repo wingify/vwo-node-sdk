@@ -1,5 +1,4 @@
 ## Contributing to VWO Node SDK
-
 We love your input! We want to make contributing to this project as easy and transparent as possible, whether it's:
 
 - Reporting a bug
@@ -8,7 +7,6 @@ We love your input! We want to make contributing to this project as easy and tra
 - Proposing new features
 
 ### We Use [Github Flow](https://guides.github.com/introduction/flow/index.html), So All Code Changes Happen Through Pull Requests
-
 Pull requests are the best way to propose changes to the codebase (we use [Github Flow](https://guides.github.com/introduction/flow/index.html)). We actively welcome your pull requests:
 
 1. Fork the repo and create your branch from `master`.
@@ -36,7 +34,6 @@ We use GitHub issues to track public bugs. Report a bug by [opening a new issue]
 - Notes (possibly including why you think this might be happening, or stuff you tried that didn't work)
 
 ### Use a Consistent Coding Style
-
 We use [prettier](https://prettier.io/) for auto-formatting and consistent coding style among developers.
 
 ### License
