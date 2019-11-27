@@ -72,7 +72,7 @@ describe('index file', () => {
 
       expect(vwoClientInstance).toBeDefined();
       expect(vwoClientInstance.activate).toBeDefined();
-      expect(vwoClientInstance.getVariationName).toBeDefined();
+      expect(vwoClientInstance.getVariation).toBeDefined();
       expect(vwoClientInstance.track).toBeDefined();
     });
   });

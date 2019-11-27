@@ -15,6 +15,7 @@
  */
 
 const CampaignUtil = require('../../lib/utils/CampaignUtil');
+const CampaignTypeEnum = require('../../lib/enums/CampaignTypeEnum');
 const logging = require('../../lib/services/logging');
 const logger = logging.getLogger();
 
@@ -52,6 +53,16 @@ describe('CampaignUtil', () => {
 
     it('should return campaign if campaign is found corresponding to the key passed', () => {
       expect(CampaignUtil.getCampaign(globalConfig.settingsFile, 'DEV_TEST_1')).toBeDefined();
+    });
+  });
+
+  describe('method: getCampaignBasedOnId', () => {
+    it('should return null if campaign is not found corresponding to the id passed', () => {
+      expect(CampaignUtil.getCampaignBasedOnId(globalConfig.settingsFile, 11111111)).toBeUndefined();
+    });
+
+    it('should return campaign if campaign is found corresponding to the id passed', () => {
+      expect(CampaignUtil.getCampaignBasedOnId(globalConfig.settingsFile, 230)).toBeDefined();
     });
   });
 
@@ -264,6 +275,51 @@ describe('CampaignUtil', () => {
       expect(variation.id).toBeDefined();
       expect(variation.name).toBeDefined();
       expect(variation.weight).toBeDefined();
+    });
+  });
+
+  describe('method: getControlForCampaign', () => {
+    it('should return empty object if campaign is not passed', () => {
+      expect(CampaignUtil.getControlForCampaign(null)).toEqual({});
+    });
+
+    it('should return control variation if campaign is passed and has variations', () => {
+      expect(CampaignUtil.getControlForCampaign(globalConfig.settingsFile.campaigns[0])).toEqual(
+        globalConfig.settingsFile.campaigns[0].variations[0]
+      );
+    });
+  });
+
+  describe('method: isAbCampaign', () => {
+    it('should return false if campaign is not ab campaign', () => {
+      expect(CampaignUtil.isAbCampaign({ type: CampaignTypeEnum.FEATURE_TEST })).toBe(false);
+      expect(CampaignUtil.isAbCampaign({ type: CampaignTypeEnum.FEATURE_ROLLOUT })).toBe(false);
+    });
+
+    it('should return true if campaign is not ab campaign', () => {
+      expect(CampaignUtil.isAbCampaign({ type: CampaignTypeEnum.AB })).toBe(true);
+    });
+  });
+
+  describe('method: isFeatureTestCampaign', () => {
+    it('should return false if campaign is not ab campaign', () => {
+      expect(CampaignUtil.isFeatureTestCampaign({ type: CampaignTypeEnum.FEATURE_ROLLOUT })).toBe(false);
+      expect(CampaignUtil.isFeatureTestCampaign({ type: CampaignTypeEnum.AB })).toBe(false);
+    });
+
+    it('should return true if campaign is not ab campaign', () => {
+      expect(CampaignUtil.isFeatureTestCampaign({ type: CampaignTypeEnum.FEATURE_TEST })).toBe(true);
+    });
+  });
+
+  describe('method: isFeatureRolloutCampaign', () => {
+    it('should return false if campaign is not ab campaign', () => {
+      expect(CampaignUtil.isFeatureRolloutCampaign({ type: CampaignTypeEnum.FEATURE_TEST })).toBe(false);
+      expect(CampaignUtil.isFeatureRolloutCampaign({ type: CampaignTypeEnum.AB })).toBe(false);
+    });
+
+    it('should return true if campaign is not ab campaign', () => {
+      expect(CampaignUtil.isFeatureRolloutCampaign({ type: CampaignTypeEnum.FEATURE_ROLLOUT })).toBe(true);
     });
   });
 });

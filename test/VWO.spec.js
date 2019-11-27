@@ -35,13 +35,13 @@ const {
   FEATURE_ROLLOUT_TRAFFIC_100
 } = require('./test-utils/data/feature-rollout-settingsFile');
 
-// const {
-//   FEATURE_TEST_TRAFFIC_0,
-//   FEATURE_TEST_TRAFFIC_25,
-//   FEATURE_TEST_TRAFFIC_50,
-//   FEATURE_TEST_TRAFFIC_75,
-//   FEATURE_TEST_TRAFFIC_100
-// } = require('../test-utils/data/feature-test-settingsFile');
+const {
+  FEATURE_TEST_TRAFFIC_0,
+  // FEATURE_TEST_TRAFFIC_25,
+  // FEATURE_TEST_TRAFFIC_50,
+  // FEATURE_TEST_TRAFFIC_75,
+  FEATURE_TEST_TRAFFIC_100
+} = require('./test-utils/data/feature-test-settingsFile');
 
 const settings = require('./test-utils/data/settingsFileAndUsersExpectation');
 const testUtil = require('./test-utils/TestUtil');
@@ -264,19 +264,19 @@ describe('Class VWO', () => {
 
   describe('method: getVariationName', () => {
     test('should return null if no argument is passed', () => {
-      expect(vwoClientInstance.getVariationName()).toBe(null);
+      expect(vwoClientInstance.getVariation()).toBe(null);
     });
 
     test('should return null if no campaignKey is passed', () => {
-      expect(vwoClientInstance.getVariationName('', userId)).toBe(null);
+      expect(vwoClientInstance.getVariation('', userId)).toBe(null);
     });
 
     test('should return null if no userId is passed', () => {
-      expect(vwoClientInstance.getVariationName(campaignKey)).toBe(null);
+      expect(vwoClientInstance.getVariation(campaignKey)).toBe(null);
     });
 
     test('should return null if campaignKey is not found in settingsFile', () => {
-      expect(vwoClientInstance.getVariationName('NO_SUCH_CAMPAIGN_KEY', userId)).toBe(null);
+      expect(vwoClientInstance.getVariation('NO_SUCH_CAMPAIGN_KEY', userId)).toBe(null);
     });
 
     test('should test against a campaign settings: traffic:50 and split:50-50', () => {
@@ -290,7 +290,7 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariationName(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
+        expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
 
@@ -305,7 +305,7 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariationName(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
+        expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
 
@@ -320,7 +320,7 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariationName(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
+        expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
 
@@ -335,7 +335,7 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariationName(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
+        expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
 
@@ -350,7 +350,7 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariationName(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
+        expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
 
@@ -365,7 +365,7 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariationName(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
+        expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
   });
@@ -578,7 +578,7 @@ describe('Class VWO', () => {
       }
     });
 
-    xtest('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_25', () => {
+    test('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_25', () => {
       const campaignKey = FEATURE_ROLLOUT_TRAFFIC_25.campaigns[0].key;
 
       vwoClientInstance = new VWO({
@@ -589,16 +589,11 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        console.log(
-          vwoClientInstance.isFeatureEnabled(campaignKey, users[j]),
-          users[j],
-          !!settings[campaignKey][i].variation
-        );
         expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[j])).toBe(!!settings[campaignKey][i].variation);
       }
     });
 
-    xtest('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_50', () => {
+    test('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_50', () => {
       const campaignKey = FEATURE_ROLLOUT_TRAFFIC_50.campaigns[0].key;
 
       vwoClientInstance = new VWO({
@@ -613,7 +608,7 @@ describe('Class VWO', () => {
       }
     });
 
-    xtest('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_75', () => {
+    test('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_75', () => {
       const campaignKey = FEATURE_ROLLOUT_TRAFFIC_75.campaigns[0].key;
 
       vwoClientInstance = new VWO({
@@ -628,7 +623,7 @@ describe('Class VWO', () => {
       }
     });
 
-    xtest('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_100', () => {
+    test('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_100', () => {
       const campaignKey = FEATURE_ROLLOUT_TRAFFIC_100.campaigns[0].key;
 
       vwoClientInstance = new VWO({
@@ -641,6 +636,98 @@ describe('Class VWO', () => {
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[j])).toBe(!!settings[campaignKey][i].variation);
       }
+    });
+  });
+
+  describe('method: getFeatureVariableValue', () => {
+    test('should return null if no argument is passed', () => {
+      expect(vwoClientInstance.getFeatureVariableValue()).toBe(null);
+    });
+
+    test('should return null if no campaignKey is passed', () => {
+      expect(vwoClientInstance.getFeatureVariableValue('', userId)).toBe(null);
+    });
+
+    test('should return null if no userId is passed', () => {
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey)).toBe(null);
+    });
+
+    test('should return null if no variableKey is passed', () => {
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'variable-key', userId)).toBe(null);
+    });
+
+    test('should return null if campaignKey is not found in settingsFile', () => {
+      expect(vwoClientInstance.getFeatureVariableValue('NO_SUCH_CAMPAIGN_KEY', 'variable-key', userId)).toBe(null);
+    });
+
+    test('should return null if campaignKey is not found in settingsFile', () => {
+      expect(vwoClientInstance.getFeatureVariableValue('DEV_TEST_1', 'variable-key', userId)).toBe(null);
+    });
+
+    test('should return null if feature rollout campaign but percent traffic is 0', () => {
+      const campaignKey = FEATURE_ROLLOUT_TRAFFIC_0.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_ROLLOUT_TRAFFIC_0,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', userId)).toBe(null);
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'INTEGER_VARIABLE', userId)).toBe(null);
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'FLOAT_VARIABLE', userId)).toBe(null);
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'BOOLEAN_VARIABLE', userId)).toBe(null);
+    });
+
+    test('should return variable value if feature rollout campaign but percent traffic is 100', () => {
+      const campaignKey = FEATURE_ROLLOUT_TRAFFIC_100.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_ROLLOUT_TRAFFIC_100,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', userId)).toBe(
+        'this_is_a_string'
+      );
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'INTEGER_VARIABLE', userId)).toBe(123);
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'FLOAT_VARIABLE', userId)).toBe(123.456);
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'BOOLEAN_VARIABLE', userId)).toBe(true);
+    });
+
+    test('should return null if feature test campaign but percent traffic is 0', () => {
+      const campaignKey = FEATURE_TEST_TRAFFIC_0.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_0,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', userId)).toBe(null);
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'INTEGER_VARIABLE', userId)).toBe(null);
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'FLOAT_VARIABLE', userId)).toBe(null);
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'BOOLEAN_VARIABLE', userId)).toBe(null);
+    });
+
+    test('should return variable value if feature test campaign but percent traffic is 100', () => {
+      const campaignKey = FEATURE_TEST_TRAFFIC_100.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_100,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', 'Ashley')).toBe(
+        'Variation-2 string'
+      );
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'INTEGER_VARIABLE', 'Ashley')).toBe(789);
     });
   });
 });
