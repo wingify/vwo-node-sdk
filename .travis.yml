@@ -1,6 +1,10 @@
 language: node_js
 node_js:
-  - '10.0.0'
+  - 6.10.0
+  - 8
+  - 9
+  - 10.0.0
+  - node
 install:
   - yarn install
 after_success: 'yarn coveralls'
