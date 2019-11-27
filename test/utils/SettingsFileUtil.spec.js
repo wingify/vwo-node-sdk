@@ -17,10 +17,10 @@
 const SettingsFileUtil = require('../../lib/utils/SettingsFileUtil');
 
 let accountId;
-let environmentToken;
+let sdkKey;
 beforeEach(() => {
   accountId = 12345;
-  environmentToken = 'aa11110pp22222aa333ff4c5b66r77ee';
+  sdkKey = 'aa11110pp22222aa333ff4c5b66r77ee';
 });
 
 describe('SettingsFileUtil', () => {
@@ -29,16 +29,16 @@ describe('SettingsFileUtil', () => {
       expect(SettingsFileUtil.get()).toBeUndefined();
     });
 
-    it('should return undefined if no environmentToken is passed', () => {
+    it('should return undefined if no sdkKey is passed', () => {
       expect(SettingsFileUtil.get(accountId)).toBeUndefined();
     });
 
     it('should return undefined if no accountId is passed', () => {
-      expect(SettingsFileUtil.get(undefined, environmentToken)).toBeUndefined();
+      expect(SettingsFileUtil.get(undefined, sdkKey)).toBeUndefined();
     });
 
-    xit('should return a promise if parameters passed are correct', () => {
-      const settingsFilePromise = SettingsFileUtil.get(accountId, environmentToken);
+    it('should return a promise if parameters passed are correct', () => {
+      const settingsFilePromise = SettingsFileUtil.get(accountId, sdkKey);
 
       expect(typeof settingsFilePromise).toBe('object');
     });

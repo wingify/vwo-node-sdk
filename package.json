@@ -10,7 +10,7 @@
     "lint": "yarn check:versions && eslint '**/*.js' --fix",
     "prettier": "./node_modules/prettier/bin-prettier.js --write",
     "start": "yarn install && cp git-hooks/* .git/hooks/ && chmod -R +x .git/hooks",
-    "test:dev": "jest --config=jest.config.dev.js --watch --debug --colors --errorOnDeprecated",
+    "test:dev": "node --inspect node_modules/jest/bin/jest.js --watch --runInBand --config=jest.config.dev.js --watch --debug --colors --errorOnDeprecated",
     "test:prod": "jest --config=jest.config.prod.js",
     "test": "yarn test:prod"
   },

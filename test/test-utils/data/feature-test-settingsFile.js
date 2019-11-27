@@ -1,5 +1,5 @@
 const FEATURE_TEST_TRAFFIC_0 = {
-  environmentToken: 'someuniquestuff1234567',
+  sdkKey: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [
@@ -103,7 +103,7 @@ const FEATURE_TEST_TRAFFIC_0 = {
 };
 
 const FEATURE_TEST_TRAFFIC_25 = {
-  environmentToken: 'someuniquestuff1234567',
+  sdkKey: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [
@@ -207,7 +207,7 @@ const FEATURE_TEST_TRAFFIC_25 = {
 };
 
 const FEATURE_TEST_TRAFFIC_50 = {
-  environmentToken: 'someuniquestuff1234567',
+  sdkKey: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [
@@ -311,7 +311,7 @@ const FEATURE_TEST_TRAFFIC_50 = {
 };
 
 const FEATURE_TEST_TRAFFIC_75 = {
-  environmentToken: 'someuniquestuff1234567',
+  sdkKey: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [
@@ -415,7 +415,7 @@ const FEATURE_TEST_TRAFFIC_75 = {
 };
 
 const FEATURE_TEST_TRAFFIC_100 = {
-  environmentToken: 'someuniquestuff1234567',
+  sdkKey: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [
@@ -519,7 +519,7 @@ const FEATURE_TEST_TRAFFIC_100 = {
 };
 
 const FEATURE_TEST_TRAFFIC_100_DISABLED = {
-  environmentToken: 'someuniquestuff1234567',
+  sdkKey: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [

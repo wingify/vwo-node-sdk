@@ -1,5 +1,5 @@
 const FEATURE_ROLLOUT_TRAFFIC_0 = {
-  environmentToken: 'someuniquestuff1234567',
+  sdkKey: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [],
@@ -48,7 +48,7 @@ const FEATURE_ROLLOUT_TRAFFIC_0 = {
 };
 
 const FEATURE_ROLLOUT_TRAFFIC_25 = {
-  environmentToken: 'someuniquestuff1234567',
+  sdkKey: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [],
@@ -97,7 +97,7 @@ const FEATURE_ROLLOUT_TRAFFIC_25 = {
 };
 
 const FEATURE_ROLLOUT_TRAFFIC_50 = {
-  environmentToken: 'someuniquestuff1234567',
+  sdkKey: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [],
@@ -146,7 +146,7 @@ const FEATURE_ROLLOUT_TRAFFIC_50 = {
 };
 
 const FEATURE_ROLLOUT_TRAFFIC_75 = {
-  environmentToken: 'someuniquestuff1234567',
+  sdkKey: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [],
@@ -195,7 +195,7 @@ const FEATURE_ROLLOUT_TRAFFIC_75 = {
 };
 
 const FEATURE_ROLLOUT_TRAFFIC_100 = {
-  environmentToken: 'someuniquestuff1234567',
+  sdkKey: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [],
@@ -244,7 +244,7 @@ const FEATURE_ROLLOUT_TRAFFIC_100 = {
 };
 
 const FEATURE_ROLLOUT_INCORRECT_VARIABLE_TYPE = {
-  environmentToken: 'someuniquestuff1234567',
+  sdkKey: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [],

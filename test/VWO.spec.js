@@ -48,7 +48,7 @@ const testUtil = require('./test-utils/TestUtil');
 const users = testUtil.getUsers();
 const mockFn = jest.fn();
 
-const logger = logging.getLogger();
+const logger = { log: mockFn };
 
 let vwoClientInstance;
 let spyImpressionEvent;
@@ -56,7 +56,10 @@ let spyEventQueue;
 let userId;
 let campaignKey;
 let goalIdentifier;
-let userStorageService = { set: mockFn, get: mockFn };
+let userStorageService = {
+  set: mockFn,
+  get: mockFn
+};
 
 beforeEach(() => {
   logging.setLogHandler(mockFn);
@@ -69,6 +72,7 @@ beforeEach(() => {
   vwoClientInstance = new VWO({
     settingsFile: settingsFile1,
     logger,
+    isDevelopmentMode: true,
     userStorageService
   });
 
@@ -80,6 +84,7 @@ describe('Class VWO', () => {
     test('should set stuff on the object itself to be referenced later in code', () => {
       vwoClientInstance = new VWO({
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
       expect(vwoClientInstance.logger).toBeDefined();
@@ -89,6 +94,7 @@ describe('Class VWO', () => {
     test('should not process settingsFile if settingsFile is not provided or corrupted', () => {
       vwoClientInstance = new VWO({
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
       expect(vwoClientInstance.SettingsFileManager).toBeUndefined();
@@ -123,6 +129,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile1,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -145,6 +152,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile2,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -167,6 +175,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile3,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -189,6 +198,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile4,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -211,6 +221,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile5,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -233,6 +244,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile6,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -273,6 +285,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile1,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -287,6 +300,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile2,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -301,6 +315,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile3,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -315,6 +330,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile4,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -329,6 +345,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile5,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -343,6 +360,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile6,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -383,6 +401,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile1,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -407,6 +426,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile2,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -431,6 +451,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile3,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -455,6 +476,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile4,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -479,6 +501,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile5,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -503,6 +526,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile6,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -545,6 +569,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: FEATURE_ROLLOUT_TRAFFIC_0,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -559,6 +584,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: FEATURE_ROLLOUT_TRAFFIC_25,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -578,6 +604,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: FEATURE_ROLLOUT_TRAFFIC_50,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -592,6 +619,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: FEATURE_ROLLOUT_TRAFFIC_75,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
@@ -606,6 +634,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: FEATURE_ROLLOUT_TRAFFIC_100,
         logger,
+        isDevelopmentMode: true,
         userStorageService
       });
 
