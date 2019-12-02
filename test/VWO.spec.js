@@ -264,19 +264,19 @@ describe('Class VWO', () => {
 
   describe('method: getVariationName', () => {
     test('should return null if no argument is passed', () => {
-      expect(vwoClientInstance.getVariation()).toBe(null);
+      expect(vwoClientInstance.getVariationName()).toBe(null);
     });
 
     test('should return null if no campaignKey is passed', () => {
-      expect(vwoClientInstance.getVariation('', userId)).toBe(null);
+      expect(vwoClientInstance.getVariationName('', userId)).toBe(null);
     });
 
     test('should return null if no userId is passed', () => {
-      expect(vwoClientInstance.getVariation(campaignKey)).toBe(null);
+      expect(vwoClientInstance.getVariationName(campaignKey)).toBe(null);
     });
 
     test('should return null if campaignKey is not found in settingsFile', () => {
-      expect(vwoClientInstance.getVariation('NO_SUCH_CAMPAIGN_KEY', userId)).toBe(null);
+      expect(vwoClientInstance.getVariationName('NO_SUCH_CAMPAIGN_KEY', userId)).toBe(null);
     });
 
     test('should test against a campaign settings: traffic:50 and split:50-50', () => {
@@ -290,7 +290,7 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
+        expect(vwoClientInstance.getVariationName(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
 
@@ -305,7 +305,7 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
+        expect(vwoClientInstance.getVariationName(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
 
@@ -320,7 +320,7 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
+        expect(vwoClientInstance.getVariationName(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
 
@@ -335,7 +335,7 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
+        expect(vwoClientInstance.getVariationName(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
 
@@ -350,7 +350,7 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
+        expect(vwoClientInstance.getVariationName(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
 
@@ -365,7 +365,7 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
+        expect(vwoClientInstance.getVariationName(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
   });
