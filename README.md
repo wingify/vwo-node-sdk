@@ -27,6 +27,10 @@ Refer [third-party-attributions.txt](https://github.com/wingify/vwo-node-sdk/blo
 
 [Varun Malhotra](https://github.com/softvar) [@s0ftvar](https://twitter.com/s0ftvar)
 
+## Changelog
+
+Refer [CHANGELOG.md](https://github.com/wingify/vwo-node-sdk/blob/master/CHANGELOG.md)
+
 ## Contributing
 
 Please go through our [contributing guidelines](https://github.com/wingify/vwo-node-sdk/blob/master/CONTRIBUTING.md)
