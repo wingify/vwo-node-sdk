@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2019-12-17
+### Added
+Pre and Post segmentation capabilites
+- Introduced new Segmentation service to evaluate whether user is eligible for campaign based on campaign pre-segmentation conditions and passed custom-variables
+### Changed
+- All existing APIs to handle custom-variables for tageting audience
+- Code refactored to support campaign tageting and post segmentation
+
 ## [1.4.2] - 2019-12-02
 ### Changed
 - `getVariation` and `getVariationName` API are same. Only two names for same API.
