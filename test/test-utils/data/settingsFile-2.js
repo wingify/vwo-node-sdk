@@ -1,5 +1,5 @@
 module.exports = {
-  sdkKey: 'someuniquestuff1234567',
+  environmentToken: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [
@@ -32,7 +32,8 @@ module.exports = {
       percentTraffic: 100,
       key: 'DEV_TEST_2',
       status: 'RUNNING',
-      type: 'VISUAL_AB'
+      type: 'VISUAL_AB',
+      segments: {}
     }
   ],
   accountId: 888888,

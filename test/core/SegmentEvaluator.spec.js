@@ -15,23 +15,29 @@
  */
 
 const SegmentEvaluator = require('../../lib/core/SegmentEvaluator');
+const logging = require('../../lib/services/logging');
+const VWO = require('../../lib/VWO');
+const SegmentEvaluatorData = require('../test-utils/data/segmentEvaluatorData');
 
-describe('SegmentEvaluator', () => {
-  describe('method: evaluate', () => {
-    test('should return true if no conditions are passed', () => {
-      // Initially, we are not giving pre-segmentation support
-      const conditions = [];
+const testCasesKeys = Object.keys(SegmentEvaluatorData);
+const logger = logging.getLogger();
 
-      const result = SegmentEvaluator.evaluate(conditions);
-      expect(result).toBe(true);
-    });
-
-    test('should return false if conditions are passed', () => {
-      // Initially, we are not giving pre-segmentation support
-      const conditions = [{ device: 'iPhone' }];
-
-      const result = SegmentEvaluator.evaluate(conditions);
-      expect(result).toBe(false);
+describe('SegmentorService', () => {
+  testCasesKeys.forEach((key, index) => {
+    describe(key, () => {
+      SegmentEvaluatorData[key].forEach(testObj => {
+        test(testObj.description, () => {
+          expect(
+            SegmentEvaluator(
+              new VWO({
+                logger
+              }),
+              testObj.dsl,
+              testObj.customVariables
+            )
+          ).toBe(testObj.expectation);
+        });
+      });
     });
   });
 });

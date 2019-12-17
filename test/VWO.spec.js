@@ -24,7 +24,8 @@ const {
   settingsFile3,
   settingsFile4,
   settingsFile5,
-  settingsFile6
+  settingsFile6,
+  settingsFile7
 } = require('./test-utils/data/settingsFiles');
 
 const {
@@ -32,7 +33,8 @@ const {
   FEATURE_ROLLOUT_TRAFFIC_25,
   FEATURE_ROLLOUT_TRAFFIC_50,
   FEATURE_ROLLOUT_TRAFFIC_75,
-  FEATURE_ROLLOUT_TRAFFIC_100
+  FEATURE_ROLLOUT_TRAFFIC_100,
+  FEATURE_ROLLOUT_WITH_SEGMENTS_TRAFFIC_100
 } = require('./test-utils/data/feature-rollout-settingsFile');
 
 const {
@@ -51,11 +53,42 @@ const mockFn = jest.fn();
 const logger = { log: mockFn };
 
 let vwoClientInstance;
-let spyImpressionEvent;
+let spyImpressionEventTrackUser;
+let spyImpressionEventTrackGoal;
+let spyImpressionEventPush;
 let spyEventQueue;
 let userId;
 let campaignKey;
 let goalIdentifier;
+let tags = {
+  contains_vwo: 'legends say that vwo is the best',
+  regex_for_no_zeros: 1223123,
+  regex_for_all_letters: 'dsfASF',
+  regex_for_small_letters: 'sadfksjdf',
+  regex_real_number: 12321.2242,
+  regex_for_zeros: 0,
+  is_equal_to: 'equal_to_variable',
+  contains: 'contains_variable',
+  regex_for_capital_letters: 'SADFLSDLF',
+  is_not_equal_to: 'is_not_equal_to_variable',
+  this_is_regex: 'this    is    regex',
+  starts_with: 'starts_with_variable'
+};
+
+let falseTags = {
+  contains_vwo: 'legends say that vwo is the best',
+  regex_for_no_zeros: 1223123,
+  regex_for_all_letters: 'dsfASF',
+  regex_for_small_letters: 'sadfksjdf',
+  regex_real_number: 12321.2242,
+  regex_for_zeros: 0,
+  is_equal_to: '!equal_to_variable',
+  contains: 'contains_variable',
+  regex_for_capital_letters: 'SADFLSDLF',
+  is_not_equal_to: 'is_not_equal_to_variable',
+  this_is_regex: 'this    is    regex',
+  starts_with: 'starts_with_variable'
+};
 let userStorageService = {
   set: mockFn,
   get: mockFn
@@ -76,7 +109,9 @@ beforeEach(() => {
     userStorageService
   });
 
-  spyImpressionEvent = jest.spyOn(ImpressionUtil, 'buildEvent');
+  spyImpressionEventTrackUser = jest.spyOn(ImpressionUtil, 'buildEventForTrackingUser');
+  spyImpressionEventTrackGoal = jest.spyOn(ImpressionUtil, 'buildEventForTrackingGoal');
+  spyImpressionEventPush = jest.spyOn(ImpressionUtil, 'buildEventForPushing');
 });
 
 describe('Class VWO', () => {
@@ -140,7 +175,7 @@ describe('Class VWO', () => {
 
         expect(variationName).toBe(settings[campaignKey][i].variation);
         if (variationName) {
-          expect(spyImpressionEvent).toHaveBeenCalled();
+          expect(spyImpressionEventTrackUser).toHaveBeenCalled();
           expect(spyEventQueue).toHaveBeenCalled();
         }
       }
@@ -163,7 +198,7 @@ describe('Class VWO', () => {
 
         expect(variationName).toBe(settings[campaignKey][i].variation);
         if (variationName) {
-          expect(spyImpressionEvent).toHaveBeenCalled();
+          expect(spyImpressionEventTrackUser).toHaveBeenCalled();
           expect(spyEventQueue).toHaveBeenCalled();
         }
       }
@@ -186,7 +221,7 @@ describe('Class VWO', () => {
 
         expect(variationName).toBe(settings[campaignKey][i].variation);
         if (variationName) {
-          expect(spyImpressionEvent).toHaveBeenCalled();
+          expect(spyImpressionEventTrackUser).toHaveBeenCalled();
           expect(spyEventQueue).toHaveBeenCalled();
         }
       }
@@ -209,7 +244,7 @@ describe('Class VWO', () => {
 
         expect(variationName).toBe(settings[campaignKey][i].variation);
         if (variationName) {
-          expect(spyImpressionEvent).toHaveBeenCalled();
+          expect(spyImpressionEventTrackUser).toHaveBeenCalled();
           expect(spyEventQueue).toHaveBeenCalled();
         }
       }
@@ -232,7 +267,7 @@ describe('Class VWO', () => {
 
         expect(variationName).toBe(settings[campaignKey][i].variation);
         if (variationName) {
-          expect(spyImpressionEvent).toHaveBeenCalled();
+          expect(spyImpressionEventTrackUser).toHaveBeenCalled();
           expect(spyEventQueue).toHaveBeenCalled();
         }
       }
@@ -255,14 +290,74 @@ describe('Class VWO', () => {
 
         expect(variationName).toBe(settings[campaignKey][i].variation);
         if (variationName) {
-          expect(spyImpressionEvent).toHaveBeenCalled();
+          expect(spyImpressionEventTrackUser).toHaveBeenCalled();
           expect(spyEventQueue).toHaveBeenCalled();
         }
       }
     });
+
+    test('should test against a campaign settings: traffic:100, split:33.3333:33.3333:33.3333 and no dsl', () => {
+      const campaignKey = settingsFile6.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile6,
+        logger,
+        userStorageService
+      });
+
+      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        const variationName = vwoClientInstance.activate(campaignKey, users[j], tags);
+
+        expect(variationName).toBe(settings[campaignKey][i].variation);
+        if (variationName) {
+          expect(spyImpressionEventTrackUser).toHaveBeenCalled();
+          expect(spyEventQueue).toHaveBeenCalled();
+        }
+      }
+    });
+
+    test('should test against a campaign settings: traffic:100, split:33.3333:33.3333:33.3333 and with dsl', () => {
+      const campaignKey = settingsFile7.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile7,
+        logger,
+        userStorageService
+      });
+
+      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        const variationName = vwoClientInstance.activate(campaignKey, users[j], tags);
+
+        expect(variationName).toBe(settings[campaignKey][i].variation);
+        if (variationName) {
+          expect(spyImpressionEventTrackUser).toHaveBeenCalled();
+          expect(spyEventQueue).toHaveBeenCalled();
+        }
+      }
+    });
+
+    test('should test against a campaign settings: traffic:100, split:33.3333:33.3333:33.3333 and with dsl', () => {
+      const campaignKey = settingsFile7.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile7,
+        logger,
+        userStorageService
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        const variationName = vwoClientInstance.activate(campaignKey, users[j], falseTags);
+
+        expect(variationName).toBe(null);
+      }
+    });
   });
 
-  describe('method: getVariationName', () => {
+  describe('method: getVariation', () => {
     test('should return null if no argument is passed', () => {
       expect(vwoClientInstance.getVariationName()).toBe(null);
     });
@@ -368,6 +463,52 @@ describe('Class VWO', () => {
         expect(vwoClientInstance.getVariationName(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
       }
     });
+
+    test('should test against a campaign settings: traffic:100 and split:33.3333:33.3333:33.3333 with no dsl', () => {
+      const campaignKey = settingsFile6.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile6,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        expect(vwoClientInstance.getVariation(campaignKey, users[j], tags)).toBe(settings[campaignKey][i].variation);
+      }
+    });
+
+    test('should test against a campaign settings: traffic:100 and split:33.3333:33.3333:33.3333 with dsl', () => {
+      const campaignKey = settingsFile7.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile7,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        expect(vwoClientInstance.getVariation(campaignKey, users[j], tags)).toBe(settings[campaignKey][i].variation);
+      }
+    });
+
+    test('should test against a campaign settings: traffic:100 and split:33.3333:33.3333:33.3333 with dsl', () => {
+      const campaignKey = settingsFile7.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile7,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        expect(vwoClientInstance.getVariation(campaignKey, users[j], falseTags)).toBe(null);
+        expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(null);
+      }
+    });
   });
 
   describe('method: track', () => {
@@ -411,7 +552,7 @@ describe('Class VWO', () => {
         const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier);
 
         if (isTracked) {
-          expect(spyImpressionEvent).toHaveBeenCalled();
+          expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
           expect(spyEventQueue).toHaveBeenCalled();
           expect(isTracked).toBe(true);
         } else {
@@ -436,7 +577,7 @@ describe('Class VWO', () => {
         const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier);
 
         if (isTracked) {
-          expect(spyImpressionEvent).toHaveBeenCalled();
+          expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
           expect(spyEventQueue).toHaveBeenCalled();
           expect(isTracked).toBe(true);
         } else {
@@ -461,7 +602,7 @@ describe('Class VWO', () => {
         const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier);
 
         if (isTracked) {
-          expect(spyImpressionEvent).toHaveBeenCalled();
+          expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
           expect(spyEventQueue).toHaveBeenCalled();
           expect(isTracked).toBe(true);
         } else {
@@ -486,7 +627,7 @@ describe('Class VWO', () => {
         const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier);
 
         if (isTracked) {
-          expect(spyImpressionEvent).toHaveBeenCalled();
+          expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
           expect(spyEventQueue).toHaveBeenCalled();
           expect(isTracked).toBe(true);
         } else {
@@ -511,7 +652,7 @@ describe('Class VWO', () => {
         const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier);
 
         if (isTracked) {
-          expect(spyImpressionEvent).toHaveBeenCalled();
+          expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
           expect(spyEventQueue).toHaveBeenCalled();
           expect(isTracked).toBe(true);
         } else {
@@ -536,7 +677,79 @@ describe('Class VWO', () => {
         const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier);
 
         if (isTracked) {
-          expect(spyImpressionEvent).toHaveBeenCalled();
+          expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
+          expect(spyEventQueue).toHaveBeenCalled();
+          expect(isTracked).toBe(true);
+        } else {
+          expect(isTracked).toBe(false);
+        }
+      }
+    });
+
+    test('should test against a campaign settings: traffic:100 and split:33.3333:33.3333:33.3333 with no dsl', () => {
+      const campaignKey = settingsFile6.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile6,
+        logger,
+        userStorageService
+      });
+
+      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier, tags);
+
+        if (isTracked) {
+          expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
+          expect(spyEventQueue).toHaveBeenCalled();
+          expect(isTracked).toBe(true);
+        } else {
+          expect(isTracked).toBe(false);
+        }
+      }
+    });
+
+    test('should test against a campaign settings: traffic:100 and split:33.3333:33.3333:33.3333 with dsl', () => {
+      const campaignKey = settingsFile7.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile6,
+        logger,
+        userStorageService
+      });
+
+      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier, tags);
+
+        if (isTracked) {
+          expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
+          expect(spyEventQueue).toHaveBeenCalled();
+          expect(isTracked).toBe(true);
+        } else {
+          expect(isTracked).toBe(false);
+        }
+      }
+    });
+
+    test('should test against a campaign settings: traffic:100 and split:33.3333:33.3333:33.3333 with dsl', () => {
+      const campaignKey = settingsFile7.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile6,
+        logger,
+        userStorageService
+      });
+
+      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier, falseTags);
+
+        if (isTracked) {
+          expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
           expect(spyEventQueue).toHaveBeenCalled();
           expect(isTracked).toBe(true);
         } else {
@@ -636,6 +849,80 @@ describe('Class VWO', () => {
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[j])).toBe(!!settings[campaignKey][i].variation);
       }
+    });
+
+    test('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_100', () => {
+      const campaignKey = FEATURE_ROLLOUT_TRAFFIC_100.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_ROLLOUT_TRAFFIC_100,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[j], tags)).toBe(
+          !!settings[campaignKey][i].variation
+        );
+      }
+    });
+
+    test('should test against a campaign settings: FEATURE_ROLLOUT_WITH_SEGMENTS_TRAFFIC_100 with dsl', () => {
+      const campaignKey = FEATURE_ROLLOUT_WITH_SEGMENTS_TRAFFIC_100.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_ROLLOUT_WITH_SEGMENTS_TRAFFIC_100,
+        logger,
+        userStorageService
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[j], tags)).toBe(
+          !!settings[campaignKey][i].variation
+        );
+      }
+    });
+
+    test('should test against a campaign settings: FEATURE_ROLLOUT_WITH_SEGMENTS_TRAFFIC_100 with dsl', () => {
+      const campaignKey = FEATURE_ROLLOUT_WITH_SEGMENTS_TRAFFIC_100.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_ROLLOUT_WITH_SEGMENTS_TRAFFIC_100,
+        logger,
+        userStorageService
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[j], falseTags)).toBe(false);
+      }
+    });
+  });
+
+  describe('method: push', () => {
+    test('should return null if no argument is passed', () => {
+      expect(vwoClientInstance.push()).toBe(false);
+    });
+    test('should return null if tagKey is not string', () => {
+      expect(vwoClientInstance.push(1, '', '')).toBe(false);
+    });
+    test('should return null if tagValue is not string', () => {
+      expect(vwoClientInstance.push('', 1, '')).toBe(false);
+    });
+    test('should return null if userId is not string', () => {
+      expect(vwoClientInstance.push('', '', 1)).toBe(false);
+    });
+    test('should test against correct params', () => {
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        userStorageService
+      });
+
+      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+      expect(vwoClientInstance.push('1', '1', '1')).toBe(true);
+      expect(spyImpressionEventPush).toHaveBeenCalled();
+      expect(spyEventQueue).toHaveBeenCalled();
     });
   });
 

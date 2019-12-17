@@ -80,21 +80,84 @@ describe('ValidateUtil', () => {
 
   describe('method: areValidParamsForAPIMethod', () => {
     it('should verify API methods params', () => {
-      expect(ValidateUtil.areValidParamsForAPIMethod(ApiEnum.ACTIVATE, null, null)).toBe(false);
-      expect(ValidateUtil.areValidParamsForAPIMethod(ApiEnum.ACTIVATE, 'Hello', null)).toBe(false);
-      expect(ValidateUtil.areValidParamsForAPIMethod(ApiEnum.ACTIVATE, 'Hello', 12345)).toBe(false);
-      expect(ValidateUtil.areValidParamsForAPIMethod(ApiEnum.ACTIVATE, 'Hello', 'World')).toBe(true);
+      expect(
+        ValidateUtil.areValidParamsForAPIMethod({ method: ApiEnum.ACTIVATE, campaignKey: null, userId: null })
+      ).toBe(false);
+      expect(
+        ValidateUtil.areValidParamsForAPIMethod({ method: ApiEnum.ACTIVATE, campaignKey: 'Hello', userId: null })
+      ).toBe(false);
+      expect(
+        ValidateUtil.areValidParamsForAPIMethod({ method: ApiEnum.ACTIVATE, campaignKey: 'Hello', userId: 12345 })
+      ).toBe(false);
+      expect(
+        ValidateUtil.areValidParamsForAPIMethod({ method: ApiEnum.ACTIVATE, campaignKey: 'Hello', userId: 'World' })
+      ).toBe(true);
 
-      expect(ValidateUtil.areValidParamsForAPIMethod(ApiEnum.GET_VARIATION_NAME, null, null)).toBe(false);
-      expect(ValidateUtil.areValidParamsForAPIMethod(ApiEnum.GET_VARIATION_NAME, 'Hello', null)).toBe(false);
-      expect(ValidateUtil.areValidParamsForAPIMethod(ApiEnum.GET_VARIATION_NAME, 'Hello', 12345)).toBe(false);
-      expect(ValidateUtil.areValidParamsForAPIMethod(ApiEnum.GET_VARIATION_NAME, 'Hello', 'World')).toBe(true);
+      expect(
+        ValidateUtil.areValidParamsForAPIMethod({ method: ApiEnum.GET_VARIATION_NAME, campaignKey: null, userId: null })
+      ).toBe(false);
+      expect(
+        ValidateUtil.areValidParamsForAPIMethod({
+          method: ApiEnum.GET_VARIATION_NAME,
+          campaignKey: 'Hello',
+          userId: null
+        })
+      ).toBe(false);
+      expect(
+        ValidateUtil.areValidParamsForAPIMethod({
+          method: ApiEnum.GET_VARIATION_NAME,
+          campaignKey: 'Hello',
+          userId: 12345
+        })
+      ).toBe(false);
+      expect(
+        ValidateUtil.areValidParamsForAPIMethod({
+          method: ApiEnum.GET_VARIATION_NAME,
+          campaignKey: 'Hello',
+          userId: 'World'
+        })
+      ).toBe(true);
 
-      expect(ValidateUtil.areValidParamsForAPIMethod(ApiEnum.TRACK, null, null, null)).toBe(false);
-      expect(ValidateUtil.areValidParamsForAPIMethod(ApiEnum.TRACK, 'Hello', null, null)).toBe(false);
-      expect(ValidateUtil.areValidParamsForAPIMethod(ApiEnum.TRACK, 'Hello', 'World', null)).toBe(false);
-      expect(ValidateUtil.areValidParamsForAPIMethod(ApiEnum.TRACK, 'Hello', 'World', 12345)).toBe(false);
-      expect(ValidateUtil.areValidParamsForAPIMethod(ApiEnum.TRACK, 'Hello', 'World', 'GOAL')).toBe(true);
+      expect(
+        ValidateUtil.areValidParamsForAPIMethod({
+          method: ApiEnum.TRACK,
+          campaignKey: null,
+          userId: null,
+          goalIdentifier: null
+        })
+      ).toBe(false);
+      expect(
+        ValidateUtil.areValidParamsForAPIMethod({
+          method: ApiEnum.TRACK,
+          campaignKey: 'Hello',
+          userId: null,
+          goalIdentifier: null
+        })
+      ).toBe(false);
+      expect(
+        ValidateUtil.areValidParamsForAPIMethod({
+          method: ApiEnum.TRACK,
+          campaignKey: 'Hello',
+          userId: 'World',
+          goalIdentifier: null
+        })
+      ).toBe(false);
+      expect(
+        ValidateUtil.areValidParamsForAPIMethod({
+          method: ApiEnum.TRACK,
+          campaignKey: 'Hello',
+          userId: 'World',
+          goalIdentifier: 12345
+        })
+      ).toBe(false);
+      expect(
+        ValidateUtil.areValidParamsForAPIMethod({
+          method: ApiEnum.TRACK,
+          campaignKey: 'Hello',
+          userId: 'World',
+          goalIdentifier: 'GOAL'
+        })
+      ).toBe(true);
     });
   });
 });
