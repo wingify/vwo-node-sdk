@@ -14,6 +14,54 @@
  * limitations under the License.
  */
 
-test('adds 1 + 2 to equal 3', () => {
-  expect(3).toBe(3);
+const CachingUtil = require('../../lib/utils/CachingUtil');
+
+const keyPrefix = '__random_prefix__';
+const key = '__random_key__';
+const wrongKey = '__wrong_key__';
+const data = '__random_data__';
+
+describe('CachingUtil', () => {
+  describe('method: set and get', () => {
+    CachingUtil.set(keyPrefix, key, data);
+    test('should return false if no params are passed', () => {
+      expect(CachingUtil.get()).toBe(false);
+    });
+    test('should return correct value if correct params are passed', () => {
+      expect(CachingUtil.get(keyPrefix, key)).toBe(data);
+    });
+    test('should return false if wrong key is passed', () => {
+      expect(CachingUtil.get(keyPrefix, wrongKey)).toBe(false);
+    });
+    test('should return false if wrong keyPrefix is passed', () => {
+      expect(CachingUtil.get(wrongKey, key)).toBe(false);
+    });
+    test('should return false if both key and keyPrefix are wrong', () => {
+      expect(CachingUtil.get(wrongKey, wrongKey)).toBe(false);
+    });
+    test('should return false if cache already has been set', () => {
+      expect(CachingUtil.set(keyPrefix, key, data)).toBe(false);
+    });
+  });
+
+  describe('method: remove', () => {
+    test('should return false if no params are passed', () => {
+      expect(CachingUtil.remove()).toBe(false);
+    });
+    test('should remove the value from cache', () => {
+      CachingUtil.set(keyPrefix, key, data);
+      expect(CachingUtil.get(keyPrefix, key)).toBe(data);
+      CachingUtil.remove(keyPrefix, key);
+      expect(CachingUtil.get(keyPrefix, key)).toBe(false);
+    });
+  });
+
+  describe('method: resetCache', () => {
+    test('should remove the value from cache', () => {
+      CachingUtil.set(keyPrefix, key, data);
+      expect(CachingUtil.get(keyPrefix, key)).toBe(data);
+      CachingUtil.resetCache();
+      expect(CachingUtil.get(keyPrefix, key)).toBe(false);
+    });
+  });
 });

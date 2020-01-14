@@ -14,8 +14,28 @@
  * limitations under the License.
  */
 
-require('../../../lib/services/logging/ConsoleLogManager');
+const ConsoleLogManager = require('../../../lib/services/logging/ConsoleLogManager');
+const { LogLevelEnum } = require('../../../lib/enums/LogLevelEnum');
 
-test('todo', () => {
-  expect(3).toBe(3);
+describe('ConsoleLogManager', () => {
+  describe('method: setLogLevel', () => {
+    const logger = new ConsoleLogManager();
+    test('should set logLevel as error if no level is passed', () => {
+      logger.setLogLevel();
+      expect(logger.logLevel).toBe(LogLevelEnum.ERROR);
+    });
+    test('should set logLevel as the level passed', () => {
+      logger.setLogLevel(LogLevelEnum.DEBUG);
+      expect(logger.logLevel).toBe(LogLevelEnum.DEBUG);
+    });
+  });
+
+  describe('method: getCurrentTime', () => {
+    const logger = new ConsoleLogManager();
+    test('should return a string value', () => {
+      expect(typeof logger.getCurrentTime()).toBe('string');
+    });
+  });
+
+  describe('method: shouldLog', () => {});
 });

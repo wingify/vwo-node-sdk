@@ -5,6 +5,7 @@ const settingsFile4 = require('./settingsFile-4');
 const settingsFile5 = require('./settingsFile-5');
 const settingsFile6 = require('./settingsFile-6');
 const settingsFile7 = require('./settingsFile-7');
+const settingsFile8 = require('./settingsFile-8');
 
 module.exports = {
   settingsFile1,
@@ -13,5 +14,6 @@ module.exports = {
   settingsFile4,
   settingsFile5,
   settingsFile6,
-  settingsFile7
+  settingsFile7,
+  settingsFile8
 };

@@ -14,8 +14,73 @@
  * limitations under the License.
  */
 
-require('../../../lib/services/logging/LoggingManager');
+const {
+  getLogger,
+  setLogColorMode,
+  getLogColorMode,
+  setLogLevel,
+  getLogLevel,
+  globalLogHandler
+} = require('../../../lib/services/logging');
+const AnsiColorEnum = require('../../../lib/enums/AnsiColorEnum');
+let { LogLevelEnum } = require('../../../lib/enums');
 
-test('todo', () => {
-  expect(3).toBe(3);
+LogLevelEnum = LogLevelEnum.LogLevelEnum;
+
+const spyOnGlobalHandlerLog = jest.spyOn(globalLogHandler, 'log');
+
+describe('LoggingManager', () => {
+  describe('method: setLogColorMode and getLogColorMode', () => {
+    test('should set colored log value', () => {
+      setLogColorMode(AnsiColorEnum.CYAN);
+      expect(getLogColorMode()).toBe(AnsiColorEnum.CYAN);
+    });
+  });
+
+  describe('method: setLogLevel', () => {
+    test('should set logLevel as error if no level is passed', () => {
+      setLogLevel();
+      expect(getLogLevel()).toBe(LogLevelEnum.ERROR);
+    });
+    test('should set logLevel as the level passed', () => {
+      setLogLevel(LogLevelEnum.DEBUG);
+      expect(getLogLevel()).toBe(LogLevelEnum.DEBUG);
+    });
+  });
+
+  describe('method: info', () => {
+    const logger = getLogger('logger');
+    setLogLevel(LogLevelEnum.INFO);
+    test('logger should be called', () => {
+      logger.info('1');
+      expect(spyOnGlobalHandlerLog).toHaveBeenCalledWith(LogLevelEnum.INFO, '1');
+    });
+  });
+
+  describe('method: debug', () => {
+    const logger = getLogger('logger');
+    setLogLevel(LogLevelEnum.DEBUG);
+    test('logger should be called', () => {
+      logger.debug('1');
+      expect(spyOnGlobalHandlerLog).toHaveBeenCalledWith(LogLevelEnum.DEBUG, '1');
+    });
+  });
+
+  describe('method: warn', () => {
+    const logger = getLogger('logger');
+    setLogLevel(LogLevelEnum.WARN);
+    test('logger should be called', () => {
+      logger.warn('1');
+      expect(spyOnGlobalHandlerLog).toHaveBeenCalledWith(LogLevelEnum.WARN, '1');
+    });
+  });
+
+  describe('method: error', () => {
+    const logger = getLogger('logger');
+    setLogLevel(LogLevelEnum.ERROR);
+    test('logger should be called', () => {
+      logger.error('1');
+      expect(spyOnGlobalHandlerLog).toHaveBeenCalledWith(LogLevelEnum.ERROR, '1');
+    });
+  });
 });
