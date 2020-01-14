@@ -322,4 +322,42 @@ describe('CampaignUtil', () => {
       expect(CampaignUtil.isFeatureRolloutCampaign({ type: CampaignTypeEnum.FEATURE_ROLLOUT })).toBe(true);
     });
   });
+
+  describe('method: scaleVariationWeights', () => {
+    it('should scale and set correct variation weights', () => {
+      const variations = [
+        {
+          weight: 5.5,
+          expectedWeight: 55
+        },
+        {
+          weight: 4.5,
+          expectedWeight: 45
+        }
+      ];
+      CampaignUtil.scaleVariationWeights(variations);
+      expect(variations.reduce((acc, variation) => acc + variation.weight, 0)).toBe(100);
+      variations.forEach(variation => {
+        expect(Math.round(variation.weight)).toBe(variation.expectedWeight);
+      });
+    });
+
+    it('should scale and set correct variation weights when total is 0', () => {
+      const variations = [
+        {
+          weight: 0,
+          expectedWeight: 50
+        },
+        {
+          weight: 0,
+          expectedWeight: 50
+        }
+      ];
+      CampaignUtil.scaleVariationWeights(variations);
+      expect(variations.reduce((acc, variation) => acc + variation.weight, 0)).toBe(100);
+      variations.forEach(variation => {
+        expect(Math.round(variation.weight)).toBe(variation.expectedWeight);
+      });
+    });
+  });
 });

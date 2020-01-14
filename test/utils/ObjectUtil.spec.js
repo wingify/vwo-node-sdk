@@ -14,7 +14,23 @@
  * limitations under the License.
  */
 
-module.exports = {
-  CUSTOM_VARIABLE: 'custom_variable',
-  USER: 'user'
-};
+const ObjectUtil = require('../../lib/utils/ObjectUtil');
+
+describe('ObjectUtil', () => {
+  describe('method: areObjectKeys', () => {
+    it('should return a number', () => {
+      expect(typeof ObjectUtil.areObjectKeys({})).toBe('number');
+    });
+  });
+
+  describe('method: getKeyValue', () => {
+    const result = ObjectUtil.getKeyValue({
+      key: 'value'
+    });
+    it('should return correct values', () => {
+      expect(ObjectUtil.getKeyValue({})).toBe(undefined);
+      expect(result.key).toBe('key');
+      expect(result.value).toBe('value');
+    });
+  });
+});

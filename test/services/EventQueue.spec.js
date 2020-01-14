@@ -14,8 +14,28 @@
  * limitations under the License.
  */
 
-require('../../lib/services/EventQueue');
+const EventQueue = require('../../lib/services/EventQueue');
+const VWO = require('../../lib/VWO');
 
-test('todo', () => {
-  expect(3).toBe(3);
+const mockFn = jest.fn();
+
+const logger = { log: mockFn };
+
+describe('EventQueue', () => {
+  describe('method: process', () => {
+    const queue = new EventQueue();
+    test("shouldn't enqueue anything in developmentMode", () => {
+      queue.process({ isDevelopmentMode: true }, {}, new VWO({ logger }));
+      expect(queue.queue.length).toBe(0);
+    });
+  });
+
+  // describe('method: enqueue', () => {
+  //   const queue = new EventQueue();
+  //   test("should enqueue in the queue", () => {
+  //     queue.enqueue({}, new VWO({logger}));
+  //     queue.running = true;
+  //     expect(queue.queue.length).toBe(1);
+  //   });
+  // });
 });

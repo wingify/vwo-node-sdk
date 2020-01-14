@@ -25,7 +25,8 @@ Refer [third-party-attributions.txt](https://github.com/wingify/vwo-node-sdk/blo
 
 ## Authors
 
-[Varun Malhotra](https://github.com/softvar) [@s0ftvar](https://twitter.com/s0ftvar)
+* [Varun Malhotra](https://github.com/softvar) [@s0ftvar](https://twitter.com/s0ftvar) 
+* [Ishank Bahl](https://github.com/ishankbahl) [@ishankbahl97](https://twitter.com/ishankbahl97)
 
 ## Changelog
 

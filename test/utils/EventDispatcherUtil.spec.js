@@ -19,3 +19,16 @@ require('../../lib/utils/EventDispatcherUtil');
 test('todo', () => {
   expect(3).toBe(3);
 });
+// const url = require('url');
+
+// const spyOnUrlParse = jest.spyOn(url, 'parse');
+// const urlProperty = 'http://vwo.com';
+
+// describe('EventDispatcher', () => {
+//   describe('method: dispatch', () => {
+//     test('url should be parsed', () => {
+//       // EventDispatcher.dispatch({url: urlProperty}, () => {});
+//       // expect(spyOnUrlParse).toHaveBeenCalledWith(urlProperty);
+//     });
+//   });
+// });

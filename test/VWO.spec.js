@@ -25,7 +25,8 @@ const {
   settingsFile4,
   settingsFile5,
   settingsFile6,
-  settingsFile7
+  settingsFile7,
+  settingsFile8
 } = require('./test-utils/data/settingsFiles');
 
 const {
@@ -42,7 +43,8 @@ const {
   // FEATURE_TEST_TRAFFIC_25,
   // FEATURE_TEST_TRAFFIC_50,
   // FEATURE_TEST_TRAFFIC_75,
-  FEATURE_TEST_TRAFFIC_100
+  FEATURE_TEST_TRAFFIC_100,
+  FEATURE_TEST_TRAFFIC_100_WHITELISTING
 } = require('./test-utils/data/feature-test-settingsFile');
 
 const settings = require('./test-utils/data/settingsFileAndUsersExpectation');
@@ -60,7 +62,7 @@ let spyEventQueue;
 let userId;
 let campaignKey;
 let goalIdentifier;
-let tags = {
+let trueCustomVariables = {
   contains_vwo: 'legends say that vwo is the best',
   regex_for_no_zeros: 1223123,
   regex_for_all_letters: 'dsfASF',
@@ -75,7 +77,7 @@ let tags = {
   starts_with: 'starts_with_variable'
 };
 
-let falseTags = {
+let falseCustomVariables = {
   contains_vwo: 'legends say that vwo is the best',
   regex_for_no_zeros: 1223123,
   regex_for_all_letters: 'dsfASF',
@@ -89,6 +91,21 @@ let falseTags = {
   this_is_regex: 'this    is    regex',
   starts_with: 'starts_with_variable'
 };
+
+let trueWhitelistingTags = {
+  chrome: 'false',
+  safari: 'true',
+  browser: 'chrome 107.107'
+};
+
+let falseWhitelistingTags = {
+  chrome: 'true',
+  safari: 'false',
+  browser: 'firefox 106.69'
+};
+
+const bigStr =
+  'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx';
 let userStorageService = {
   set: mockFn,
   get: mockFn
@@ -308,7 +325,9 @@ describe('Class VWO', () => {
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        const variationName = vwoClientInstance.activate(campaignKey, users[j], tags);
+        const variationName = vwoClientInstance.activate(campaignKey, users[j], {
+          customVariables: trueCustomVariables
+        });
 
         expect(variationName).toBe(settings[campaignKey][i].variation);
         if (variationName) {
@@ -330,7 +349,9 @@ describe('Class VWO', () => {
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        const variationName = vwoClientInstance.activate(campaignKey, users[j], tags);
+        const variationName = vwoClientInstance.activate(campaignKey, users[j], {
+          customVariables: trueCustomVariables
+        });
 
         expect(variationName).toBe(settings[campaignKey][i].variation);
         if (variationName) {
@@ -339,7 +360,6 @@ describe('Class VWO', () => {
         }
       }
     });
-
     test('should test against a campaign settings: traffic:100, split:33.3333:33.3333:33.3333 and with dsl', () => {
       const campaignKey = settingsFile7.campaigns[0].key;
 
@@ -350,9 +370,55 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        const variationName = vwoClientInstance.activate(campaignKey, users[j], falseTags);
+        const variationName = vwoClientInstance.activate(campaignKey, users[j], {
+          customVariables: falseCustomVariables
+        });
 
         expect(variationName).toBe(null);
+      }
+    });
+
+    test('should test against a campaign settings: traffic:100, split:33.3333:33.3333:33.3333 and with dsl and whitelisting', () => {
+      const campaignKey = settingsFile8.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile8,
+        logger,
+        userStorageService
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        const variationName = vwoClientInstance.activate(campaignKey, users[j], {
+          customVariables: falseCustomVariables,
+          variationTargetingVariables: falseWhitelistingTags
+        });
+
+        expect(variationName).toBe(null);
+      }
+    });
+
+    test('should test against a campaign settings: traffic:100, split:33.3333:33.3333:33.3333 and with dsl and whitelisting', () => {
+      const campaignKey = settingsFile8.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile8,
+        logger,
+        userStorageService
+      });
+
+      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        const variationName = vwoClientInstance.activate(campaignKey, users[j], {
+          customVariables: falseCustomVariables,
+          variationTargetingVariables: trueWhitelistingTags
+        });
+
+        expect(variationName).toBe(settings[campaignKey][i].variation);
+        if (variationName) {
+          expect(spyImpressionEventTrackUser).toHaveBeenCalled();
+          expect(spyEventQueue).toHaveBeenCalled();
+        }
       }
     });
   });
@@ -475,7 +541,9 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariation(campaignKey, users[j], tags)).toBe(settings[campaignKey][i].variation);
+        expect(vwoClientInstance.getVariation(campaignKey, users[j], { customVariables: trueCustomVariables })).toBe(
+          settings[campaignKey][i].variation
+        );
       }
     });
 
@@ -490,7 +558,9 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariation(campaignKey, users[j], tags)).toBe(settings[campaignKey][i].variation);
+        expect(vwoClientInstance.getVariation(campaignKey, users[j], { customVariables: trueCustomVariables })).toBe(
+          settings[campaignKey][i].variation
+        );
       }
     });
 
@@ -505,8 +575,50 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.getVariation(campaignKey, users[j], falseTags)).toBe(null);
+        expect(vwoClientInstance.getVariation(campaignKey, users[j], { customVariables: falseCustomVariables })).toBe(
+          null
+        );
         expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(null);
+      }
+    });
+
+    test('should test against a campaign settings: traffic:100 and split:33.3333:33.3333:33.3333 with dsl with whitelisting', () => {
+      const campaignKey = settingsFile8.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile8,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        expect(
+          vwoClientInstance.getVariation(campaignKey, users[j], {
+            customVariables: falseCustomVariables,
+            variationTargetingVariables: falseWhitelistingTags
+          })
+        ).toBe(null);
+        expect(vwoClientInstance.getVariation(campaignKey, users[j])).toBe(null);
+      }
+    });
+    test('should test against a campaign settings: traffic:100 and split:33.3333:33.3333:33.3333 with dsl with whitelisting', () => {
+      const campaignKey = settingsFile8.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile8,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        expect(
+          vwoClientInstance.getVariation(campaignKey, users[j], {
+            customVariables: falseCustomVariables,
+            variationTargetingVariables: trueWhitelistingTags
+          })
+        ).toBe(settings[campaignKey][i].variation);
       }
     });
   });
@@ -534,6 +646,21 @@ describe('Class VWO', () => {
 
     test('should return false if goalIdentifier is not found in settingsFile', () => {
       expect(vwoClientInstance.track(campaignKey, userId, 'NO_SUCH_GOAL_IDENTIFIER')).toBe(false);
+    });
+
+    test('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_0', () => {
+      const campaignKey = FEATURE_ROLLOUT_TRAFFIC_0.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_ROLLOUT_TRAFFIC_0,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        expect(vwoClientInstance.track(campaignKey, users[j], goalIdentifier)).toBe(false);
+      }
     });
 
     test('should test against a campaign settings: traffic:50 and split:50-50', () => {
@@ -698,7 +825,9 @@ describe('Class VWO', () => {
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier, tags);
+        const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier, {
+          customVariables: trueCustomVariables
+        });
 
         if (isTracked) {
           expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
@@ -722,7 +851,9 @@ describe('Class VWO', () => {
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier, tags);
+        const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier, {
+          customVariables: trueCustomVariables
+        });
 
         if (isTracked) {
           expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
@@ -746,7 +877,9 @@ describe('Class VWO', () => {
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier, falseTags);
+        const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier, {
+          customVariables: falseCustomVariables
+        });
 
         if (isTracked) {
           expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
@@ -755,6 +888,49 @@ describe('Class VWO', () => {
         } else {
           expect(isTracked).toBe(false);
         }
+      }
+    });
+
+    test('should test against a campaign settings: traffic:100 and split:33.3333:33.3333:33.3333 with dsl and whitelisting', () => {
+      const campaignKey = settingsFile8.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile8,
+        logger,
+        userStorageService
+      });
+
+      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier, {
+          customVariables: falseCustomVariables,
+          variationTargetingVariables: falseWhitelistingTags
+        });
+        expect(isTracked).toBe(false);
+      }
+    });
+
+    test('should test against a campaign settings: traffic:100 and split:33.3333:33.3333:33.3333 with dsl and whitelisting', () => {
+      const campaignKey = settingsFile8.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile8,
+        logger,
+        userStorageService
+      });
+
+      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier, {
+          customVariables: falseCustomVariables,
+          variationTargetingVariables: trueWhitelistingTags
+        });
+
+        expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
+        expect(spyEventQueue).toHaveBeenCalled();
+        expect(isTracked).toBe(true);
       }
     });
   });
@@ -862,9 +1038,9 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[j], tags)).toBe(
-          !!settings[campaignKey][i].variation
-        );
+        expect(
+          vwoClientInstance.isFeatureEnabled(campaignKey, users[j], { customVariables: trueCustomVariables })
+        ).toBe(!!settings[campaignKey][i].variation);
       }
     });
 
@@ -878,9 +1054,9 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[j], tags)).toBe(
-          !!settings[campaignKey][i].variation
-        );
+        expect(
+          vwoClientInstance.isFeatureEnabled(campaignKey, users[j], { customVariables: trueCustomVariables })
+        ).toBe(!!settings[campaignKey][i].variation);
       }
     });
 
@@ -894,23 +1070,69 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[j], falseTags)).toBe(false);
+        expect(
+          vwoClientInstance.isFeatureEnabled(campaignKey, users[j], { customVariables: falseCustomVariables })
+        ).toBe(false);
+      }
+    });
+
+    test('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_10 with dsl and whitelisting', () => {
+      const campaignKey = FEATURE_TEST_TRAFFIC_100_WHITELISTING.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_100_WHITELISTING,
+        logger,
+        userStorageService
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        expect(
+          vwoClientInstance.isFeatureEnabled(campaignKey, users[j], {
+            customVariables: falseCustomVariables,
+            variationTargetingVariables: falseWhitelistingTags
+          })
+        ).toBe(false);
+      }
+    });
+
+    test('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_10 with dsl and whitelisting', () => {
+      const campaignKey = FEATURE_TEST_TRAFFIC_100_WHITELISTING.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_100_WHITELISTING,
+        logger,
+        userStorageService
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        expect(
+          vwoClientInstance.isFeatureEnabled(campaignKey, users[j], {
+            customVariables: trueCustomVariables,
+            variationTargetingVariables: trueWhitelistingTags
+          })
+        ).toBe(!!settings[campaignKey][i].variation);
       }
     });
   });
 
   describe('method: push', () => {
-    test('should return null if no argument is passed', () => {
+    test('should return false if no argument is passed', () => {
       expect(vwoClientInstance.push()).toBe(false);
     });
-    test('should return null if tagKey is not string', () => {
-      expect(vwoClientInstance.push(1, '', '')).toBe(false);
+    test('should return false if tagKey is not string', () => {
+      expect(vwoClientInstance.push(1, 'a', 'a')).toBe(false);
     });
-    test('should return null if tagValue is not string', () => {
-      expect(vwoClientInstance.push('', 1, '')).toBe(false);
+    test('should return false if tagValue is not string', () => {
+      expect(vwoClientInstance.push('a', 1, 'a')).toBe(false);
     });
-    test('should return null if userId is not string', () => {
-      expect(vwoClientInstance.push('', '', 1)).toBe(false);
+    test('should return false if userId is not string', () => {
+      expect(vwoClientInstance.push('a', 'a', 1)).toBe(false);
+    });
+    test("should return false if tagKey's length is more than 255", () => {
+      expect(vwoClientInstance.push(bigStr, 'a', 'a')).toBe(false);
+    });
+    test("should return false if tagValue's length is more than 255", () => {
+      expect(vwoClientInstance.push('a', bigStr, 'a')).toBe(false);
     });
     test('should test against correct params', () => {
       vwoClientInstance = new VWO({
@@ -1011,10 +1233,95 @@ describe('Class VWO', () => {
         userStorageService
       });
 
-      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', 'Ashley')).toBe(
-        'Variation-2 string'
-      );
-      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'INTEGER_VARIABLE', 'Ashley')).toBe(789);
+      expect(
+        vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', 'Ashley', {
+          customVariables: trueCustomVariables
+        })
+      ).toBe('Variation-2 string');
+      expect(
+        vwoClientInstance.getFeatureVariableValue(campaignKey, 'INTEGER_VARIABLE', 'Ashley', {
+          customVariables: trueCustomVariables
+        })
+      ).toBe(789);
+    });
+    test('should return null if feature test campaign but percent traffic is 100 with whitelisting and dsl', () => {
+      const campaignKey = FEATURE_TEST_TRAFFIC_100_WHITELISTING.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_100_WHITELISTING,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      expect(
+        vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', userId, {
+          variationTargetingVariables: falseWhitelistingTags,
+          customVariables: falseCustomVariables
+        })
+      ).toBe(null);
+      expect(
+        vwoClientInstance.getFeatureVariableValue(campaignKey, 'INTEGER_VARIABLE', userId, {
+          variationTargetingVariables: falseWhitelistingTags,
+          customVariables: falseCustomVariables
+        })
+      ).toBe(null);
+      expect(
+        vwoClientInstance.getFeatureVariableValue(campaignKey, 'FLOAT_VARIABLE', userId, {
+          variationTargetingVariables: falseWhitelistingTags,
+          customVariables: falseCustomVariables
+        })
+      ).toBe(null);
+      expect(
+        vwoClientInstance.getFeatureVariableValue(campaignKey, 'BOOLEAN_VARIABLE', userId, {
+          variationTargetingVariables: falseWhitelistingTags,
+          customVariables: falseCustomVariables
+        })
+      ).toBe(null);
+    });
+    test('should return variable value if feature test campaign but percent traffic is 100 with whitelisting and dsl', () => {
+      const campaignKey = FEATURE_TEST_TRAFFIC_100_WHITELISTING.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_100_WHITELISTING,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      expect(
+        vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', 'Ashley', {
+          customVariables: falseCustomVariables,
+          variationTargetingVariables: trueWhitelistingTags
+        })
+      ).toBe('Variation-2 string');
+      expect(
+        vwoClientInstance.getFeatureVariableValue(campaignKey, 'INTEGER_VARIABLE', 'Ashley', {
+          customVariables: falseCustomVariables,
+          variationTargetingVariables: trueWhitelistingTags
+        })
+      ).toBe(789);
+    });
+    test('should return variable value if feature test campaign but percent traffic is 100 with dsl', () => {
+      const campaignKey = FEATURE_TEST_TRAFFIC_100_WHITELISTING.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_100_WHITELISTING,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      expect(
+        vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', 'Ashley', {
+          customVariables: trueCustomVariables
+        })
+      ).toBe('Variation-2 string');
+      expect(
+        vwoClientInstance.getFeatureVariableValue(campaignKey, 'INTEGER_VARIABLE', 'Ashley', {
+          customVariables: trueCustomVariables
+        })
+      ).toBe(789);
     });
   });
 });

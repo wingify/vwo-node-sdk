@@ -15,27 +15,17 @@
  */
 
 const SegmentEvaluator = require('../../lib/core/SegmentEvaluator');
-const logging = require('../../lib/services/logging');
-const VWO = require('../../lib/VWO');
-const SegmentEvaluatorData = require('../test-utils/data/segmentEvaluatorData');
+const SegmentEvaluatorData = require('../test-utils/data/SegmentEvaluatorData');
 
 const testCasesKeys = Object.keys(SegmentEvaluatorData);
-const logger = logging.getLogger();
 
 describe('SegmentorService', () => {
-  testCasesKeys.forEach((key, index) => {
+  testCasesKeys.forEach(key => {
     describe(key, () => {
-      SegmentEvaluatorData[key].forEach(testObj => {
-        test(testObj.description, () => {
-          expect(
-            SegmentEvaluator(
-              new VWO({
-                logger
-              }),
-              testObj.dsl,
-              testObj.customVariables
-            )
-          ).toBe(testObj.expectation);
+      Object.keys(SegmentEvaluatorData[key]).forEach(testName => {
+        const testObj = SegmentEvaluatorData[key][testName];
+        test(testName, () => {
+          expect(SegmentEvaluator(testObj.dsl, testObj.customVariables)).toBe(testObj.expectation);
         });
       });
     });

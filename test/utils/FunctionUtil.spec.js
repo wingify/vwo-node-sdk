@@ -50,4 +50,14 @@ describe('DataTypeUtil', () => {
       expect(typeof FunctionUtil.getCurrentUnixTimestamp()).toBe('number');
     });
   });
+
+  describe('method: matchWithRegex', () => {
+    it('should return true', () => {
+      expect(Boolean(FunctionUtil.matchWithRegex('str', /^str/))).toBe(true);
+    });
+
+    it('should return false', () => {
+      expect(Boolean(FunctionUtil.matchWithRegex('str', /^string/))).toBe(false);
+    });
+  });
 });

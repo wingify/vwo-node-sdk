@@ -16,6 +16,7 @@
 
 const BucketingService = require('../../lib/core/BucketingService');
 const CampaignUtil = require('../../lib/utils/CampaignUtil');
+const bucketValues = require('../test-utils/data/bucketValues');
 
 let userId;
 let dummyCampaign;
@@ -120,6 +121,14 @@ describe('BucketingService', () => {
       const result = BucketingService.bucketUserToVariation(userId, dummyCampaign);
 
       expect(result.name).toBe('Variation-1');
+    });
+  });
+
+  describe('method: calculateBucketValue', () => {
+    test('should generate correct bucket values', () => {
+      bucketValues.forEach(value => {
+        expect(BucketingService.calculateBucketValue(value.user)).toBe(value.bucketValue);
+      });
     });
   });
 });
