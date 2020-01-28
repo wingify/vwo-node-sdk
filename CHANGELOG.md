@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2020-01-28
+### Added
+Client-side Javascript SDK
+- NodeJs SDK can be used on client-side i.e. browser with all capabilities like A/B testing, Goal tracking, Feature Rollout, Feature Test, etc.
+- Introduced `webpack` for bundling client-side `vwo-javascript-sdk`
+-
+### Changed
+- Replaced `ajv` dependency with `superstruct`. Build-size reduced by significant factor
 
 ## [1.6.0] - 2020-01-15
 ### Breaking Changes
