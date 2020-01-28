@@ -130,17 +130,7 @@ describe('Service SettingsFileManager', () => {
     });
 
     it('should return true if config is valid', () => {
-      const spyInvalidateSettingsFileMethod = jest.spyOn(SettingsFileManager, 'validateSettingsFile');
       const isValid = SettingsFileManager.isSettingsFileValid(globalConfig);
-
-      expect(isValid).toBe(true);
-      expect(spyInvalidateSettingsFileMethod).toHaveBeenCalledWith(globalConfig.settingsFile);
-    });
-  });
-
-  describe('method: validateSettingsFile', () => {
-    it('should validate the settingsFile schema', () => {
-      const isValid = SettingsFileManager.validateSettingsFile(globalConfig.settingsFile);
 
       expect(isValid).toBe(true);
     });
