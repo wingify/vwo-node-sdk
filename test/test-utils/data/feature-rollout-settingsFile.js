@@ -49,7 +49,7 @@ const FEATURE_ROLLOUT_TRAFFIC_0 = {
 };
 
 const FEATURE_ROLLOUT_WITH_SEGMENTS_TRAFFIC_100 = {
-  environmentToken: 'someuniquestuff1234567',
+  sdkKey: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [],

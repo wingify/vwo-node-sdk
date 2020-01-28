@@ -1,5 +1,5 @@
 module.exports = {
-  environmentToken: 'someuniquestuff1234567',
+  sdkKey: 'someuniquestuff1234567',
   campaigns: [
     {
       goals: [

@@ -1,8 +1,12 @@
 {
   "name": "vwo-node-sdk",
-  "version": "1.6.0",
-  "description": "VWO Node SDK for server-side A/B Testing",
+  "version": "1.7.0",
+  "description": "VWO Node SDK for server-side Testing",
   "scripts": {
+    "build": "yarn build:dev && yarn build:prod",
+    "build:dev": "webpack --mode=development",
+    "build:dev-analyze": "webpack --mode=development --analyze=1",
+    "build:prod": "webpack --mode=production",
     "check:versions": "node -e 'require(\"./scripts/check-versions\")'",
     "check:license": "yarn check:versions && node -e 'require(\"./scripts/check-license\")'",
     "coverage": "jest --config=jest.config.prod.js --detectOpenHandles --coverage --coverageReporters=text-lcov && cat ./coverage/lcov.info",
@@ -21,21 +25,29 @@
   "author": "dev@wingify.com",
   "license": "Apache-2.0",
   "main": "lib/index",
+  "browser": "dist/vwo-javascript-sdk",
   "files": [
+    "dist/",
     "package.json",
     "yarn.lock",
     "lib/**/*",
     "LICENSE",
     "README.md",
-    "CONTRIBUTING.md"
+    "CONTRIBUTING.md",
+    "CHANGELOG.md",
+    "NOTICE",
+    "third-party-attributions.txt"
   ],
   "dependencies": {
-    "ajv": "^6.10.0",
     "lodash.clonedeep": "^4.5.0",
     "murmurhash": "^0.0.2",
+    "superstruct": "^0.8.3",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
+    "@babel/core": "^7.6.2",
+    "@babel/preset-env": "^7.6.2",
+    "babel-loader": "^8.0.6",
     "coveralls": "^3.0.4",
     "eslint": "^4.19.1",
     "eslint-config-prettier": "^2.9.0",
@@ -50,12 +62,15 @@
     "lint-staged": "^8.1.3",
     "prettier": "^1.16.4",
     "semver": "^6.1.1",
-    "shelljs": "^0.8.3"
+    "shelljs": "^0.8.3",
+    "webpack": "^4.41.0",
+    "webpack-bundle-analyzer": "^3.6.0",
+    "webpack-cli": "^3.3.9"
   },
   "husky": {
     "hooks": {
       "pre-commit": "lint-staged",
-      "pre-push": "yarn lint && yarn check:license && yarn test:prod"
+      "pre-push": "yarn lint && yarn check:license && yarn test:prod && yarn build"
     }
   },
   "lint-staged": {
