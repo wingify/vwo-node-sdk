@@ -1,0 +1,77 @@
+{
+  "name": "vwo-node-sdk",
+  "version": "1.7.0",
+  "description": "VWO Node SDK for server-side Testing",
+  "scripts": {
+    "build": "yarn build:dev && yarn build:prod",
+    "build:dev": "webpack --mode=development",
+    "build:dev-analyze": "webpack --mode=development --analyze=1",
+    "build:prod": "webpack --mode=production",
+    "check:versions": "node -e 'require(\"./scripts/check-versions\")'",
+    "check:license": "yarn check:versions && node -e 'require(\"./scripts/check-license\")'",
+    "coverage": "jest --config=jest.config.prod.js --detectOpenHandles --coverage --coverageReporters=text-lcov && cat ./coverage/lcov.info",
+    "coveralls": "yarn coverage | coveralls",
+    "lint": "yarn check:versions && eslint '**/*.js' --fix",
+    "prettier": "./node_modules/prettier/bin-prettier.js --write",
+    "start": "yarn install && cp git-hooks/* .git/hooks/ && chmod -R +x .git/hooks",
+    "test:dev": "node --inspect node_modules/jest/bin/jest.js --watch --runInBand --config=jest.config.dev.js --watch --debug --colors --errorOnDeprecated",
+    "test:prod": "jest --config=jest.config.prod.js",
+    "test": "yarn test:prod"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wingify/vwo-node-sdk"
+  },
+  "author": "dev@wingify.com",
+  "license": "Apache-2.0",
+  "main": "lib/index",
+  "browser": "dist/vwo-javascript-sdk",
+  "files": [
+    "dist/",
+    "package.json",
+    "yarn.lock",
+    "lib/**/*",
+    "LICENSE",
+    "README.md",
+    "CONTRIBUTING.md",
+    "CHANGELOG.md",
+    "NOTICE",
+    "third-party-attributions.txt"
+  ],
+  "dependencies": {
+    "lodash.clonedeep": "^4.5.0",
+    "murmurhash": "^0.0.2",
+    "superstruct": "^0.8.3",
+    "uuid": "^3.3.2"
+  },
+  "devDependencies": {
+    "coveralls": "^3.0.4",
+    "jest": "^24.8.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "yarn lint && yarn check:license && yarn test:prod && yarn build"
+    }
+  },
+  "lint-staged": {
+    "globOptions": {
+      "matchBase": false
+    },
+    "linters": {
+      "**/*.js": [
+        "yarn lint",
+        "prettier",
+        "git add"
+      ],
+      "**/*.{json,md}": [
+        "prettier",
+        "git add"
+      ]
+    }
+  },
+  "engineStrict": true,
+  "engines": {
+    "node": ">= 6.10.0"
+  }
+}
