@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.7.0
+ * vwo-javascript-sdk - v1.7.2
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019 Wingify Software Pvt. Ltd.
@@ -1320,7 +1320,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.7.0"
+    version: "1.7.2"
   };
 } else {}
 
