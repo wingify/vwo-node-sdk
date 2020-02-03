@@ -2694,7 +2694,7 @@ var campaignObjectSchema = struct([{
   isForcedVariationEnabled: 'boolean?'
 }]);
 var settingsFileSchema = struct({
-  sdkKey: 'string',
+  sdkKey: 'string?',
   version: 'number|string',
   accountId: 'number|string',
   campaigns: 'campaignsType'

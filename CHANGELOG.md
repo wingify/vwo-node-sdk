@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.1] - 2020-02-03
+### Changed
+- Make `sdkKey` optional while validating settingsFile. `sdkKey` will not be present in response of `getSettingsFile` API from `v1.7.0`.
+
 ## [1.7.0] - 2020-01-28
 ### Added
 Client-side Javascript SDK
