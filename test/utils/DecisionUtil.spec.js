@@ -29,17 +29,19 @@ const globalConfig = {
 };
 
 const userId = 'Alice';
-const campaign = settingsFile1.campaigns[0];
+let campaign = settingsFile1.campaigns[0];
 
 let spyOnGetStoredVariation;
 let spyOnVariationAllotted;
 let spyOnSaveUserProfiel;
 let output;
-
+let SettingsFileManager;
 beforeEach(() => {
-  let SettingsFileManager = new SettingsFileService(globalConfig);
+  SettingsFileManager = new SettingsFileService(globalConfig);
 
-  SettingsFileManager.processsettingsFile(globalConfig);
+  SettingsFileManager.processSettingsFile();
+
+  campaign = SettingsFileManager.getSettingsFile().campaigns[0];
 });
 
 describe('DecisionUtil', () => {
@@ -49,7 +51,13 @@ describe('DecisionUtil', () => {
       spyOnVariationAllotted = jest.spyOn(VariationDecider, 'getVariationAllotted');
       spyOnSaveUserProfiel = jest.spyOn(DecisionUtil, '_saveUserData');
 
-      output = DecisionUtil.getVariation(globalConfig, campaign, 'DEV_TEST_1', userId);
+      output = DecisionUtil.getVariation(
+        globalConfig,
+        SettingsFileManager.getSettingsFile(),
+        campaign,
+        'DEV_TEST_1',
+        userId
+      );
     });
 
     it('should first look into USS for fetching stored variation', () => {
@@ -70,7 +78,9 @@ describe('DecisionUtil', () => {
 
   describe('method: _getStoredVariation', () => {
     it('should return null if data not found in campaignUserDataMapping', () => {
-      expect(DecisionUtil._getStoredVariation(globalConfig, 'DEV_TEST_1', userId)).toBe(null);
+      expect(
+        DecisionUtil._getStoredVariation(globalConfig, SettingsFileManager.getSettingsFile(), 'DEV_TEST_1', userId)
+      ).toBe(null);
     });
   });
 

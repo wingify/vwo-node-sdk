@@ -4,6 +4,7 @@
 [![Build Status](http://img.shields.io/travis/wingify/vwo-node-sdk/master.svg?style=flat)](http://travis-ci.org/wingify/vwo-node-sdk)
 [![Coverage Status](https://coveralls.io/repos/github/wingify/vwo-node-sdk/badge.svg?branch=master)](https://coveralls.io/github/wingify/vwo-node-sdk?branch=master)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
+![](http://img.badgesize.io/wingify/vwo-node-sdk/master/dist/vwo-javascript-sdk.min.js?compression=gzip&color=blue)
 
 This open source library allows you to A/B Test your Website at server-side. This SDK can also be used on client-side i.e. browser.
 

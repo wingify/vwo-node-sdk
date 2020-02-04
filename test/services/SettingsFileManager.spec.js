@@ -49,14 +49,14 @@ describe('Service SettingsFileManager', () => {
       const config = undefined;
 
       SettingsFileManager = new SettingsFileService(config);
-      expect(SettingsFileManager.isSettingsFileValid(config)).toBe(false);
+      expect(SettingsFileManager.isSettingsFileValid()).toBe(false);
     });
 
     it('should return false if config.settingsFile is not defined', () => {
       const config = {};
 
       SettingsFileManager = new SettingsFileService(config);
-      expect(SettingsFileManager.isSettingsFileValid(config)).toBe(false);
+      expect(SettingsFileManager.isSettingsFileValid()).toBe(false);
     });
 
     it('should return false if settingsFile has bad campaign schema', () => {
@@ -76,7 +76,7 @@ describe('Service SettingsFileManager', () => {
       const spyInvalidateSettingsFileLog = jest.spyOn(config.logger, 'log');
 
       SettingsFileManager = new SettingsFileService(config);
-      expect(SettingsFileManager.isSettingsFileValid(config)).toBe(false);
+      expect(SettingsFileManager.isSettingsFileValid()).toBe(false);
       expect(spyInvalidateSettingsFileLog).toHaveBeenCalled();
     });
 
@@ -100,7 +100,7 @@ describe('Service SettingsFileManager', () => {
       const spyInvalidateSettingsFileLog = jest.spyOn(config.logger, 'log');
 
       SettingsFileManager = new SettingsFileService(config);
-      expect(SettingsFileManager.isSettingsFileValid(config)).toBe(false);
+      expect(SettingsFileManager.isSettingsFileValid()).toBe(false);
       expect(spyInvalidateSettingsFileLog).toHaveBeenCalled();
     });
 
@@ -125,23 +125,23 @@ describe('Service SettingsFileManager', () => {
       const spyInvalidateSettingsFileLog = jest.spyOn(config.logger, 'log');
 
       SettingsFileManager = new SettingsFileService(config);
-      expect(SettingsFileManager.isSettingsFileValid(config)).toBe(false);
+      expect(SettingsFileManager.isSettingsFileValid()).toBe(false);
       expect(spyInvalidateSettingsFileLog).toHaveBeenCalled();
     });
 
     it('should return true if config is valid', () => {
-      const isValid = SettingsFileManager.isSettingsFileValid(globalConfig);
+      const isValid = SettingsFileManager.isSettingsFileValid();
 
       expect(isValid).toBe(true);
     });
   });
 
-  describe('metho: processsettingsFile', () => {
+  describe('method: processSettingsFile', () => {
     it('should call _setVariationBucketing for each campaign in settingsFile', () => {
       const spySetVariationBucketingMethod = jest.spyOn(SettingsFileManager, '_setVariationBucketing');
       const spyLog = jest.spyOn(globalConfig.logger, 'log');
 
-      SettingsFileManager.processsettingsFile(globalConfig);
+      SettingsFileManager.processSettingsFile();
       expect(spySetVariationBucketingMethod).toHaveBeenCalled();
       expect(spyLog).toHaveBeenCalled();
     });

@@ -1,5 +1,6 @@
 const webpack = require('webpack');
 const path = require('path');
+const semver = require('semver');
 const packageFile = require('./package.json');
 
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
@@ -14,7 +15,12 @@ Object.keys(packageFile.dependencies).map((key, index) => {
   deps += `\n ${index + 1}. ${key} - ${packageFile.dependencies[key]}`;
 });
 
-const libraryHeaderComment = `${libraryName} - v${libVersion}
+let libraryHeaderComment;
+
+function addPlugins(argv) {
+  const version = semver.inc(libVersion, argv.type) || libVersion;
+
+  libraryHeaderComment = `${libraryName} - v${version}
 URL - https://github.com/wingify/vwo-node-sdk
 
 Copyright 2019-2020 Wingify Software Pvt. Ltd.
@@ -33,7 +39,6 @@ limitations under the License.
 
 Dependencies used - ${deps}`;
 
-function addPlugins(argv) {
   const plugins = [
     new webpack.BannerPlugin({
       banner: libraryHeaderComment,

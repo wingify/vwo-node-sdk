@@ -16,24 +16,52 @@
 
 const FunctionUtil = require('../../lib/utils/FunctionUtil');
 
-describe('DataTypeUtil', () => {
+describe('FunctionUtil', () => {
   describe('method: cloneObject', () => {
     it('should clone an object', () => {
       const obj = {
         a: 1,
-        b: 2
+        b: 2,
+        c: {
+          c1: {
+            c2: 'c12'
+          }
+        }
       };
       const newObj = FunctionUtil.cloneObject(obj);
 
       // change obj
       obj.a = 3;
       obj.b = 5;
+      obj.c.c1.c2 = 'c12-new';
 
       expect(obj.a).toBe(3);
       expect(obj.b).toBe(5);
+      expect(obj.c.c1.c2).toBe('c12-new');
 
       expect(newObj.a).toBe(1);
       expect(newObj.b).toBe(2);
+      expect(newObj.c.c1.c2).toBe('c12');
+    });
+
+    it('should fail if key is a function', () => {
+      const obj = {
+        a: 1,
+        b: function() {}
+      };
+      const newObj = FunctionUtil.cloneObject(obj);
+
+      expect(newObj.b).toBeUndefined();
+    });
+
+    it('should fail if key is undefined', () => {
+      const obj = {
+        a: 1,
+        b: undefined
+      };
+      const newObj = FunctionUtil.cloneObject(obj);
+
+      expect(newObj.b).toBeUndefined();
     });
   });
 

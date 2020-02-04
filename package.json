@@ -39,7 +39,6 @@
     "third-party-attributions.txt"
   ],
   "dependencies": {
-    "lodash.clonedeep": "^4.5.0",
     "murmurhash": "^0.0.2",
     "superstruct": "^0.8.3",
     "uuid": "^3.3.2"

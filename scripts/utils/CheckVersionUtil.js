@@ -15,37 +15,29 @@
  */
 
 const semver = require('semver');
-const shell = require('shelljs');
-const childProcess = require('child_process');
+const ShellUtil = require('./shell');
 
 const packageConfig = require('../../package.json');
 const AnsiColorEnum = require('../../lib/enums/AnsiColorEnum');
 
 const versionRequirements = [];
 
-function _exec(cmd) {
-  return childProcess
-    .execSync(cmd)
-    .toString()
-    .trim();
-}
-
 function getWarnings(mods) {
   if (!mods || !mods.length) {
     return [];
   }
 
-  if (mods.indexOf('node') !== -1 && shell.which('node')) {
+  if (mods.indexOf('node') !== -1 && ShellUtil.shell.which('node')) {
     versionRequirements.push({
       name: 'node',
       currentVersion: semver.clean(process.version),
       versionRequirement: packageConfig.engines.node
     });
   }
-  if (mods.indexOf('yarn') !== -1 && shell.which('yarn')) {
+  if (mods.indexOf('yarn') !== -1 && ShellUtil.shell.which('yarn')) {
     versionRequirements.push({
       name: 'yarn',
-      currentVersion: _exec('yarn --version'),
+      currentVersion: ShellUtil.exec('yarn --version'),
       versionRequirement: packageConfig.engines.yarn
     });
   }
