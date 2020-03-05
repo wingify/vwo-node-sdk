@@ -4775,6 +4775,12 @@ function operandCustomVariablesParser(operand, customVariables) {
 
   var operandKey = key;
   operand = value;
+
+  if (!customVariables.hasOwnProperty(key)) {
+    // For handling ".*" regex case when key is not present in customVariables and matches regex is used.
+    return false;
+  }
+
   var tagValue = customVariables[operandKey]; // Pre process tag value
 
   tagValue = preProcessTagValue(tagValue);

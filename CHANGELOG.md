@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.4] - 2020-02-19
+### Changed
+- Added check in segmentation for handling the scenario in which custom-variable key defined in campaign settings is not passed in APIs and matches regex ".*" is used.
+
 ## [1.7.3] - 2020-02-03
 ### Changed
 - Update year in Apache-2.0 Copyright header in all source and scripts files
