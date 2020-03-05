@@ -44,7 +44,7 @@ describe('CachingUtil', () => {
     });
   });
 
-  describe('method: remove', () => {
+  /* describe('method: remove', () => {
     test('should return false if no params are passed', () => {
       expect(CachingUtil.remove()).toBe(false);
     });
@@ -54,7 +54,7 @@ describe('CachingUtil', () => {
       CachingUtil.remove(keyPrefix, key);
       expect(CachingUtil.get(keyPrefix, key)).toBe(false);
     });
-  });
+  }); */
 
   describe('method: resetCache', () => {
     test('should remove the value from cache', () => {
