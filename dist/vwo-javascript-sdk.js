@@ -251,7 +251,7 @@ function () {
     /**
      * This API method: Marks the conversion of the campaign for a particular goal
      *
-     * @param {Number} campaignKey           unique campaign test key
+     * @param {String/Array<string>/null/undefined} campaignSpecifier campaign keys to track           unique campaignSpecifier
      * @param {String} userId                ID assigned to a user
      * @param {String} goalIdentifier         unique campaign's goal identifier
      * @param {Object} options               optional params - customVariables, variationTargetingVariables, revenueValue
@@ -259,13 +259,13 @@ function () {
 
   }, {
     key: "track",
-    value: function track(campaignKey, userId, goalIdentifier, options) {
+    value: function track(campaignSpecifier, userId, goalIdentifier, options) {
       try {
         var self = this;
-        return api.track(self, campaignKey, userId, goalIdentifier, options);
+        return api.track(self, campaignSpecifier, userId, goalIdentifier, options);
       } catch (err) {
         this.logger.log(LogLevelEnum.ERROR, err.message);
-        return false;
+        return null;
       }
     }
     /**
@@ -1153,6 +1153,9 @@ var LogLevelEnum = logging.LogLevelEnum,
     LogMessageEnum = logging.LogMessageEnum,
     LogMessageUtil = logging.LogMessageUtil;
 var file = FileNameEnum.Track;
+var GOAL_TYPE_TO_TRACK_DEFAULT = GoalTypeEnum.ALL;
+var GOAL_IDENTIFIER_SEPERATOR = '_vwo_';
+var api = ApiEnum.TRACK;
 /**
  * This API method: Marks the conversion of the campaign for a particular goal
  *
@@ -1170,13 +1173,14 @@ var file = FileNameEnum.Track;
 
 function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   var options = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
-  var api = ApiEnum.TRACK;
   var areParamsValid = false;
 
   if (DataTypeUtil.isObject(options)) {
     var revenueValue = options.revenueValue,
         customVariables = options.customVariables,
-        variationTargetingVariables = options.variationTargetingVariables; // Check if arguments have valid data-type
+        variationTargetingVariables = options.variationTargetingVariables,
+        goalTypeToTrack = options.goalTypeToTrack,
+        shouldTrackReturningUser = options.shouldTrackReturningUser; // Check if arguments have valid data-type
 
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.TRACK,
@@ -1184,8 +1188,10 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
       userId: userId,
       goalIdentifier: goalIdentifier,
       customVariables: customVariables,
-      variationTargetingVariables: variationTargetingVariables
-    })) {
+      variationTargetingVariables: variationTargetingVariables,
+      goalTypeToTrack: goalTypeToTrack,
+      shouldTrackReturningUser: shouldTrackReturningUser
+    }) && (!goalTypeToTrack || goalTypeToTrack && Object.values(GoalTypeEnum).includes(goalTypeToTrack))) {
       areParamsValid = true;
     }
   }
@@ -1194,7 +1200,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.TRACK_API_MISSING_PARAMS, {
       file: file
     }));
-    return false;
+    return null;
   } // Get the cached configuration
 
 
@@ -1202,12 +1208,50 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   var settingsFile = vwoInstance.SettingsFileManager.getSettingsFile(api); // If no settings are found, simply do not track goal and return false
 
   if (!settingsFile) {
-    return false;
-  } // Get the campaign settings based on campaignKey from the settings
+    return null;
+  }
 
+  var campaigns = [];
+  goalTypeToTrack = goalTypeToTrack || config.goalTypeToTrack || GOAL_TYPE_TO_TRACK_DEFAULT; // priority order - options > launchConfig > default
 
-  var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey); // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
+  if (DataTypeUtil.isUndefined(shouldTrackReturningUser)) {
+    // if shouldTrackReturningUser is not given in options
+    if (DataTypeUtil.isBoolean(config.shouldTrackReturningUser)) {
+      // if shouldTrackReturningUser is given in config at launch
+      shouldTrackReturningUser = config.shouldTrackReturningUser;
+    } else {
+      shouldTrackReturningUser = false;
+    }
+  }
 
+  if (!DataTypeUtil.isString(campaignKey)) {
+    if (DataTypeUtil.isArray(campaignKey)) {
+      campaigns = CampaignUtil.getCampaignsForKeys(settingsFile, campaignKey);
+    } else {
+      campaigns = CampaignUtil.getCampaignsForGoal(settingsFile, goalIdentifier, goalTypeToTrack);
+    }
+  } else {
+    // Get the campaign settings based on campaignKey from the settings
+    var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
+    campaigns.push(campaign || {
+      key: campaignKey
+    });
+  }
+
+  var result = {};
+  campaigns.forEach(function (campaign) {
+    return result[campaign.key] = trackCampaignGoal(vwoInstance, campaign, campaign.key, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, goalTypeToTrack, shouldTrackReturningUser);
+  });
+
+  if (!Object.keys(result).length) {
+    return null;
+  }
+
+  return result;
+}
+
+function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, goalTypeToTrack, shouldTrackReturningUser) {
+  // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CAMPAIGN_NOT_RUNNING, {
       file: file,
@@ -1241,6 +1285,8 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
       campaignKey: campaignKey
     }));
     return false;
+  } else if (goalTypeToTrack !== GOAL_TYPE_TO_TRACK_DEFAULT && goal.type !== goalTypeToTrack) {
+    return false;
   } else if (goal.type === GoalTypeEnum.REVENUE && !ValidateUtil.isValidValue(revenueValue)) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL, {
       file: file,
@@ -1251,15 +1297,37 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
     return false;
   }
 
-  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables),
+  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, goalIdentifier),
       variationId = _DecisionUtil$getVari.variationId,
-      variationName = _DecisionUtil$getVari.variationName; // Is User is a part of Campaign and has been decided to be a part of particular variation
+      variationName = _DecisionUtil$getVari.variationName,
+      storedGoalIdentifier = _DecisionUtil$getVari.storedGoalIdentifier; // Is User is a part of Campaign and has been decided to be a part of particular variation
 
 
   if (variationName) {
-    // If goal is found, send an impression to VWO server for report stats
+    if (storedGoalIdentifier) {
+      var identifiers = storedGoalIdentifier.split(GOAL_IDENTIFIER_SEPERATOR);
+
+      if (!identifiers.includes(goalIdentifier)) {
+        storedGoalIdentifier += GOAL_IDENTIFIER_SEPERATOR + goalIdentifier;
+
+        DecisionUtil._saveUserData(config, campaign, variationName, userId, storedGoalIdentifier);
+      } else if (!shouldTrackReturningUser) {
+        vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GOAL_ALREADY_TRACKED, {
+          file: file,
+          userId: userId,
+          goalIdentifier: goalIdentifier,
+          campaignKey: campaignKey
+        }));
+        return false;
+      }
+    } // If goal is found, send an impression to VWO server for report stats
+
+
     var properties = ImpressionUtil.buildEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue);
     vwoInstance.eventQueue.process(config, properties, vwoInstance);
+
+    DecisionUtil._saveUserData(config, campaign, variationName, userId, goalIdentifier);
+
     return true;
   }
 
@@ -1300,7 +1368,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.7.4"
+    version: "1.7.5"
   };
 } else {}
 
@@ -2035,7 +2103,8 @@ module.exports = {
  */
 var GoalTypeEnum = {
   REVENUE: 'REVENUE_TRACKING',
-  CUSTOM: 'CUSTOM_GOAL'
+  CUSTOM: 'CUSTOM_GOAL',
+  ALL: 'ALL'
 };
 module.exports = GoalTypeEnum;
 
@@ -2164,10 +2233,11 @@ module.exports = {
     TAG_KEY_LENGTH_EXCEEDED: '({file}): Length of tagKey:{tagKey} for userID:{userId} can not be greater than 255',
     TAG_VALUE_LENGTH_EXCEEDED: '({file}): Length of value:{tagValue} of tagKey:{tagKey} for userID:{userId} can not be greater than 255',
     TRACK_API_GOAL_NOT_FOUND: '({file}): Goal:{goalIdentifier} not found for Campaign:{campaignKey} and userId:{userId}',
-    TRACK_API_MISSING_PARAMS: '({file}): "track" API got bad parameters. It expects campaignKey(String) as first, userId(String) as second, goalIdentifier(String/Number) as third and options(optional Object) as fourth argument',
+    TRACK_API_MISSING_PARAMS: '({file}): "track" API got bad parameters. It expects campaignKey(String or Array of strings or null or undefined) as first, userId(String) as second, goalIdentifier(String/Number) as third and options(optional Object) as fourth argument.',
     TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL: '({file}): Revenue value should be passed for revenue goal:{goalIdentifier} for Campaign:{campaignKey} and userId:{userId}',
     UNABLE_TO_CAST_VALUE: "({file}): Unable to cast value:{variableValue} to type:{variableType}, returning null",
-    VARIABLE_NOT_FOUND: "({file}): Variable:{variableKey} for User ID:{userId} is not found in settings-file. Returning null"
+    VARIABLE_NOT_FOUND: "({file}): Variable:{variableKey} for User ID:{userId} is not found in settings-file. Returning null",
+    NO_CAMPAIGN_FOUND: "({file}): No campaign found for goalIdentifier:{goalIdentifier}. Please verify from VWO app."
   },
   INFO_MESSAGES: {
     FEATURE_ENABLED_FOR_USER: "({file}): Campaign:{campaignKey} for user ID:{userId} is enabled",
@@ -2181,7 +2251,8 @@ module.exports = {
     USER_RECEIVED_VARIABLE_VALUE: "({file}): Value for variable:{variableKey} of feature flag:{campaignKey} is:{variableValue} for user:{userId}",
     VARIABLE_NOT_USED_RETURN_DEFAULT_VARIABLE_VALUE: "({file}): Variable:{variableKey} is not used in variation:{variationName}. Returning default value",
     VARIATION_ALLOCATED: '({file}): User ID:{userId} of Campaign:{campaignKey} got variation:{variationName}',
-    VARIATION_RANGE_ALLOCATION: '({file}): Campaign:{campaignKey} having variation:{variationName} with weight:{variationWeight} got range as: ( {start} - {end} ))'
+    VARIATION_RANGE_ALLOCATION: '({file}): Campaign:{campaignKey} having variation:{variationName} with weight:{variationWeight} got range as: ( {start} - {end} ))',
+    GOAL_ALREADY_TRACKED: '({file}): "Goal:{goalIdentifer} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. Skipping now.'
   },
   WARNING_MESSAGES: {}
 };
@@ -2447,6 +2518,8 @@ var FunctionUtil = __webpack_require__(/*! ./utils/FunctionUtil */ "./lib/utils/
 
 var SettingsFileUtil = __webpack_require__(/*! ./utils/SettingsFileUtil */ "./lib/utils/SettingsFileUtil.js");
 
+var GoalTypeEnum = __webpack_require__(/*! ./enums/GoalTypeEnum */ "./lib/enums/GoalTypeEnum.js");
+
 var logging = __webpack_require__(/*! ./services/logging */ "./lib/services/logging/index.js");
 
 var FileNameEnum = __webpack_require__(/*! ./enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
@@ -2465,6 +2538,7 @@ module.exports = {
   setLogger: setLogHandler,
   setLogLevel: setLogLevel,
   getSettingsFile: SettingsFileUtil.get,
+  GoalTypeEnum: GoalTypeEnum,
 
   /**
    * Initializes the SDK and parses the settingsfile
@@ -2477,6 +2551,23 @@ module.exports = {
     try {
       // validating config schema
       FunctionUtil.cloneObject(sdkConfig);
+
+      if (!DataTypeUtil.isUndefined(sdkConfig.shouldTrackReturningUser) && !DataTypeUtil.isBoolean(sdkConfig.shouldTrackReturningUser)) {
+        throw new Error('shouldTrackReturningUser should be boolean');
+      }
+
+      if (!DataTypeUtil.isUndefined(sdkConfig.isDevelopmentMode) && !DataTypeUtil.isBoolean(sdkConfig.isDevelopmentMode)) {
+        throw new Error('isDevelopmentMode should be boolean');
+      }
+
+      if (sdkConfig.goalTypeToTrack && !Object.values(GoalTypeEnum).includes(sdkConfig.goalTypeToTrack)) {
+        throw new Error('goalTypeToTrack should be certain strings');
+      }
+
+      if (config.logging && config.logging.level && !Object.values(LogLevelEnum).includes(sdkConfig.logging.level)) {
+        throw new Error('log level should be certain values');
+      }
+
       config = sdkConfig;
     } catch (err) {
       logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SDK_CONFIG_CORRUPTED, {
@@ -3294,6 +3385,8 @@ var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/log
 
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
 
+var GoalTypeEnum = __webpack_require__(/*! ../enums/GoalTypeEnum */ "./lib/enums/GoalTypeEnum.js");
+
 var CampaignTypeEnum = __webpack_require__(/*! ../enums/CampaignTypeEnum */ "./lib/enums/CampaignTypeEnum.js");
 
 var LogLevelEnum = logging.LogLevelEnum,
@@ -3379,6 +3472,59 @@ var CampaignUtil = {
     }
 
     return campaign;
+  },
+
+  /**
+   * Gets campaigns for corresponding campaignKeys
+   *
+   * @param {Object} settingsFile
+   * @param {Array} campaignKeys
+   *
+   * @return {Array} Campaigns
+   */
+  getCampaignsForKeys: function getCampaignsForKeys(settingsFile, campaignKeys) {
+    var campaigns = [];
+    campaignKeys.forEach(function (key) {
+      var campaign = CampaignUtil.getCampaign(settingsFile, key);
+
+      if (campaign) {
+        campaigns.push(campaign);
+      } else {
+        campaigns.push({
+          key: key
+        });
+      }
+    });
+    return campaigns;
+  },
+
+  /**
+   * Gets campaigns which have the goalIdentifier present
+   *
+   * @param {settingsFile}
+   * @param {String} goalIdentifier
+   * @param {String} goalTypeToTrack type of goal to track
+   *
+   * @return {Array} Campaigns
+   */
+  getCampaignsForGoal: function getCampaignsForGoal(settingsFile, goalIdentifier, goalTypeToTrack) {
+    var campaigns = [];
+    settingsFile.campaigns.forEach(function (campaign) {
+      var goal = CampaignUtil.getCampaignGoal(settingsFile, campaign.key, goalIdentifier);
+
+      if (goal && (goalTypeToTrack === GoalTypeEnum.ALL || goal.type === goalTypeToTrack)) {
+        campaigns.push(campaign);
+      }
+    });
+
+    if (!campaigns.length) {
+      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.NO_CAMPAIGN_FOUND, {
+        file: FileNameEnum.CampaignUtil,
+        goalIdentifier: goalIdentifier
+      }));
+    }
+
+    return campaigns;
   },
   getCampaignStatus: function getCampaignStatus(settingsFile, campaignKey) {
     var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
@@ -3603,6 +3749,15 @@ var DataTypeUtil = {
   },
   isBoolean: function isBoolean(val) {
     return DataTypeUtil._toStringValue(val) === '[object Boolean]';
+  },
+  isUndefined: function isUndefined(val) {
+    return DataTypeUtil._toStringValue(val) === '[object Undefined]';
+  },
+  isNull: function isNull(val) {
+    return DataTypeUtil._toStringValue(val) === '[object Null]';
+  },
+  isArray: function isArray(val) {
+    return DataTypeUtil._toStringValue(val) === '[object Array]';
   }
 };
 module.exports = DataTypeUtil;
@@ -3681,6 +3836,7 @@ var DecisionUtil = {
    */
   getVariation: function getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables) {
     var variationTargetingVariables = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
+    var newGoalIdentifier = arguments.length > 7 ? arguments[7] : undefined;
     var status;
     var variation, variationName, variationId;
 
@@ -3720,7 +3876,9 @@ var DecisionUtil = {
     } // If userStorageService is used, get the variation from the stored data
 
 
-    var storedVariation = DecisionUtil._getStoredVariation(config, settingsFile, campaign.key, userId); // If stored variation is found, simply return the same
+    var _ref = DecisionUtil._getStoredVariationAndGoalIdentifiers(config, settingsFile, campaign.key, userId) || {},
+        storedVariation = _ref.storedVariation,
+        goalIdentifier = _ref.goalIdentifier; // If stored variation is found, simply return the same
 
 
     if (storedVariation) {
@@ -3733,7 +3891,8 @@ var DecisionUtil = {
       return {
         variation: storedVariation,
         variationName: storedVariation.name,
-        variationId: storedVariation.id
+        variationId: storedVariation.id,
+        storedGoalIdentifier: goalIdentifier
       };
     }
 
@@ -3777,7 +3936,7 @@ var DecisionUtil = {
     // Check if variation-name has been assigned to the userId. If not, return no variation
     if (variationName) {
       // If userStorageService is provided, look into it for the saved variation for the campaign and userId
-      DecisionUtil._saveUserData(config, campaign, variationName, userId);
+      DecisionUtil._saveUserData(config, campaign, variationName, userId, newGoalIdentifier);
 
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.VARIATION_ALLOCATED, {
         file: file,
@@ -3866,12 +4025,13 @@ var DecisionUtil = {
    * @param {String} campaignKey
    * @param {String} userId
    *
-   * @return {Object|null} - if found then variation settings object otherwise null
+   * @return {Object|null} - if found then variation and goalIdentifier settings object otherwise null
    */
-  _getStoredVariation: function _getStoredVariation(config, settingsFile, campaignKey, userId) {
+  _getStoredVariationAndGoalIdentifiers: function _getStoredVariationAndGoalIdentifiers(config, settingsFile, campaignKey, userId) {
     var userData = DecisionUtil._getStoredUserData(config, userId, campaignKey);
 
-    var variationName = userData.variationName;
+    var variationName = userData.variationName,
+        goalIdentifier = userData.goalIdentifier;
 
     if (userData && userData.campaignKey && variationName) {
       logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.GETTING_STORED_VARIATION, {
@@ -3880,7 +4040,10 @@ var DecisionUtil = {
         userId: userId,
         variationName: variationName
       }));
-      return CampaignUtil.getCampaignVariation(settingsFile, campaignKey, variationName);
+      return {
+        storedVariation: CampaignUtil.getCampaignVariation(settingsFile, campaignKey, variationName),
+        goalIdentifier: goalIdentifier
+      };
     } // Log if stored variation is not found even after implementing UserStorageService
 
 
@@ -3889,6 +4052,26 @@ var DecisionUtil = {
       campaignKey: campaignKey,
       userId: userId
     }));
+    return null;
+  },
+
+  /**
+   * If userStorageService is provided and variation was stored, get the stored variation
+   *
+   * @param {Object} config
+   * @param {Object} settingsFile - cloned settingsFile
+   * @param {String} campaignKey
+   * @param {String} userId
+   *
+   * @return {Object|null} - if found then variation settings object otherwise null
+   */
+  _getStoredVariation: function _getStoredVariation(config, settingsFile, campaignKey, userId) {
+    var data = DecisionUtil._getStoredVariationAndGoalIdentifiers(config, settingsFile, campaignKey, userId);
+
+    if (data && data.storedVariation) {
+      return data.storedVariation;
+    }
+
     return null;
   },
 
@@ -3905,7 +4088,8 @@ var DecisionUtil = {
     var userStorageMap = {
       userId: userId,
       variationName: null,
-      campaignKey: campaignKey
+      campaignKey: campaignKey,
+      goalIdentifier: null
     };
 
     if (!config.userStorageService) {
@@ -3941,7 +4125,7 @@ var DecisionUtil = {
    *
    * @return {Boolean} - true if found otherwise false
    */
-  _saveUserData: function _saveUserData(config, campaign, variationName, userId) {
+  _saveUserData: function _saveUserData(config, campaign, variationName, userId, goalIdentifier) {
     var isSaved = false;
 
     if (!config.userStorageService) {
@@ -3952,11 +4136,17 @@ var DecisionUtil = {
     }
 
     try {
-      config.userStorageService.set({
+      var properties = {
         userId: userId,
         variationName: variationName,
         campaignKey: campaign.key
-      });
+      };
+
+      if (!DataTypeUtil.isUndefined(goalIdentifier)) {
+        properties.goalIdentifier = goalIdentifier;
+      }
+
+      config.userStorageService.set(properties);
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SETTING_DATA_USER_STORAGE_SERVICE, {
         file: file,
         userId: userId
@@ -4960,6 +5150,8 @@ var DataTypeEnum = __webpack_require__(/*! ../enums/DataTypeEnum */ "./lib/enums
 
 var ApiEnum = __webpack_require__(/*! ../enums/ApiEnum */ "./lib/enums/ApiEnum.js");
 
+var GoalTypeEnum = __webpack_require__(/*! ../enums/GoalTypeEnum */ "./lib/enums/GoalTypeEnum.js");
+
 var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _defineProperty(_APIMethodArgumentsVa, ApiEnum.ACTIVATE, function (_ref) {
   var campaignKey = _ref.campaignKey,
       userId = _ref.userId,
@@ -4991,11 +5183,15 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
       _ref2$customVariables = _ref2.customVariables,
       customVariables = _ref2$customVariables === void 0 ? {} : _ref2$customVariables,
       _ref2$variationTarget = _ref2.variationTargetingVariables,
-      variationTargetingVariables = _ref2$variationTarget === void 0 ? {} : _ref2$variationTarget;
+      variationTargetingVariables = _ref2$variationTarget === void 0 ? {} : _ref2$variationTarget,
+      _ref2$goalTypeToTrack = _ref2.goalTypeToTrack,
+      goalTypeToTrack = _ref2$goalTypeToTrack === void 0 ? GoalTypeEnum.ALL : _ref2$goalTypeToTrack,
+      _ref2$shouldTrackRetu = _ref2.shouldTrackReturningUser,
+      shouldTrackReturningUser = _ref2$shouldTrackRetu === void 0 ? false : _ref2$shouldTrackRetu;
   return [{
     key: 'campaignKey',
     value: campaignKey,
-    type: DataTypeEnum.STRING
+    type: DataTypeEnum.STRING_NULL_UNDEFINED_ARRAY
   }, {
     key: 'userId',
     value: userId,
@@ -5012,6 +5208,14 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
     key: 'variationTargetingVariables',
     value: variationTargetingVariables,
     type: DataTypeEnum.OBJECT
+  }, {
+    key: 'goalTypeToTrack',
+    value: goalTypeToTrack,
+    type: DataTypeEnum.STRING
+  }, {
+    key: 'shouldTrackReturningUser',
+    value: shouldTrackReturningUser,
+    type: DataTypeEnum.BOOLEAN
   }];
 }), _defineProperty(_APIMethodArgumentsVa, ApiEnum.IS_FEATURE_ENABLED, function (_ref3) {
   var campaignKey = _ref3.campaignKey,
@@ -5133,6 +5337,11 @@ var ValidateUtil = {
 
         case DataTypeEnum.OBJECT:
           validators.push(ValidateUtil.isValidObject(argValue));
+          break;
+
+        case DataTypeEnum.STRING_NULL_UNDEFINED_ARRAY:
+          var value = ValidateUtil.isValidString(argValue) || DataTypeUtil.isUndefined(argValue) || DataTypeUtil.isNull(argValue) || DataTypeUtil.isArray(argValue);
+          validators.push(value);
           break;
         // case DataTypeEnum.NUMBER_STRING:
         //   value = ValidateUtil.isValidNumber(argValue) || ValidateUtil.isValidString(argValue);

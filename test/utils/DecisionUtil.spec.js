@@ -47,7 +47,7 @@ beforeEach(() => {
 describe('DecisionUtil', () => {
   describe('method: getVariation', () => {
     beforeEach(() => {
-      spyOnGetStoredVariation = jest.spyOn(DecisionUtil, '_getStoredVariation');
+      spyOnGetStoredVariation = jest.spyOn(DecisionUtil, '_getStoredVariationAndGoalIdentifiers');
       spyOnVariationAllotted = jest.spyOn(VariationDecider, 'getVariationAllotted');
       spyOnSaveUserProfiel = jest.spyOn(DecisionUtil, '_saveUserData');
 
