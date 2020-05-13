@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.7.5
+ * vwo-javascript-sdk - v1.8.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2020 Wingify Software Pvt. Ltd.
@@ -1139,6 +1139,9 @@ var DecisionUtil = __webpack_require__(/*! ../utils/DecisionUtil */ "./lib/utils
 
 var CampaignUtil = __webpack_require__(/*! ../utils/CampaignUtil */ "./lib/utils/CampaignUtil.js");
 
+var _require = __webpack_require__(/*! ../utils/ObjectUtil */ "./lib/utils/ObjectUtil.js"),
+    ObjectValues = _require.ObjectValues;
+
 var ImpressionUtil = __webpack_require__(/*! ../utils/ImpressionUtil */ "./lib/utils/ImpressionUtil.js");
 
 var ValidateUtil = __webpack_require__(/*! ../utils/ValidateUtil */ "./lib/utils/ValidateUtil.js");
@@ -1191,7 +1194,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
       variationTargetingVariables: variationTargetingVariables,
       goalTypeToTrack: goalTypeToTrack,
       shouldTrackReturningUser: shouldTrackReturningUser
-    }) && (!goalTypeToTrack || goalTypeToTrack && Object.values(GoalTypeEnum).includes(goalTypeToTrack))) {
+    }) && (!goalTypeToTrack || goalTypeToTrack && ObjectValues(GoalTypeEnum).includes(goalTypeToTrack))) {
       areParamsValid = true;
     }
   }
@@ -1368,7 +1371,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.7.5"
+    version: "1.8.0"
   };
 } else {}
 
@@ -2516,6 +2519,9 @@ var DataTypeUtil = __webpack_require__(/*! ./utils/DataTypeUtil */ "./lib/utils/
 
 var FunctionUtil = __webpack_require__(/*! ./utils/FunctionUtil */ "./lib/utils/FunctionUtil.js");
 
+var _require = __webpack_require__(/*! ./utils/ObjectUtil */ "./lib/utils/ObjectUtil.js"),
+    ObjectValues = _require.ObjectValues;
+
 var SettingsFileUtil = __webpack_require__(/*! ./utils/SettingsFileUtil */ "./lib/utils/SettingsFileUtil.js");
 
 var GoalTypeEnum = __webpack_require__(/*! ./enums/GoalTypeEnum */ "./lib/enums/GoalTypeEnum.js");
@@ -2560,11 +2566,11 @@ module.exports = {
         throw new Error('isDevelopmentMode should be boolean');
       }
 
-      if (sdkConfig.goalTypeToTrack && !Object.values(GoalTypeEnum).includes(sdkConfig.goalTypeToTrack)) {
+      if (sdkConfig.goalTypeToTrack && !ObjectValues(GoalTypeEnum).includes(sdkConfig.goalTypeToTrack)) {
         throw new Error('goalTypeToTrack should be certain strings');
       }
 
-      if (config.logging && config.logging.level && !Object.values(LogLevelEnum).includes(sdkConfig.logging.level)) {
+      if (config.logging && config.logging.level && !ObjectValues(LogLevelEnum).includes(sdkConfig.logging.level)) {
         throw new Error('log level should be certain values');
       }
 
@@ -4751,6 +4757,11 @@ var ObjectUtil = {
       key: key,
       value: value
     };
+  },
+  ObjectValues: function ObjectValues(obj) {
+    return Object.keys(obj).map(function (key) {
+      return obj[key];
+    });
   }
 };
 module.exports = ObjectUtil;
