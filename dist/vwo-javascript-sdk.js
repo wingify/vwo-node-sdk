@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.8.0
+ * vwo-javascript-sdk - v1.8.1
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2020 Wingify Software Pvt. Ltd.
@@ -1140,7 +1140,7 @@ var DecisionUtil = __webpack_require__(/*! ../utils/DecisionUtil */ "./lib/utils
 var CampaignUtil = __webpack_require__(/*! ../utils/CampaignUtil */ "./lib/utils/CampaignUtil.js");
 
 var _require = __webpack_require__(/*! ../utils/ObjectUtil */ "./lib/utils/ObjectUtil.js"),
-    ObjectValues = _require.ObjectValues;
+    objectValues = _require.objectValues;
 
 var ImpressionUtil = __webpack_require__(/*! ../utils/ImpressionUtil */ "./lib/utils/ImpressionUtil.js");
 
@@ -1194,7 +1194,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
       variationTargetingVariables: variationTargetingVariables,
       goalTypeToTrack: goalTypeToTrack,
       shouldTrackReturningUser: shouldTrackReturningUser
-    }) && (!goalTypeToTrack || goalTypeToTrack && ObjectValues(GoalTypeEnum).includes(goalTypeToTrack))) {
+    }) && (!goalTypeToTrack || goalTypeToTrack && objectValues(GoalTypeEnum).includes(goalTypeToTrack))) {
       areParamsValid = true;
     }
   }
@@ -2520,7 +2520,7 @@ var DataTypeUtil = __webpack_require__(/*! ./utils/DataTypeUtil */ "./lib/utils/
 var FunctionUtil = __webpack_require__(/*! ./utils/FunctionUtil */ "./lib/utils/FunctionUtil.js");
 
 var _require = __webpack_require__(/*! ./utils/ObjectUtil */ "./lib/utils/ObjectUtil.js"),
-    ObjectValues = _require.ObjectValues;
+    objectValues = _require.objectValues;
 
 var SettingsFileUtil = __webpack_require__(/*! ./utils/SettingsFileUtil */ "./lib/utils/SettingsFileUtil.js");
 
@@ -2566,11 +2566,11 @@ module.exports = {
         throw new Error('isDevelopmentMode should be boolean');
       }
 
-      if (sdkConfig.goalTypeToTrack && !ObjectValues(GoalTypeEnum).includes(sdkConfig.goalTypeToTrack)) {
+      if (sdkConfig.goalTypeToTrack && !objectValues(GoalTypeEnum).includes(sdkConfig.goalTypeToTrack)) {
         throw new Error('goalTypeToTrack should be certain strings');
       }
 
-      if (config.logging && config.logging.level && !ObjectValues(LogLevelEnum).includes(sdkConfig.logging.level)) {
+      if (config.logging && config.logging.level && !objectValues(LogLevelEnum).includes(sdkConfig.logging.level)) {
         throw new Error('log level should be certain values');
       }
 
@@ -4758,7 +4758,7 @@ var ObjectUtil = {
       value: value
     };
   },
-  ObjectValues: function ObjectValues(obj) {
+  objectValues: function objectValues(obj) {
     return Object.keys(obj).map(function (key) {
       return obj[key];
     });
