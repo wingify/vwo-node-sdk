@@ -1371,7 +1371,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.8.1"
+    version: "1.8.2"
   };
 } else {}
 
