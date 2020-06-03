@@ -16,6 +16,7 @@
 
 const indexFile = require('../lib/index');
 const logging = require('../lib/services/logging');
+// const logger = logging.getLogger();
 
 describe('index file', () => {
   test('should export required modules and APIs', () => {
@@ -24,6 +25,7 @@ describe('index file', () => {
     expect(indexFile.setLogLevel).toBeDefined();
     expect(indexFile.getSettingsFile).toBeDefined();
     expect(indexFile.launch).toBeDefined();
+    expect(indexFile.GoalTypeEnum).toBeDefined();
   });
 
   describe('method: launch', () => {
@@ -69,6 +71,15 @@ describe('index file', () => {
 
     test('should return a new Object of VWO SDK', () => {
       const vwoClientInstance = indexFile.launch({});
+
+      expect(vwoClientInstance).toBeDefined();
+      expect(vwoClientInstance.activate).toBeDefined();
+      expect(vwoClientInstance.getVariationName).toBeDefined();
+      expect(vwoClientInstance.track).toBeDefined();
+    });
+
+    test('should return a new Object of VWO SDK', () => {
+      const vwoClientInstance = indexFile.launch([]);
 
       expect(vwoClientInstance).toBeDefined();
       expect(vwoClientInstance.activate).toBeDefined();

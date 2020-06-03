@@ -63,6 +63,14 @@ describe('FunctionUtil', () => {
 
       expect(newObj.b).toBeUndefined();
     });
+
+    it('should return the value for falsy values', () => {
+      expect(FunctionUtil.cloneObject(0)).toBe(0);
+      expect(FunctionUtil.cloneObject(null)).toBe(null);
+      expect(FunctionUtil.cloneObject(undefined)).toBe(undefined);
+      expect(FunctionUtil.cloneObject('')).toBe('');
+      expect(FunctionUtil.cloneObject(false)).toBe(false);
+    });
   });
 
   describe('method: getRandomNumber', () => {
@@ -86,6 +94,10 @@ describe('FunctionUtil', () => {
 
     it('should return false', () => {
       expect(Boolean(FunctionUtil.matchWithRegex('str', /^string/))).toBe(false);
+    });
+
+    it('should return null for incorrect first arg', () => {
+      expect(FunctionUtil.matchWithRegex({}, '')).toBe(null);
     });
   });
 });

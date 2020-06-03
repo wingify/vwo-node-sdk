@@ -192,7 +192,9 @@ function () {
 
     this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.VALID_CONFIGURATION, {
       file: file
-    })); // Setup event quque for sending impressions to VWO server
+    }));
+    SettingsFileManager.checkAndPoll(); // Checks if pollingInterval is passed then starts polling settingsFile
+    // Setup event quque for sending impressions to VWO server
 
     this.eventQueue = new EventQueue();
     this.SettingsFileManager = SettingsFileManager; // Process settingsFile for various things. For eg: assign bucket range to variation, etc.
@@ -2214,7 +2216,8 @@ module.exports = {
     UUID_FOR_USER: '({file}): Uuid generated for User ID:{userId} and accountId:{accountId} is {desiredUuid}',
     VALID_CONFIGURATION: '({file}): SDK configuration and account settings are valid',
     VARIATION_HASH_BUCKET_VALUE: '({file}): User ID:{userId} for Campaign:{campaignKey} having percent traffic:{percentTraffic} got hash-value:{hashValue} and bucket value:{bucketValue}',
-    WHITELISTING_SKIPPED: '({file}): For userId:{userId} of Campaign:{campaignKey}, whitelisting was skipped'
+    WHITELISTING_SKIPPED: '({file}): For userId:{userId} of Campaign:{campaignKey}, whitelisting was skipped',
+    STARTED_POLLING: '({file}): Polling of settings-file is registered with a periodic interval of {pollingInterval}ms'
   },
   ERROR_MESSAGES: {
     API_HAS_CORRUPTED_SETTINGS_FILE: '({file}): "{api}" API has corrupted settings-file. Please check or reach out to VWO support',
@@ -2240,7 +2243,12 @@ module.exports = {
     TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL: '({file}): Revenue value should be passed for revenue goal:{goalIdentifier} for Campaign:{campaignKey} and userId:{userId}',
     UNABLE_TO_CAST_VALUE: "({file}): Unable to cast value:{variableValue} to type:{variableType}, returning null",
     VARIABLE_NOT_FOUND: "({file}): Variable:{variableKey} for User ID:{userId} is not found in settings-file. Returning null",
-    NO_CAMPAIGN_FOUND: "({file}): No campaign found for goalIdentifier:{goalIdentifier}. Please verify from VWO app."
+    NO_CAMPAIGN_FOUND: "({file}): No campaign found for goalIdentifier:{goalIdentifier}. Please verify from VWO app.",
+    POLLING_FAILED: '({file}): Failed fetching of Settings-file via polling for the accountId:{accountId}',
+    POLLING_INTERVAL_INVALID: '({file}): pollingParameter provided is not of type number',
+    SDK_KEY_NOT_PROVIVED: '({file}): sdkKey is required along with pollingInterval to poll the settings-file',
+    SDK_KEY_NOT_STRING: '({file}): sdkKey provided is not of type string',
+    INVALID_USER_ID: '({file}): Invalid userId:{userId} passed to {method} of this file'
   },
   INFO_MESSAGES: {
     FEATURE_ENABLED_FOR_USER: "({file}): Campaign:{campaignKey} for user ID:{userId} is enabled",
@@ -2255,7 +2263,11 @@ module.exports = {
     VARIABLE_NOT_USED_RETURN_DEFAULT_VARIABLE_VALUE: "({file}): Variable:{variableKey} is not used in variation:{variationName}. Returning default value",
     VARIATION_ALLOCATED: '({file}): User ID:{userId} of Campaign:{campaignKey} got variation:{variationName}',
     VARIATION_RANGE_ALLOCATION: '({file}): Campaign:{campaignKey} having variation:{variationName} with weight:{variationWeight} got range as: ( {start} - {end} ))',
-    GOAL_ALREADY_TRACKED: '({file}): "Goal:{goalIdentifer} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. Skipping now.'
+    GOAL_ALREADY_TRACKED: '({file}): "Goal:{goalIdentifer} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. Skipping now.',
+    POLLING_SUCCESS: '({file}): Settings-file fetched successfully via polling for the accountId:{accountId}',
+    SETTINGS_FILE_UPDATED: '({file}): vwo-sdk instance is updated with the latest settings-file for the accountId:{accountId}',
+    USER_ELIGIBILITY_FOR_CAMPAIGN: '({file}): Is User ID:{userId} part of campaign? {isUserPart}',
+    GOT_VARIATION_FOR_USER: '({file}): userId:{userId} for campaign:{campaignTestKey} got variationName:{variationName}'
   },
   WARNING_MESSAGES: {}
 };
@@ -2530,6 +2542,7 @@ var logging = __webpack_require__(/*! ./services/logging */ "./lib/services/logg
 
 var FileNameEnum = __webpack_require__(/*! ./enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
 
+var file = FileNameEnum.INDEX;
 var setLogHandler = logging.setLogHandler,
     setLogLevel = logging.setLogLevel,
     LogLevelEnum = logging.LogLevelEnum,
@@ -2539,6 +2552,12 @@ var setLogHandler = logging.setLogHandler,
 var logger = logging.getLogger(); // By default, all ERRORS should be logged
 
 logging.setLogLevel(LogLevelEnum.ERROR);
+
+function logError(log) {
+  logger.log(LogLevelEnum.ERROR, log);
+  throw new Error(logger.log(LogLevelEnum.ERROR, log));
+}
+
 module.exports = {
   logging: logging,
   setLogger: setLogHandler,
@@ -2570,15 +2589,37 @@ module.exports = {
         throw new Error('goalTypeToTrack should be certain strings');
       }
 
-      if (config.logging && config.logging.level && !objectValues(LogLevelEnum).includes(sdkConfig.logging.level)) {
+      if (sdkConfig.logging && sdkConfig.logging.level && !objectValues(LogLevelEnum).includes(sdkConfig.logging.level)) {
         throw new Error('log level should be certain values');
+      }
+
+      if (sdkConfig.pollingInterval && !DataTypeUtil.isNumber(sdkConfig.pollingInterval)) {
+        var log = LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.POLLING_INTERVAL_INVALID, {
+          file: file
+        });
+        logError(log);
+      }
+
+      if (sdkConfig.pollingInterval && DataTypeUtil.isUndefined(sdkConfig.sdkKey)) {
+        var _log = LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SDK_KEY_NOT_PROVIVED, {
+          file: file
+        });
+
+        logError(_log);
+      }
+
+      if (sdkConfig.pollingInterval && !DataTypeUtil.isString(sdkConfig.sdkKey)) {
+        var _log2 = LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SDK_KEY_NOT_STRING, {
+          file: file
+        });
+
+        logError(_log2);
       }
 
       config = sdkConfig;
     } catch (err) {
       logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SDK_CONFIG_CORRUPTED, {
-        file: FileNameEnum.INDEX,
-        value: config.logging.haveColoredLogs
+        file: file
       }));
       config = {};
     } // If DEV mode, set colorful logs to true
@@ -2598,18 +2639,18 @@ module.exports = {
         logging.setLogHandler(config.logging.logger);
         logging.setLogLevel(logging.LogLevelEnum.NOTSET);
         logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.CUSTOM_LOGGER_USED, {
-          file: FileNameEnum.INDEX
+          file: file
         }));
       } else if (config.logging.logger) {
         logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CUSTOM_LOGGER_MISCONFIGURED, {
-          file: FileNameEnum.INDEX
+          file: file
         }));
       }
 
       if (config.logging.level !== undefined) {
         logging.setLogLevel(config.logging.level);
         logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.LOG_LEVEL_SET, {
-          file: FileNameEnum.INDEX,
+          file: file,
           level: LogNumberLevel['_' + config.logging.level]
         }));
       }
@@ -2618,7 +2659,7 @@ module.exports = {
 
     if (config.isDevelopmentMode) {
       logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.SET_DEVELOPMENT_MODE, {
-        file: FileNameEnum.INDEX
+        file: file
       }));
     } // Set logger on config Obkect, to be required later
 
@@ -2857,6 +2898,8 @@ var CampaignUtil = __webpack_require__(/*! ../utils/CampaignUtil */ "./lib/utils
 
 var FunctionUtil = __webpack_require__(/*! ../utils/FunctionUtil */ "./lib/utils/FunctionUtil.js");
 
+var SettingsFileUtil = __webpack_require__(/*! ../utils/SettingsFileUtil */ "./lib/utils/SettingsFileUtil.js");
+
 var logging = __webpack_require__(/*! ./logging */ "./lib/services/logging/index.js");
 
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
@@ -2910,6 +2953,47 @@ function () {
       }
 
       return true;
+    }
+  }, {
+    key: "checkAndPoll",
+    value: function checkAndPoll() {
+      var _this = this;
+
+      if (!this._configObj.pollingInterval || !this._configObj.sdkKey) {
+        return;
+      }
+
+      var lastSettingsFile = JSON.stringify(this._clonedSettingsFile);
+      setInterval(function () {
+        SettingsFileUtil.get(_this._clonedSettingsFile.accountId, _this._configObj.sdkKey).then(function (latestSettingsFile) {
+          _this._configObj.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.POLLING_SUCCESS, {
+            file: file,
+            accountId: _this._clonedSettingsFile.accountId
+          }));
+
+          var stringifiedLatestSettingsFile = JSON.stringify(latestSettingsFile);
+
+          if (stringifiedLatestSettingsFile !== lastSettingsFile) {
+            lastSettingsFile = stringifiedLatestSettingsFile;
+            _this._clonedSettingsFile = FunctionUtil.cloneObject(latestSettingsFile);
+
+            _this._configObj.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SETTINGS_FILE_UPDATED, {
+              file: file,
+              accountId: _this._clonedSettingsFile.accountId
+            }));
+          }
+        })["catch"](function (_e) {
+          _this._configObj.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.POLLING_FAILED, {
+            file: file,
+            accountId: _this._clonedSettingsFile.accountId
+          }));
+        });
+      }, this._configObj.pollingInterval);
+
+      this._configObj.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.STARTED_POLLING, {
+        file: file,
+        pollingInterval: this._configObj.pollingInterval
+      }));
     }
   }, {
     key: "processSettingsFile",

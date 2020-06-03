@@ -22,6 +22,8 @@ describe('XhrUtil', () => {
       expect(XhrUtil.send()).toBeUndefined();
       expect(XhrUtil.send({ method: 'GET' })).toBeUndefined();
       expect(XhrUtil.send({ url: 'https://vwo.com' })).toBeUndefined();
+      const promise = XhrUtil.send({ url: 'https://vwo.com', method: 'GET' });
+      expect(typeof promise.then).toBe('function');
     });
   });
 });

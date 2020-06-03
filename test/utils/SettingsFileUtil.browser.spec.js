@@ -19,6 +19,7 @@ const SettingsFileUtil = require('../../lib/utils/SettingsFileUtil');
 let accountId;
 let sdkKey;
 beforeEach(() => {
+  process.env = undefined;
   accountId = 12345;
   sdkKey = 'aa11110pp22222aa333ff4c5b66r77ee';
 });
