@@ -44,7 +44,7 @@ There are multiple ways to load the library
 
 ### Documentation
 
-Refer [Official VWO Documentation](https://developers.vwo.com/reference#server-side-introduction)
+Refer [Official VWO Documentation](https://developers.vwo.com/reference#fullstack-introduction)
 
 ### Demo NodeJs application
 
