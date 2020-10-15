@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.8.3
+ * vwo-javascript-sdk - v1.9.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2020 Wingify Software Pvt. Ltd.
@@ -1424,7 +1424,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.8.3"
+    version: "1.9.0"
   };
 } else {}
 
@@ -2320,6 +2320,7 @@ module.exports = {
     USER_RECEIVED_VARIABLE_VALUE: "({file}): Value for variable:{variableKey} of feature flag:{campaignKey} is:{variableValue} for user:{userId}",
     VARIABLE_NOT_USED_RETURN_DEFAULT_VARIABLE_VALUE: "({file}): Variable:{variableKey} is not used in variation:{variationName}. Returning default value",
     VARIATION_ALLOCATED: '({file}): User ID:{userId} of Campaign:{campaignKey} got variation:{variationName}',
+    NO_VARIATION_ALLOCATED: '({file}): User ID:{userId} of Campaign:{campaignKey} did not get any variation',
     VARIATION_RANGE_ALLOCATION: '({file}): Campaign:{campaignKey} having variation:{variationName} with weight:{variationWeight} got range as: ( {start} - {end} ))',
     GOAL_ALREADY_TRACKED: '({file}): "Goal:{goalIdentifer} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. Skipping now.',
     POLLING_SUCCESS: '({file}): Settings-file fetched successfully via polling for the accountId:{accountId}',
