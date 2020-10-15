@@ -155,9 +155,16 @@ var api = __webpack_require__(/*! ./api */ "./lib/api/index.js");
 
 var CachingUtil = __webpack_require__(/*! ./utils/CachingUtil */ "./lib/utils/CachingUtil.js");
 
+var Constants;
+var BatchEventsDispatcher;
+
 var EventQueue = __webpack_require__(/*! ./services/EventQueue */ "./lib/services/EventQueue.js");
 
 var SettingsFileService = __webpack_require__(/*! ./services/SettingsFileManager */ "./lib/services/SettingsFileManager.js");
+
+var BatchEventsQueue;
+
+if (false) {}
 
 var logging = __webpack_require__(/*! ./services/logging */ "./lib/services/logging/index.js");
 
@@ -197,7 +204,25 @@ function () {
     // Setup event quque for sending impressions to VWO server
 
     this.eventQueue = new EventQueue();
-    this.SettingsFileManager = SettingsFileManager; // Process settingsFile for various things. For eg: assign bucket range to variation, etc.
+    this.SettingsFileManager = SettingsFileManager;
+
+    if (config.batchEvents) {
+      var accountId = SettingsFileManager.getSettingsFile().accountId;
+      var sdkKey = SettingsFileManager.getSettingsFile().sdkKey;
+      this.batchEventsQueue = new BatchEventsQueue(Object.assign({}, config.batchEvents, {
+        dispatcher: function dispatcher(events, callback) {
+          return BatchEventsDispatcher({
+            ev: events
+          }, callback, {
+            a: accountId,
+            sd: Constants.SDK_NAME,
+            sv: Constants.SDK_VERSION
+          }, sdkKey);
+        }
+      }));
+      this.flushEvents = this.batchEventsQueue.flushAndClearInterval.bind(this.batchEventsQueue);
+    } // Process settingsFile for various things. For eg: assign bucket range to variation, etc.
+
 
     this.SettingsFileManager.processSettingsFile();
     this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.SDK_INITIALIZED, {
@@ -481,8 +506,15 @@ function activate(vwoInstance, campaignKey, userId) {
   } // Variation found...let VWO server knows about it to show report stats
 
 
-  var properties = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId);
-  vwoInstance.eventQueue.process(config, properties, vwoInstance);
+  if (config.batchEvents) {
+    var properties = ImpressionUtil.buildBatchEventForTrackingUser(settingsFile, campaign.id, variationId, userId);
+    vwoInstance.batchEventsQueue.enqueue(properties);
+  } else {
+    var _properties = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId);
+
+    vwoInstance.eventQueue.process(config, _properties, vwoInstance);
+  }
+
   return variationName;
 }
 
@@ -980,8 +1012,14 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
   if (variationName && CampaignUtil.isFeatureTestCampaign(campaign)) {
     isFeatureEnabled = variation.isFeatureEnabled; // Variation found...let VWO server knows about it to show report stats
 
-    var properties = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId);
-    vwoInstance.eventQueue.process(config, properties, vwoInstance);
+    if (config.batchEvents) {
+      var properties = ImpressionUtil.buildBatchEventForTrackingUser(settingsFile, campaign.id, variationId, userId);
+      vwoInstance.batchEventsQueue.enqueue(properties);
+    } else {
+      var _properties = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId);
+
+      vwoInstance.eventQueue.process(config, _properties, vwoInstance);
+    }
   } else if (variationName && CampaignUtil.isFeatureRolloutCampaign(campaign)) {
     isFeatureEnabled = true;
   }
@@ -1100,8 +1138,15 @@ function push(vwoInstance, tagKey, tagValue, userId) {
     return false;
   }
 
-  var properties = ImpressionUtil.buildEventForPushing(settingsFile, tagKey, tagValue, userId);
-  vwoInstance.eventQueue.process(config, properties, vwoInstance);
+  if (config.batchEvents) {
+    var properties = ImpressionUtil.buildBatchEventForPushing(settingsFile, tagKey, tagValue, userId);
+    vwoInstance.batchEventsQueue.enqueue(properties);
+  } else {
+    var _properties = ImpressionUtil.buildEventForPushing(settingsFile, tagKey, tagValue, userId);
+
+    vwoInstance.eventQueue.process(config, _properties, vwoInstance);
+  }
+
   return true;
 }
 
@@ -1328,8 +1373,14 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
     } // If goal is found, send an impression to VWO server for report stats
 
 
-    var properties = ImpressionUtil.buildEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue);
-    vwoInstance.eventQueue.process(config, properties, vwoInstance);
+    if (config.batchEvents) {
+      var properties = ImpressionUtil.buildBatchEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue);
+      vwoInstance.batchEventsQueue.enqueue(properties);
+    } else {
+      var _properties = ImpressionUtil.buildEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue);
+
+      vwoInstance.eventQueue.process(config, _properties, vwoInstance);
+    }
 
     DecisionUtil._saveUserData(config, campaign, variationName, userId, goalIdentifier);
 
@@ -1373,7 +1424,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.8.2"
+    version: "1.8.3"
   };
 } else {}
 
@@ -1384,6 +1435,7 @@ module.exports = {
   SEED_VALUE: 1,
   MAX_TRAFFIC_PERCENT: 100,
   MAX_TRAFFIC_VALUE: 10000,
+  MAX_EVENTS_PER_REQUEST: 5000,
   STATUS_RUNNING: 'RUNNING',
   SEED_URL: 'https://vwo.com',
   HTTP_PROTOCOL: 'http://',
@@ -2069,6 +2121,7 @@ module.exports = {
   EventQueue: "".concat(SERVICES_PATH, "/EventQueue"),
   LoggingManager: "".concat(SERVICES_PATH, "/LoggingManager"),
   SettingsFileManager: "".concat(SERVICES_PATH, "/SettingsFileManager"),
+  BatchEventsQueue: "".concat(SERVICES_PATH, "/BatchEventsQueue"),
   CachingUtil: "".concat(UTIL_PATH, "/CachingUtil"),
   CampaignUtil: "".concat(UTIL_PATH, "/CampaignUtil"),
   DataTypeUtil: "".concat(UTIL_PATH, "/DataTypeUtil"),
@@ -2079,7 +2132,8 @@ module.exports = {
   ImpressionUtil: "".concat(UTIL_PATH, "/ImpressionUtil"),
   UuidUtil: "".concat(UTIL_PATH, "/UuidUtil"),
   ValidateUtil: "".concat(UTIL_PATH, "/ValidateUtil"),
-  DecisionUtil: "".concat(UTIL_PATH, "/DecisionUtils")
+  DecisionUtil: "".concat(UTIL_PATH, "/DecisionUtils"),
+  HttpHandlerUtil: "".concat(UTIL_PATH, "/HttpHandlerUtil")
 };
 
 /***/ }),
@@ -2217,7 +2271,10 @@ module.exports = {
     VALID_CONFIGURATION: '({file}): SDK configuration and account settings are valid',
     VARIATION_HASH_BUCKET_VALUE: '({file}): User ID:{userId} for Campaign:{campaignKey} having percent traffic:{percentTraffic} got hash-value:{hashValue} and bucket value:{bucketValue}',
     WHITELISTING_SKIPPED: '({file}): For userId:{userId} of Campaign:{campaignKey}, whitelisting was skipped',
-    STARTED_POLLING: '({file}): Polling of settings-file is registered with a periodic interval of {pollingInterval}ms'
+    STARTED_POLLING: '({file}): Polling of settings-file is registered with a periodic interval of {pollingInterval}ms',
+    BATCH_EVENT_LIMIT_EXCEEDED: '({file}): Impression event - {endPoint} failed due to exceeding payload size. Parameter eventsPerRequest in batchEvents config in launch API has value:{eventsPerRequest} for accountId:{accountId}. Please read the official documentation for knowing the size limits.',
+    BULK_NOT_PROCESSED: "({file}): Batch events couldn't be received by VWO. Calling Flush Callback with error and data.",
+    BEFORE_FLUSHING: '({file}): Flushing events queue {manually} having {length} events. {timer}'
   },
   ERROR_MESSAGES: {
     API_HAS_CORRUPTED_SETTINGS_FILE: '({file}): "{api}" API has corrupted settings-file. Please check or reach out to VWO support',
@@ -2248,7 +2305,8 @@ module.exports = {
     POLLING_INTERVAL_INVALID: '({file}): pollingParameter provided is not of type number',
     SDK_KEY_NOT_PROVIVED: '({file}): sdkKey is required along with pollingInterval to poll the settings-file',
     SDK_KEY_NOT_STRING: '({file}): sdkKey provided is not of type string',
-    INVALID_USER_ID: '({file}): Invalid userId:{userId} passed to {method} of this file'
+    INVALID_USER_ID: '({file}): Invalid userId:{userId} passed to {method} of this file',
+    EVENT_BATCHING_NOT_OBJECT: '({file}): Batch events settings are not of type object.'
   },
   INFO_MESSAGES: {
     FEATURE_ENABLED_FOR_USER: "({file}): Campaign:{campaignKey} for user ID:{userId} is enabled",
@@ -2267,7 +2325,9 @@ module.exports = {
     POLLING_SUCCESS: '({file}): Settings-file fetched successfully via polling for the accountId:{accountId}',
     SETTINGS_FILE_UPDATED: '({file}): vwo-sdk instance is updated with the latest settings-file for the accountId:{accountId}',
     USER_ELIGIBILITY_FOR_CAMPAIGN: '({file}): Is User ID:{userId} part of campaign? {isUserPart}',
-    GOT_VARIATION_FOR_USER: '({file}): userId:{userId} for campaign:{campaignTestKey} got variationName:{variationName}'
+    GOT_VARIATION_FOR_USER: '({file}): userId:{userId} for campaign:{campaignTestKey} got variationName:{variationName}',
+    BULK_IMPRESSION_SUCCESS: '({file}): Impression event - {endPoint} was successfully received by VWO having accountId:{a}',
+    AFTER_FLUSHING: '({file}): Events queue having {length} events has been flushed {manually}'
   },
   WARNING_MESSAGES: {}
 };
@@ -2330,7 +2390,8 @@ var UrlEnum = {
   ACCOUNT_SETTINGS: '/server-side/settings',
   TRACK_USER: '/server-side/track-user',
   TRACK_GOAL: '/server-side/track-goal',
-  PUSH: '/server-side/push'
+  PUSH: '/server-side/push',
+  BATCH_EVENTS: '/server-side/batch-events'
 };
 module.exports = UrlEnum;
 
@@ -2538,6 +2599,9 @@ var SettingsFileUtil = __webpack_require__(/*! ./utils/SettingsFileUtil */ "./li
 
 var GoalTypeEnum = __webpack_require__(/*! ./enums/GoalTypeEnum */ "./lib/enums/GoalTypeEnum.js");
 
+var _require2 = __webpack_require__(/*! ./constants */ "./lib/constants/index.js"),
+    MAX_EVENTS_PER_REQUEST = _require2.MAX_EVENTS_PER_REQUEST;
+
 var logging = __webpack_require__(/*! ./services/logging */ "./lib/services/logging/index.js");
 
 var FileNameEnum = __webpack_require__(/*! ./enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
@@ -2614,6 +2678,22 @@ module.exports = {
         });
 
         logError(_log2);
+      }
+
+      if (!DataTypeUtil.isUndefined(sdkConfig.batchEvents) && !DataTypeUtil.isObject(sdkConfig.batchEvents)) {
+        var _log3 = LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.EVENT_BATCHING_NOT_OBJECT, {
+          file: file
+        });
+
+        logError(_log3);
+      }
+
+      if (DataTypeUtil.isObject(sdkConfig.batchEvents) && "undefined" === 'undefined') {
+        sdkConfig.batchEvents = null;
+      }
+
+      if (DataTypeUtil.isObject(sdkConfig.batchEvents) && (!(DataTypeUtil.isNumber(sdkConfig.batchEvents.eventsPerRequest) && sdkConfig.batchEvents.eventsPerRequest > 0 && sdkConfig.batchEvents.eventsPerRequest <= MAX_EVENTS_PER_REQUEST || DataTypeUtil.isNumber(sdkConfig.batchEvents.requestTimeInterval) && sdkConfig.batchEvents.requestTimeInterval >= 1) || sdkConfig.batchEvents.flushCallback && !DataTypeUtil.isFunction(sdkConfig.batchEvents.flushCallback))) {
+        throw new Error('Invalid batchEvents config');
       }
 
       config = sdkConfig;
@@ -4644,6 +4724,13 @@ function getBaseProperties(configObj, userId) {
   };
 }
 
+function getBasePropertiesForBulk(configObj, userId) {
+  return {
+    sId: FunctionUtil.getCurrentUnixTimestamp(),
+    u: UuidUtil.generateFor(userId, configObj.accountId)
+  };
+}
+
 module.exports = {
   /**
    * Build properties for the impression event
@@ -4658,6 +4745,26 @@ module.exports = {
     properties.tags = JSON.stringify({
       u: _defineProperty({}, encodeURIComponent(tagKey), encodeURIComponent(tagValue))
     });
+    logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_PUSH, {
+      file: FileNameEnum.ImpressionUtil,
+      properties: JSON.stringify(properties)
+    }));
+    return properties;
+  },
+
+  /**
+   * Build properties for the bulk impression event
+   *
+   * @param {String} userId the unique ID assigned to a user
+   * @param {String} tagKey the tag name
+   * @param {String} tagValue the tag value
+   */
+  buildBatchEventForPushing: function buildBatchEventForPushing(configObj, tagKey, tagValue, userId) {
+    var properties = Object.assign({}, getBasePropertiesForBulk(configObj, userId));
+    properties.eT = 3;
+    properties.t = encodeURIComponent(JSON.stringify({
+      u: _defineProperty({}, tagKey, tagValue)
+    }));
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_PUSH, {
       file: FileNameEnum.ImpressionUtil,
       properties: JSON.stringify(properties)
@@ -4691,6 +4798,28 @@ module.exports = {
   },
 
   /**
+   * Build properties for the bulk impression event
+   *
+   * @param {String} userId the unique ID assigned to a user
+   * @param {String} campaignKey, the Campaign ID
+   * @param {Number} variationId, the Variation ID
+   *
+   * @return null if campaign ID or variation ID is invalid
+   */
+  buildBatchEventForTrackingUser: function buildBatchEventForTrackingUser(configObj, campaignKey, variationId, userId) {
+    var properties = Object.assign({
+      e: campaignKey,
+      c: variationId
+    }, getBasePropertiesForBulk(configObj, userId));
+    properties.eT = 1;
+    logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_TRACK_USER, {
+      file: FileNameEnum.ImpressionUtil,
+      properties: JSON.stringify(properties)
+    }));
+    return properties;
+  },
+
+  /**
    * Build properties for the impression event
    *
    * @param {String} userId the unique ID assigned to a user
@@ -4714,6 +4843,38 @@ module.exports = {
 
     if (goal.type === GoalTypeEnum.REVENUE && ValidateUtil.isValidValue(revenue)) {
       properties['r'] = revenue;
+    }
+
+    logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_TRACK_GOAL, {
+      file: FileNameEnum.ImpressionUtil,
+      properties: JSON.stringify(properties)
+    }));
+    return properties;
+  },
+
+  /**
+   * Build properties for the bulk impression event
+   *
+   * @param {String} userId the unique ID assigned to a user
+   * @param {String} campaignKey, the Campaign ID
+   * @param {Number} variationId, the Variation ID
+   * @param {String} goalId, the Goal ID
+   * @param {String} revenue, the revenue generated on conversion
+   *
+   * @return null if campaign ID or variation ID is invalid
+   */
+  buildBatchEventForTrackingGoal: function buildBatchEventForTrackingGoal(configObj, campaignKey, variationId, userId) {
+    var goal = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
+    var revenue = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
+    var properties = Object.assign({
+      e: campaignKey,
+      c: variationId
+    }, getBasePropertiesForBulk(configObj, userId));
+    properties.eT = 2;
+    properties.g = goal.id;
+
+    if (goal.type === GoalTypeEnum.REVENUE && ValidateUtil.isValidValue(revenue)) {
+      properties.r = revenue;
     }
 
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_TRACK_GOAL, {

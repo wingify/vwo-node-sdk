@@ -4,11 +4,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2020-10-16
+### Added
+- Added support for batching of events sent to VWO server
+- Intoduced `batchEvents` config in launch API for setting when to send bulk events
+- Added `flushEvents` API to manually flush the batch events queue whne `batchEvents` config is passed. Note: `batchEvents` config i.e. `eventsPerRequest` and `requestTimeInterval` won't be considered while manually flushing
+
+```js
+var settingsFile = await vwoSdk.getSettingsFile(accountId, sdkKey);
+
+vwoSdk.lanuch({
+  settingsFile: settingsFile,
+  batchEvents: {
+    eventsPerRequest: 1000, // specify the number of events
+    requestTimeInterval: 10000, // specify the time limit fordraining the events (in seconds)
+    flushCallback: (err, events) => console.log(err, events) // optional callback to execute when queue events are flushed
+  }
+});
+
+// (optional): Manually flush the batch events queue to send impressions to VWO server.
+vwoSdk.flushEvents();
+```
+
 ## [1.8.3] - 2020-06-03
 ### Added
 - Added support for polling settingsFile automatically based on the interval provided al the time of using launch API
 ```js
 var settingsFile = await vwoSdk.getSettingsFile(accountId, sdkKey);
+
 vwoSdk.lanuch({
   settingsFile: settingsFile,
   pollInterval: 1000 // ms,

@@ -17,6 +17,7 @@
 const VWO = require('../lib/VWO');
 const ImpressionUtil = require('../lib/utils/ImpressionUtil');
 const logging = require('../lib/services/logging');
+const indexFile = require('../lib/index');
 
 const {
   settingsFile1,
@@ -53,6 +54,8 @@ const testUtil = require('./test-utils/TestUtil');
 const users = testUtil.getUsers();
 const mockFn = jest.fn();
 const GoalTypeEnum = require('../lib/enums/GoalTypeEnum');
+
+jest.useFakeTimers();
 
 const logger = { log: mockFn };
 
@@ -204,6 +207,142 @@ describe('Class VWO', () => {
     test('should process settingsFile if it is provided and is valid', () => {
       expect(vwoClientInstance.SettingsFileManager).toBeDefined();
       expect(vwoClientInstance.eventQueue).toBeDefined();
+    });
+  });
+
+  describe('Event Batching', () => {
+    test('Event Batching should be undefined if batchEvents is not passed', () => {
+      vwoClientInstance = indexFile.launch({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+      expect(vwoClientInstance.batchEventsQueue).toBeUndefined();
+    });
+
+    test('Event Batching should be undefined if batchEvents is not passed an object', () => {
+      vwoClientInstance = indexFile.launch({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService,
+        batchEvents: 4
+      });
+      expect(vwoClientInstance.batchEventsQueue).toBeUndefined();
+    });
+
+    test('Event Batching should be undefined if requestTimeInterval is not a number', () => {
+      vwoClientInstance = indexFile.launch({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService,
+        batchEvents: {
+          requestTimeInterval: 'u'
+        }
+      });
+      expect(vwoClientInstance.batchEventsQueue).toBeUndefined();
+    });
+
+    test('Event Batching should be undefined if eventsPerRequest is not a number', () => {
+      vwoClientInstance = indexFile.launch({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService,
+        batchEvents: {
+          eventsPerRequest: false
+        }
+      });
+      expect(vwoClientInstance.batchEventsQueue).toBeUndefined();
+    });
+
+    test('Event Batching should be undefined if flushCallback is not a function', () => {
+      vwoClientInstance = indexFile.launch({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService,
+        batchEvents: {
+          eventsPerRequest: 3,
+          flushCallback: {}
+        }
+      });
+      expect(vwoClientInstance.batchEventsQueue).toBeUndefined();
+    });
+
+    test('Event Batching should be defined if passed correct settings', () => {
+      vwoClientInstance = indexFile.launch({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService,
+        batchEvents: {
+          requestTimeInterval: 100,
+          eventsPerRequest: 10,
+          flushCallback: () => {}
+        }
+      });
+      expect(vwoClientInstance.batchEventsQueue).toBeDefined();
+    });
+
+    test('Event Batching: enqueue should queue an event, flushEvents should flush queue', () => {
+      vwoClientInstance = indexFile.launch({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService,
+        batchEvents: {
+          requestTimeInterval: 100,
+          eventsPerRequest: 10,
+          flushCallback: () => {}
+        }
+      });
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(0);
+      vwoClientInstance.batchEventsQueue.enqueue(1);
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(1);
+      vwoClientInstance.flushEvents();
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(0);
+    });
+
+    test('Event Batching: queue should be flushed if eventsPerRequest is reached', () => {
+      vwoClientInstance = indexFile.launch({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService,
+        batchEvents: {
+          requestTimeInterval: 1000,
+          eventsPerRequest: 2,
+          flushCallback: () => {}
+        }
+      });
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(0);
+      vwoClientInstance.batchEventsQueue.enqueue(1);
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(1);
+      vwoClientInstance.batchEventsQueue.enqueue(1);
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(0);
+    });
+
+    test('Event Batching: queue should be flushed if requestTimeInterval is reached', () => {
+      vwoClientInstance = indexFile.launch({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService,
+        batchEvents: {
+          requestTimeInterval: 1000,
+          eventsPerRequest: 3,
+          flushCallback: () => {}
+        }
+      });
+      setTimeout(() => expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(0), 1000);
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(0);
+      vwoClientInstance.batchEventsQueue.enqueue(1);
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(1);
+      vwoClientInstance.batchEventsQueue.enqueue(2);
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(2);
     });
   });
 
