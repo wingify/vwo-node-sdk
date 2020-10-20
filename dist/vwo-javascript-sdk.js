@@ -157,6 +157,7 @@ var CachingUtil = __webpack_require__(/*! ./utils/CachingUtil */ "./lib/utils/Ca
 
 var Constants;
 var BatchEventsDispatcher;
+var customEventUtil;
 
 var EventQueue = __webpack_require__(/*! ./services/EventQueue */ "./lib/services/EventQueue.js");
 
@@ -188,9 +189,9 @@ function () {
 
     this.userStorageService = config.userStorageService;
     this.logger = config.logger;
-    var SettingsFileManager = new SettingsFileService(config); // Validate the config file i.e. check if required fields contain appropriate data
+    var settingsFileManager = new SettingsFileService(config); // Validate the config file i.e. check if required fields contain appropriate data
 
-    if (!SettingsFileManager.isSettingsFileValid()) {
+    if (!settingsFileManager.isSettingsFileValid()) {
       this.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.INVALID_SETTINGS_FILE, {
         file: file
       }));
@@ -200,28 +201,13 @@ function () {
     this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.VALID_CONFIGURATION, {
       file: file
     }));
-    SettingsFileManager.checkAndPoll(); // Checks if pollingInterval is passed then starts polling settingsFile
+    settingsFileManager.checkAndPoll(); // Checks if pollingInterval is passed then starts polling settingsFile
     // Setup event quque for sending impressions to VWO server
 
     this.eventQueue = new EventQueue();
-    this.SettingsFileManager = SettingsFileManager;
+    this.SettingsFileManager = settingsFileManager;
 
-    if (config.batchEvents) {
-      var accountId = SettingsFileManager.getSettingsFile().accountId;
-      var sdkKey = SettingsFileManager.getSettingsFile().sdkKey;
-      this.batchEventsQueue = new BatchEventsQueue(Object.assign({}, config.batchEvents, {
-        dispatcher: function dispatcher(events, callback) {
-          return BatchEventsDispatcher({
-            ev: events
-          }, callback, {
-            a: accountId,
-            sd: Constants.SDK_NAME,
-            sv: Constants.SDK_VERSION
-          }, sdkKey);
-        }
-      }));
-      this.flushEvents = this.batchEventsQueue.flushAndClearInterval.bind(this.batchEventsQueue);
-    } // Process settingsFile for various things. For eg: assign bucket range to variation, etc.
+    if (false) { var sdkKey, accountId; } // Process settingsFile for various things. For eg: assign bucket range to variation, etc.
 
 
     this.SettingsFileManager.processSettingsFile();
@@ -361,6 +347,17 @@ function () {
         this.logger.log(LogLevelEnum.ERROR, err.message);
         return false;
       }
+    }
+    /**
+     * Manually flush impression events to VWO which are queued in batch queue as per batchEvents config
+     */
+
+  }, {
+    key: "flushEvents",
+    value: function flushEvents() {
+      var _this = this;
+
+      if (false) {}
     }
   }]);
 
@@ -1436,6 +1433,9 @@ module.exports = {
   MAX_TRAFFIC_PERCENT: 100,
   MAX_TRAFFIC_VALUE: 10000,
   MAX_EVENTS_PER_REQUEST: 5000,
+  DEFAULT_EVENTS_PER_REQUEST: 100,
+  DEFAULT_REQUEST_TIME_INTERVAL: 600,
+  // 10 * 60(secs) = 600 secs i.e. 10 minutes
   STATUS_RUNNING: 'RUNNING',
   SEED_URL: 'https://vwo.com',
   HTTP_PROTOCOL: 'http://',
@@ -2272,9 +2272,10 @@ module.exports = {
     VARIATION_HASH_BUCKET_VALUE: '({file}): User ID:{userId} for Campaign:{campaignKey} having percent traffic:{percentTraffic} got hash-value:{hashValue} and bucket value:{bucketValue}',
     WHITELISTING_SKIPPED: '({file}): For userId:{userId} of Campaign:{campaignKey}, whitelisting was skipped',
     STARTED_POLLING: '({file}): Polling of settings-file is registered with a periodic interval of {pollingInterval}ms',
-    BATCH_EVENT_LIMIT_EXCEEDED: '({file}): Impression event - {endPoint} failed due to exceeding payload size. Parameter eventsPerRequest in batchEvents config in launch API has value:{eventsPerRequest} for accountId:{accountId}. Please read the official documentation for knowing the size limits.',
-    BULK_NOT_PROCESSED: "({file}): Batch events couldn't be received by VWO. Calling Flush Callback with error and data.",
-    BEFORE_FLUSHING: '({file}): Flushing events queue {manually} having {length} events. {timer}'
+    BATCH_EVENT_LIMIT_EXCEEDED: '({file}): Impression event - {endPoint} failed due to exceeding payload size. Parameter eventsPerRequest in batchEvents config in launch API has value:{eventsPerRequest} for accountId:{accountId}. Please read the official documentation for knowing the size limits',
+    BULK_NOT_PROCESSED: "({file}): Batch events couldn't be received by VWO. Calling Flush Callback with error and data",
+    BEFORE_FLUSHING: '({file}): Flushing events queue {manually} having {length} events for account:{accountId}. {timer}',
+    FLUSH_EVENTS: '{{file}}: Manually flushing events for account:{accountId} having {queueLength} events'
   },
   ERROR_MESSAGES: {
     API_HAS_CORRUPTED_SETTINGS_FILE: '({file}): "{api}" API has corrupted settings-file. Please check or reach out to VWO support',
@@ -2296,7 +2297,7 @@ module.exports = {
     TAG_KEY_LENGTH_EXCEEDED: '({file}): Length of tagKey:{tagKey} for userID:{userId} can not be greater than 255',
     TAG_VALUE_LENGTH_EXCEEDED: '({file}): Length of value:{tagValue} of tagKey:{tagKey} for userID:{userId} can not be greater than 255',
     TRACK_API_GOAL_NOT_FOUND: '({file}): Goal:{goalIdentifier} not found for Campaign:{campaignKey} and userId:{userId}',
-    TRACK_API_MISSING_PARAMS: '({file}): "track" API got bad parameters. It expects campaignKey(String or Array of strings or null or undefined) as first, userId(String) as second, goalIdentifier(String/Number) as third and options(optional Object) as fourth argument.',
+    TRACK_API_MISSING_PARAMS: '({file}): "track" API got bad parameters. It expects campaignKey(String or Array of strings or null or undefined) as first, userId(String) as second, goalIdentifier(String/Number) as third and options(optional Object) as fourth argument',
     TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL: '({file}): Revenue value should be passed for revenue goal:{goalIdentifier} for Campaign:{campaignKey} and userId:{userId}',
     UNABLE_TO_CAST_VALUE: "({file}): Unable to cast value:{variableValue} to type:{variableType}, returning null",
     VARIABLE_NOT_FOUND: "({file}): Variable:{variableKey} for User ID:{userId} is not found in settings-file. Returning null",
@@ -2306,7 +2307,8 @@ module.exports = {
     SDK_KEY_NOT_PROVIVED: '({file}): sdkKey is required along with pollingInterval to poll the settings-file',
     SDK_KEY_NOT_STRING: '({file}): sdkKey provided is not of type string',
     INVALID_USER_ID: '({file}): Invalid userId:{userId} passed to {method} of this file',
-    EVENT_BATCHING_NOT_OBJECT: '({file}): Batch events settings are not of type object.'
+    EVENT_BATCHING_NOT_OBJECT: '({file}): Batch events settings are not of type object',
+    NO_BATCH_QUEUE: '{{file}}: No batch queue present for account:{accountId} when calling flushEvents API. Check batchEvents config in launch API'
   },
   INFO_MESSAGES: {
     FEATURE_ENABLED_FOR_USER: "({file}): Campaign:{campaignKey} for user ID:{userId} is enabled",
@@ -2322,7 +2324,7 @@ module.exports = {
     VARIATION_ALLOCATED: '({file}): User ID:{userId} of Campaign:{campaignKey} got variation:{variationName}',
     NO_VARIATION_ALLOCATED: '({file}): User ID:{userId} of Campaign:{campaignKey} did not get any variation',
     VARIATION_RANGE_ALLOCATION: '({file}): Campaign:{campaignKey} having variation:{variationName} with weight:{variationWeight} got range as: ( {start} - {end} ))',
-    GOAL_ALREADY_TRACKED: '({file}): "Goal:{goalIdentifer} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. Skipping now.',
+    GOAL_ALREADY_TRACKED: '({file}): "Goal:{goalIdentifer} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. Skipping now',
     POLLING_SUCCESS: '({file}): Settings-file fetched successfully via polling for the accountId:{accountId}',
     SETTINGS_FILE_UPDATED: '({file}): vwo-sdk instance is updated with the latest settings-file for the accountId:{accountId}',
     USER_ELIGIBILITY_FOR_CAMPAIGN: '({file}): Is User ID:{userId} part of campaign? {isUserPart}',
@@ -2693,9 +2695,7 @@ module.exports = {
         sdkConfig.batchEvents = null;
       }
 
-      if (DataTypeUtil.isObject(sdkConfig.batchEvents) && (!(DataTypeUtil.isNumber(sdkConfig.batchEvents.eventsPerRequest) && sdkConfig.batchEvents.eventsPerRequest > 0 && sdkConfig.batchEvents.eventsPerRequest <= MAX_EVENTS_PER_REQUEST || DataTypeUtil.isNumber(sdkConfig.batchEvents.requestTimeInterval) && sdkConfig.batchEvents.requestTimeInterval >= 1) || sdkConfig.batchEvents.flushCallback && !DataTypeUtil.isFunction(sdkConfig.batchEvents.flushCallback))) {
-        throw new Error('Invalid batchEvents config');
-      }
+      if (false) {}
 
       config = sdkConfig;
     } catch (err) {
@@ -4761,16 +4761,7 @@ module.exports = {
    * @param {String} tagValue the tag value
    */
   buildBatchEventForPushing: function buildBatchEventForPushing(configObj, tagKey, tagValue, userId) {
-    var properties = Object.assign({}, getBasePropertiesForBulk(configObj, userId));
-    properties.eT = 3;
-    properties.t = encodeURIComponent(JSON.stringify({
-      u: _defineProperty({}, tagKey, tagValue)
-    }));
-    logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_PUSH, {
-      file: FileNameEnum.ImpressionUtil,
-      properties: JSON.stringify(properties)
-    }));
-    return properties;
+    if (false) { var properties; }
   },
 
   /**
@@ -4808,16 +4799,7 @@ module.exports = {
    * @return null if campaign ID or variation ID is invalid
    */
   buildBatchEventForTrackingUser: function buildBatchEventForTrackingUser(configObj, campaignKey, variationId, userId) {
-    var properties = Object.assign({
-      e: campaignKey,
-      c: variationId
-    }, getBasePropertiesForBulk(configObj, userId));
-    properties.eT = 1;
-    logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_TRACK_USER, {
-      file: FileNameEnum.ImpressionUtil,
-      properties: JSON.stringify(properties)
-    }));
-    return properties;
+    if (false) { var properties; }
   },
 
   /**
@@ -4867,22 +4849,8 @@ module.exports = {
   buildBatchEventForTrackingGoal: function buildBatchEventForTrackingGoal(configObj, campaignKey, variationId, userId) {
     var goal = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
     var revenue = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
-    var properties = Object.assign({
-      e: campaignKey,
-      c: variationId
-    }, getBasePropertiesForBulk(configObj, userId));
-    properties.eT = 2;
-    properties.g = goal.id;
 
-    if (goal.type === GoalTypeEnum.REVENUE && ValidateUtil.isValidValue(revenue)) {
-      properties.r = revenue;
-    }
-
-    logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_TRACK_GOAL, {
-      file: FileNameEnum.ImpressionUtil,
-      properties: JSON.stringify(properties)
-    }));
-    return properties;
+    if (false) { var properties; }
   }
 };
 

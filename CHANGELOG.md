@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.1] - 2020-10-20
+### Changed
+- `flushEvents` API returns promise to know whether the batch request passes or fails
+- If `requestTimeInterval` is passed, it will only set the timer when the first event will arrive
+- If `requestTimeInterval` is provided, after flushing of events, new interval will be registered when the first event will arrive
+
+```js
+vwoClientInstance.flushEvents().then(status => {
+  console.log(status); // true/false depending on network request status
+})
+```
+
 ## [1.9.0] - 2020-10-16
 ### Added
 - Added support for batching of events sent to VWO server
@@ -23,7 +35,7 @@ vwoSdk.lanuch({
 });
 
 // (optional): Manually flush the batch events queue to send impressions to VWO server.
-vwoSdk.flushEvents();
+vwoClientInstance.flushEvents();
 ```
 
 ## [1.8.3] - 2020-06-03
@@ -92,15 +104,15 @@ To prevent ordered arguments and increasing use-cases, we are moving all optiona
 #### Before
 ```js
 // activae API
-vwoSdk.activate(campaignKey, userId, customVariables);
+vwoClientInstance.activate(campaignKey, userId, customVariables);
 // getVariation API
-vwoSdk.getVariation(campaignKey, userId, customVariables);
+vwoClientInstance.getVariation(campaignKey, userId, customVariables);
 // track API
-vwoSdk.track(campaignKey, userId, goalIdentifier, revenueValue, customVariables);
+vwoClientInstance.track(campaignKey, userId, goalIdentifier, revenueValue, customVariables);
 // isFeatureEnabled API
-vwoSdk.isFeatureEnabled(campaignKey, userId, customVariables);
+vwoClientInstance.isFeatureEnabled(campaignKey, userId, customVariables);
 // getFeatureVariableValue API
-vwoSdk.getFeatureVariableValue(campaignKey, variableKey, userId, customVariables);
+vwoClientInstance.getFeatureVariableValue(campaignKey, variableKey, userId, customVariables);
 ```
 #### After
 ```js
@@ -114,15 +126,15 @@ var options = {
   revenueValue: 1000.12
 };
 // activae API
-vwoSdk.activate(campaignKey, userId, options);
+vwoClientInstance.activate(campaignKey, userId, options);
 // getVariation API
-vwoSdk.getVariation(campaignKey, userId, options);
+vwoClientInstance.getVariation(campaignKey, userId, options);
 // track API
-vwoSdk.track(campaignKey, userId, goalIdentifier, options);
+vwoClientInstance.track(campaignKey, userId, goalIdentifier, options);
 // isFeatureEnabled API
-vwoSdk.isFeatureEnabled(campaignKey, userId, options);
+vwoClientInstance.isFeatureEnabled(campaignKey, userId, options);
 // getFeatureVariableValue API
-vwoSdk.getFeatureVariableValue(campaignKey, variableKey, userId, options);
+vwoClientInstance.getFeatureVariableValue(campaignKey, variableKey, userId, options);
 ```
 ### Added
 Forced Variation capabilites
