@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `flushEvents` API returns promise to know whether the batch request passes or fails
 - If `requestTimeInterval` is passed, it will only set the timer when the first event will arrive
 - If `requestTimeInterval` is provided, after flushing of events, new interval will be registered when the first event will arrive
+- If `eventsPerRequest` is not provided, the default value of `600` i.e. `10 minutes` will be used
+- If `requestTimeInterval` is not provided, the default value of `100` events will be used
 
 ```js
 vwoClientInstance.flushEvents().then(status => {
