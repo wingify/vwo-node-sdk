@@ -153,8 +153,6 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  */
 var api = __webpack_require__(/*! ./api */ "./lib/api/index.js");
 
-var CachingUtil = __webpack_require__(/*! ./utils/CachingUtil */ "./lib/utils/CachingUtil.js");
-
 var Constants;
 var BatchEventsDispatcher;
 var customEventUtil;
@@ -213,9 +211,7 @@ function () {
     this.SettingsFileManager.processSettingsFile();
     this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.SDK_INITIALIZED, {
       file: file
-    })); // Reset any cached values on re-initializing the SDK
-
-    CachingUtil.resetCache();
+    }));
   } // PUBLIC METHODS
 
   /**
@@ -358,6 +354,21 @@ function () {
       var _this = this;
 
       if (false) {}
+    }
+    /**
+     * Fetch latest settings-file and update so that vwoClientInstance could use latest settings
+     * Helpful especially when using webhooks
+     *
+     * @param {Number} accountId
+     * @param {String} sdkKey
+     *
+     * @return {Promise}
+     */
+
+  }, {
+    key: "getAndUpdateSettingsFile",
+    value: function getAndUpdateSettingsFile(accountId, sdkKey) {
+      return this.SettingsFileManager.getAndUpdateSettingsFile(accountId, sdkKey);
     }
   }]);
 
@@ -1951,37 +1962,6 @@ module.exports = ApiEnum;
 
 /***/ }),
 
-/***/ "./lib/enums/CacheEnum.js":
-/*!********************************!*\
-  !*** ./lib/enums/CacheEnum.js ***!
-  \********************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-/**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-module.exports = {
-  LOOK_CAMPAIGN_GOAL: 'lookCampaignGoal',
-  LOOK_CAMPAIGN_WITH_ID: 'lookCampaignWithId',
-  LOOK_CAMPAIGN_WITH_KEY: 'lookCampaignWithKey',
-  LOOK_CAMPAIGN_VARIATION: 'lookCampaignVariation'
-};
-
-/***/ }),
-
 /***/ "./lib/enums/CampaignTypeEnum.js":
 /*!***************************************!*\
   !*** ./lib/enums/CampaignTypeEnum.js ***!
@@ -2122,7 +2102,6 @@ module.exports = {
   LoggingManager: "".concat(SERVICES_PATH, "/LoggingManager"),
   SettingsFileManager: "".concat(SERVICES_PATH, "/SettingsFileManager"),
   BatchEventsQueue: "".concat(SERVICES_PATH, "/BatchEventsQueue"),
-  CachingUtil: "".concat(UTIL_PATH, "/CachingUtil"),
   CampaignUtil: "".concat(UTIL_PATH, "/CampaignUtil"),
   DataTypeUtil: "".concat(UTIL_PATH, "/DataTypeUtil"),
   EventDispatcher: "".concat(UTIL_PATH, "/EventDispatcher"),
@@ -2330,7 +2309,8 @@ module.exports = {
     USER_ELIGIBILITY_FOR_CAMPAIGN: '({file}): Is User ID:{userId} part of campaign? {isUserPart}',
     GOT_VARIATION_FOR_USER: '({file}): userId:{userId} for campaign:{campaignTestKey} got variationName:{variationName}',
     BULK_IMPRESSION_SUCCESS: '({file}): Impression event - {endPoint} was successfully received by VWO having accountId:{a}',
-    AFTER_FLUSHING: '({file}): Events queue having {length} events has been flushed {manually}'
+    AFTER_FLUSHING: '({file}): Events queue having {length} events has been flushed {manually}',
+    SETTINGS_NOT_UPDATED: '{{file}}: Settings-file fetched are same as earlier fetched settings'
   },
   WARNING_MESSAGES: {}
 };
@@ -2390,7 +2370,8 @@ module.exports = {
  */
 var UrlEnum = {
   BASE_URL: 'dev.visualwebsiteoptimizer.com',
-  ACCOUNT_SETTINGS: '/server-side/settings',
+  SETTINGS_URL: '/server-side/settings',
+  WEBHOOK_SETTINGS_URL: '/server-side/pull',
   TRACK_USER: '/server-side/track-user',
   TRACK_GOAL: '/server-side/track-goal',
   PUSH: '/server-side/push',
@@ -3056,9 +3037,15 @@ function () {
 
           if (stringifiedLatestSettingsFile !== lastSettingsFile) {
             lastSettingsFile = stringifiedLatestSettingsFile;
-            _this._clonedSettingsFile = FunctionUtil.cloneObject(latestSettingsFile);
+
+            _this.updateSettingsFile(latestSettingsFile);
 
             _this._configObj.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SETTINGS_FILE_UPDATED, {
+              file: file,
+              accountId: _this._clonedSettingsFile.accountId
+            }));
+          } else {
+            _this._configObj.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SETTINGS_NOT_UPDATED, {
               file: file,
               accountId: _this._clonedSettingsFile.accountId
             }));
@@ -3092,6 +3079,44 @@ function () {
       }));
 
       return settingsFile;
+    }
+    /**
+     * Fetch latest settings-file and update so that vwoClientInstance could use latest settings
+     * Helpful especially when using webhooks
+     *
+     * @param {Number} accountId
+     * @param {String} sdkKey
+     *
+     * @return {Promise}
+     */
+
+  }, {
+    key: "getAndUpdateSettingsFile",
+    value: function getAndUpdateSettingsFile() {
+      var _this2 = this;
+
+      var accountId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._clonedSettingsFile.accountId;
+      var sdkKey = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this._clonedSettingsFile.sdkKey;
+      return new Promise(function (resolve, _reject) {
+        SettingsFileUtil.get(accountId, sdkKey, {
+          isViaWebhook: true
+        }).then(function (settings) {
+          _this2.updateSettingsFile(settings);
+
+          resolve(settings);
+        });
+      });
+    }
+    /**
+     * Update the settings-file on the instance so that latest settings could be used from next hit onwards
+     * @param {Object} settings
+     */
+
+  }, {
+    key: "updateSettingsFile",
+    value: function updateSettingsFile(settings) {
+      this._clonedSettingsFile = FunctionUtil.cloneObject(settings);
+      this.processSettingsFile();
     }
   }, {
     key: "getConfig",
@@ -3411,117 +3436,6 @@ module.exports = logging;
 
 /***/ }),
 
-/***/ "./lib/utils/CachingUtil.js":
-/*!**********************************!*\
-  !*** ./lib/utils/CachingUtil.js ***!
-  \**********************************/
-/*! no static exports found */
-/***/ (function(module, exports, __webpack_require__) {
-
-/**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-var DataTypeUtil = __webpack_require__(/*! ./DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
-var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
-var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
-var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
-var logger = logging.getLogger();
-var file = FileNameEnum.CachingUtil;
-var CachingUtil = {
-  _cache: {},
-  _generateCacheKey: function _generateCacheKey(keyPrefix, key) {
-    var finalKey = '';
-
-    if (DataTypeUtil.isString(key) || DataTypeUtil.isNumber(key)) {
-      finalKey = "".concat(keyPrefix, "__").concat(key);
-    } else if (DataTypeUtil.isObject(key)) {
-      var combinedKeys = '';
-
-      for (var objKey in key) {
-        if (key.hasOwnProperty(objKey)) {
-          combinedKeys += "__".concat(key[objKey]);
-        }
-      }
-
-      finalKey = "".concat(keyPrefix).concat(combinedKeys);
-    }
-
-    return finalKey;
-  },
-  resetCache: function resetCache() {
-    CachingUtil._cache = {};
-    logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.RESET_CACHE, {
-      file: file
-    }));
-  },
-  get: function get(keyPrefix, key) {
-    if (keyPrefix && key) {
-      var finalKey = CachingUtil._generateCacheKey(keyPrefix, key);
-
-      if (CachingUtil._cache[finalKey]) {
-        logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.GOT_FROM_CACHE, {
-          file: file,
-          finalKey: finalKey
-        }));
-        return CachingUtil._cache[finalKey];
-      }
-
-      return false;
-    }
-
-    return false;
-  },
-  set: function set(keyPrefix, key, data) {
-    if (key && data) {
-      var finalKey = CachingUtil._generateCacheKey(keyPrefix, key);
-
-      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.SET_IN_CACHE, {
-        file: file,
-        finalKey: finalKey
-      }));
-      CachingUtil._cache[finalKey] = data;
-    }
-
-    return false;
-  }
-  /* remove: (keyPrefix, key) => {
-    if (key && keyPrefix) {
-      let finalKey = CachingUtil._generateCacheKey(keyPrefix, key);
-       logger.log(
-        LogLevelEnum.DEBUG,
-        LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.REMOVE_FROM_CACHE, {
-          file,
-          finalKey
-        })
-      );
-      delete CachingUtil._cache[finalKey];
-       return true;
-    }
-     return false;
-  } */
-
-};
-module.exports = CachingUtil;
-
-/***/ }),
-
 /***/ "./lib/utils/CampaignUtil.js":
 /*!***********************************!*\
   !*** ./lib/utils/CampaignUtil.js ***!
@@ -3546,11 +3460,7 @@ module.exports = CachingUtil;
  */
 var ValidateUtil = __webpack_require__(/*! ./ValidateUtil */ "./lib/utils/ValidateUtil.js");
 
-var CachingUtil = __webpack_require__(/*! ./CachingUtil */ "./lib/utils/CachingUtil.js");
-
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
-
-var CacheEnum = __webpack_require__(/*! ../enums/CacheEnum */ "./lib/enums/CacheEnum.js");
 
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
 
@@ -3581,20 +3491,11 @@ var CampaignUtil = {
     return Math.min(startRange, Constants.MAX_TRAFFIC_VALUE);
   },
   getCampaignBasedOnId: function getCampaignBasedOnId(settingsFile, campaignId) {
-    var cachePrefix = CacheEnum.LOOK_CAMPAIGN_WITH_ID;
-    var cachedValue = CachingUtil.get(cachePrefix, campaignId);
-
-    if (cachedValue) {
-      return cachedValue;
-    }
-
     var campaign;
 
     for (var i = 0; i < settingsFile.campaigns.length; i++) {
       if (parseInt(settingsFile.campaigns[i].id, 10) === parseInt(campaignId, 10)) {
-        campaign = settingsFile.campaigns[i]; // save in cache for faster evaluation next time
-
-        CachingUtil.set(cachePrefix, campaignId, campaign);
+        campaign = settingsFile.campaigns[i];
         break;
       }
     }
@@ -3624,20 +3525,11 @@ var CampaignUtil = {
     }
   },
   getCampaign: function getCampaign(settingsFile, campaignKey) {
-    var cachePrefix = CacheEnum.LOOK_CAMPAIGN_WITH_KEY;
-    var cachedValue = CachingUtil.get(cachePrefix, campaignKey);
-
-    if (cachedValue) {
-      return cachedValue;
-    }
-
     var campaign;
 
     for (var i = 0; i < settingsFile.campaigns.length; i++) {
       if (settingsFile.campaigns[i].key === campaignKey) {
-        campaign = settingsFile.campaigns[i]; // save in cache for faster evaluation next time
-
-        CachingUtil.set(cachePrefix, campaignKey, campaign);
+        campaign = settingsFile.campaigns[i];
         break;
       }
     }
@@ -3761,16 +3653,6 @@ var CampaignUtil = {
     return stepFactor;
   },
   getCampaignGoal: function getCampaignGoal(settingsFile, campaignKey, goalIdentifier) {
-    var cachePrefix = CacheEnum.LOOK_CAMPAIGN_GOAL;
-    var cachedValue = CachingUtil.get(cachePrefix, {
-      campaignKey: campaignKey,
-      goalIdentifier: goalIdentifier
-    });
-
-    if (cachedValue) {
-      return cachedValue;
-    }
-
     var desiredCampaignGoal = null;
 
     if (!settingsFile || !campaignKey || !goalIdentifier) {
@@ -3787,12 +3669,7 @@ var CampaignUtil = {
       var goal = campaign.goals[i];
 
       if (goal.identifier === goalIdentifier) {
-        desiredCampaignGoal = goal; // save in cache for faster evaluation next time
-
-        CachingUtil.set(cachePrefix, {
-          campaignKey: campaignKey,
-          goalIdentifier: goalIdentifier
-        }, desiredCampaignGoal);
+        desiredCampaignGoal = goal;
         break;
       }
     }
@@ -3800,16 +3677,6 @@ var CampaignUtil = {
     return desiredCampaignGoal;
   },
   getCampaignVariation: function getCampaignVariation(settingsFile, campaignKey, variationName) {
-    var cachePrefix = CacheEnum.LOOK_CAMPAIGN_VARIATION;
-    var cachedValue = CachingUtil.get(cachePrefix, {
-      campaignKey: campaignKey,
-      variationName: variationName
-    });
-
-    if (cachedValue) {
-      return cachedValue;
-    }
-
     var desiredVariation = null;
 
     if (!settingsFile || !campaignKey || !variationName) {
@@ -3826,12 +3693,7 @@ var CampaignUtil = {
       var variation = campaign.variations[i];
 
       if (variation.name === variationName) {
-        desiredVariation = variation; // save in cache for faster evaluation next time
-
-        CachingUtil.set(cachePrefix, {
-          campaignKey: campaignKey,
-          variationName: variationName
-        }, desiredVariation);
+        desiredVariation = variation;
         break;
       }
     }
@@ -5259,7 +5121,12 @@ module.exports = {
     var protocol = 'https';
     var port;
     var hostname = UrlEnum.BASE_URL;
-    var path = UrlEnum.ACCOUNT_SETTINGS;
+    var path = UrlEnum.SETTINGS_URL;
+
+    if (config.isViaWebhook) {
+      path = UrlEnum.WEBHOOK_SETTINGS_URL;
+    }
+
     path += "?a=".concat(accountId, "&") + "i=".concat(sdkKey, "&") + "r=".concat(FunctionUtil.getRandomNumber(), "&") + 'platform=server&' + "sdk=".concat(Constants.SDK_NAME, "&") + "sdk-v=".concat(Constants.SDK_VERSION, "&") + 'api-version=1';
 
     if (config.hostname && config.path) {

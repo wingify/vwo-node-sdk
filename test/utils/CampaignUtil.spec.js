@@ -246,13 +246,15 @@ describe('CampaignUtil', () => {
   describe('method: getCampaignGoal', () => {
     it('should return null if config / campaign / goal is not found', () => {
       expect(CampaignUtil.getCampaignGoal()).toBe(null);
-      expect(CampaignUtil.getCampaignGoal(globalConfig)).toBe(null);
-      expect(CampaignUtil.getCampaignGoal(globalConfig, 'SOME_RANDOM_KEY')).toBe(null);
-      expect(CampaignUtil.getCampaignGoal(globalConfig, 'DEV_TEST_1')).toBe(null);
-      expect(CampaignUtil.getCampaignGoal(globalConfig, 'DEV_TEST_1', 'SOME_RANDOM_IDENTIFIER')).toBe(null);
+      expect(CampaignUtil.getCampaignGoal(globalConfig.settingsFile)).toBe(null);
+      expect(CampaignUtil.getCampaignGoal(globalConfig.settingsFile, 'SOME_RANDOM_KEY')).toBe(null);
+      expect(CampaignUtil.getCampaignGoal(globalConfig.settingsFile, 'DEV_TEST_1')).toBe(null);
+      expect(CampaignUtil.getCampaignGoal(globalConfig.settingsFile, 'DEV_TEST_1', 'SOME_RANDOM_IDENTIFIER')).toBe(
+        null
+      );
     });
     it('should return a goal if required params are passed correctly', () => {
-      const goal = CampaignUtil.getCampaignGoal(globalConfig, 'DEV_TEST_1', 'CUSTOM');
+      const goal = CampaignUtil.getCampaignGoal(globalConfig.settingsFile, 'DEV_TEST_1', 'CUSTOM');
 
       expect(goal).toBeDefined();
       expect(goal.id).toBeDefined();
@@ -263,13 +265,15 @@ describe('CampaignUtil', () => {
   describe('method: getCampaignVariation', () => {
     it('should return null if config / campaign / goal is not found', () => {
       expect(CampaignUtil.getCampaignVariation()).toBe(null);
-      expect(CampaignUtil.getCampaignVariation(globalConfig)).toBe(null);
-      expect(CampaignUtil.getCampaignVariation(globalConfig, 'SOME_RANDOM_KEY')).toBe(null);
-      expect(CampaignUtil.getCampaignVariation(globalConfig, 'DEV_TEST_1')).toBe(null);
-      expect(CampaignUtil.getCampaignVariation(globalConfig, 'DEV_TEST_1', 'SOME_RANDOM_VARIATION_NAME')).toBe(null);
+      expect(CampaignUtil.getCampaignVariation(globalConfig.settingsFile)).toBe(null);
+      expect(CampaignUtil.getCampaignVariation(globalConfig.settingsFile, 'SOME_RANDOM_KEY')).toBe(null);
+      expect(CampaignUtil.getCampaignVariation(globalConfig.settingsFile, 'DEV_TEST_1')).toBe(null);
+      expect(
+        CampaignUtil.getCampaignVariation(globalConfig.settingsFile, 'DEV_TEST_1', 'SOME_RANDOM_VARIATION_NAME')
+      ).toBe(null);
     });
     it('should return a goal if required params are passed correctly', () => {
-      const variation = CampaignUtil.getCampaignVariation(globalConfig, 'DEV_TEST_1', 'Control');
+      const variation = CampaignUtil.getCampaignVariation(globalConfig.settingsFile, 'DEV_TEST_1', 'Control');
 
       expect(variation).toBeDefined();
       expect(variation.id).toBeDefined();
