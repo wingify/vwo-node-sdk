@@ -447,14 +447,16 @@ function activate(vwoInstance, campaignKey, userId) {
 
   if (DataTypeUtil.isObject(options)) {
     var customVariables = options.customVariables,
-        variationTargetingVariables = options.variationTargetingVariables; // Check if arguments have valid data-type
+        variationTargetingVariables = options.variationTargetingVariables,
+        userStorageData = options.userStorageData; // Check if arguments have valid data-type
 
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.ACTIVATE,
       campaignKey: campaignKey,
       userId: userId,
       customVariables: customVariables,
-      variationTargetingVariables: variationTargetingVariables
+      variationTargetingVariables: variationTargetingVariables,
+      userStorageData: userStorageData
     })) {
       areParamsValid = true;
     }
@@ -499,7 +501,7 @@ function activate(vwoInstance, campaignKey, userId) {
   } // Once the matching RUNNING campaign is found, assign the deterministic variation to the userId provided
 
 
-  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables),
+  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData),
       variationId = _DecisionUtil$getVari.variationId,
       variationName = _DecisionUtil$getVari.variationName; // Check if variation-name has been assigned to the userId. If not, return no variation
 
@@ -604,7 +606,8 @@ function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) 
 
     if (DataTypeUtil.isObject(options)) {
       var customVariables = options.customVariables,
-          variationTargetingVariables = options.variationTargetingVariables; // Check if arguments have valid data-type
+          variationTargetingVariables = options.variationTargetingVariables,
+          userStorageData = options.userStorageData; // Check if arguments have valid data-type
 
       if (ValidateUtil.areValidParamsForAPIMethod({
         method: ApiEnum.GET_FEATURE_VARIABLE_VALUE,
@@ -612,7 +615,8 @@ function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) 
         variableKey: variableKey,
         userId: userId,
         customVariables: customVariables,
-        variationTargetingVariables: variationTargetingVariables
+        variationTargetingVariables: variationTargetingVariables,
+        userStorageData: userStorageData
       })) {
         areParamsValid = true;
       }
@@ -660,7 +664,7 @@ function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) 
 
     var variable;
 
-    var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables),
+    var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData),
         variation = _DecisionUtil$getVari.variation,
         variationName = _DecisionUtil$getVari.variationName;
 
@@ -782,14 +786,16 @@ function getVariation(vwoInstance, campaignKey, userId) {
 
   if (DataTypeUtil.isObject(options)) {
     var customVariables = options.customVariables,
-        variationTargetingVariables = options.variationTargetingVariables; // Check if arguments have valid data-type
+        variationTargetingVariables = options.variationTargetingVariables,
+        userStorageData = options.userStorageData; // Check if arguments have valid data-type
 
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.GET_VARIATION_NAME,
       campaignKey: campaignKey,
       userId: userId,
       customVariables: customVariables,
-      variationTargetingVariables: variationTargetingVariables
+      variationTargetingVariables: variationTargetingVariables,
+      userStorageData: userStorageData
     })) {
       areParamsValid = true;
     }
@@ -833,7 +839,7 @@ function getVariation(vwoInstance, campaignKey, userId) {
     return null;
   }
 
-  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables),
+  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData),
       variationName = _DecisionUtil$getVari.variationName;
 
   if (!variationName) {
@@ -958,14 +964,16 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
 
   if (DataTypeUtil.isObject(options)) {
     var customVariables = options.customVariables,
-        variationTargetingVariables = options.variationTargetingVariables; // Check if arguments have valid data-type
+        variationTargetingVariables = options.variationTargetingVariables,
+        userStorageData = options.userStorageData; // Check if arguments have valid data-type
 
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.IS_FEATURE_ENABLED,
       campaignKey: campaignKey,
       userId: userId,
       customVariables: customVariables,
-      variationTargetingVariables: variationTargetingVariables
+      variationTargetingVariables: variationTargetingVariables,
+      userStorageData: userStorageData
     })) {
       areParamsValid = true;
     }
@@ -1010,7 +1018,7 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
     return false;
   }
 
-  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables),
+  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData),
       variation = _DecisionUtil$getVari.variation,
       variationName = _DecisionUtil$getVari.variationName,
       variationId = _DecisionUtil$getVari.variationId;
@@ -1237,6 +1245,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
     var revenueValue = options.revenueValue,
         customVariables = options.customVariables,
         variationTargetingVariables = options.variationTargetingVariables,
+        userStorageData = options.userStorageData,
         goalTypeToTrack = options.goalTypeToTrack,
         shouldTrackReturningUser = options.shouldTrackReturningUser; // Check if arguments have valid data-type
 
@@ -1247,6 +1256,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
       goalIdentifier: goalIdentifier,
       customVariables: customVariables,
       variationTargetingVariables: variationTargetingVariables,
+      userStorageData: userStorageData,
       goalTypeToTrack: goalTypeToTrack,
       shouldTrackReturningUser: shouldTrackReturningUser
     }) && (!goalTypeToTrack || goalTypeToTrack && objectValues(GoalTypeEnum).includes(goalTypeToTrack))) {
@@ -1298,7 +1308,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
 
   var result = {};
   campaigns.forEach(function (campaign) {
-    return result[campaign.key] = trackCampaignGoal(vwoInstance, campaign, campaign.key, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, goalTypeToTrack, shouldTrackReturningUser);
+    return result[campaign.key] = trackCampaignGoal(vwoInstance, campaign, campaign.key, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser);
   });
 
   if (!Object.keys(result).length) {
@@ -1308,7 +1318,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   return result;
 }
 
-function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, goalTypeToTrack, shouldTrackReturningUser) {
+function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser) {
   // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CAMPAIGN_NOT_RUNNING, {
@@ -1355,7 +1365,7 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
     return false;
   }
 
-  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, goalIdentifier),
+  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, goalIdentifier),
       variationId = _DecisionUtil$getVari.variationId,
       variationName = _DecisionUtil$getVari.variationName,
       storedGoalIdentifier = _DecisionUtil$getVari.storedGoalIdentifier; // Is User is a part of Campaign and has been decided to be a part of particular variation
@@ -2310,7 +2320,8 @@ module.exports = {
     GOT_VARIATION_FOR_USER: '({file}): userId:{userId} for campaign:{campaignTestKey} got variationName:{variationName}',
     BULK_IMPRESSION_SUCCESS: '({file}): Impression event - {endPoint} was successfully received by VWO having accountId:{a}',
     AFTER_FLUSHING: '({file}): Events queue having {length} events has been flushed {manually}',
-    SETTINGS_NOT_UPDATED: '{{file}}: Settings-file fetched are same as earlier fetched settings'
+    SETTINGS_NOT_UPDATED: '{{file}}: Settings-file fetched are same as earlier fetched settings',
+    GOT_STORED_VARIATION: '({file}): Got stored variation for User ID:{userId} of Campaign:{campaignKey} as Variation:{variationName}, found in UserStorageService'
   },
   WARNING_MESSAGES: {}
 };
@@ -3869,7 +3880,8 @@ var DecisionUtil = {
    */
   getVariation: function getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables) {
     var variationTargetingVariables = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
-    var newGoalIdentifier = arguments.length > 7 ? arguments[7] : undefined;
+    var userStorageData = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : {};
+    var newGoalIdentifier = arguments.length > 8 ? arguments[8] : undefined;
     var status;
     var variation, variationName, variationId;
 
@@ -3909,7 +3921,7 @@ var DecisionUtil = {
     } // If userStorageService is used, get the variation from the stored data
 
 
-    var _ref = DecisionUtil._getStoredVariationAndGoalIdentifiers(config, settingsFile, campaign.key, userId) || {},
+    var _ref = DecisionUtil._getStoredVariationAndGoalIdentifiers(config, settingsFile, campaign.key, userId, userStorageData) || {},
         storedVariation = _ref.storedVariation,
         goalIdentifier = _ref.goalIdentifier; // If stored variation is found, simply return the same
 
@@ -4060,8 +4072,8 @@ var DecisionUtil = {
    *
    * @return {Object|null} - if found then variation and goalIdentifier settings object otherwise null
    */
-  _getStoredVariationAndGoalIdentifiers: function _getStoredVariationAndGoalIdentifiers(config, settingsFile, campaignKey, userId) {
-    var userData = DecisionUtil._getStoredUserData(config, userId, campaignKey);
+  _getStoredVariationAndGoalIdentifiers: function _getStoredVariationAndGoalIdentifiers(config, settingsFile, campaignKey, userId, userStorageData) {
+    var userData = DecisionUtil._getStoredUserData(config, userId, campaignKey, userStorageData);
 
     var variationName = userData.variationName,
         goalIdentifier = userData.goalIdentifier;
@@ -4098,8 +4110,8 @@ var DecisionUtil = {
    *
    * @return {Object|null} - if found then variation settings object otherwise null
    */
-  _getStoredVariation: function _getStoredVariation(config, settingsFile, campaignKey, userId) {
-    var data = DecisionUtil._getStoredVariationAndGoalIdentifiers(config, settingsFile, campaignKey, userId);
+  _getStoredVariation: function _getStoredVariation(config, settingsFile, campaignKey, userId, userStorageData) {
+    var data = DecisionUtil._getStoredVariationAndGoalIdentifiers(config, settingsFile, campaignKey, userId, userStorageData);
 
     if (data && data.storedVariation) {
       return data.storedVariation;
@@ -4117,7 +4129,7 @@ var DecisionUtil = {
    *
    * @return {Object} - User Campaign Mapping
    */
-  _getStoredUserData: function _getStoredUserData(config, userId, campaignKey) {
+  _getStoredUserData: function _getStoredUserData(config, userId, campaignKey, userStorageData) {
     var userStorageMap = {
       userId: userId,
       variationName: null,
@@ -4139,7 +4151,7 @@ var DecisionUtil = {
         file: file,
         userId: userId
       }));
-      return data;
+      return Object.assign({}, data, userStorageData);
     } catch (err) {
       // if no data found
       logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.GET_USER_STORAGE_SERVICE_FAILED, {
@@ -5250,7 +5262,9 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
       _ref$customVariables = _ref.customVariables,
       customVariables = _ref$customVariables === void 0 ? {} : _ref$customVariables,
       _ref$variationTargeti = _ref.variationTargetingVariables,
-      variationTargetingVariables = _ref$variationTargeti === void 0 ? {} : _ref$variationTargeti;
+      variationTargetingVariables = _ref$variationTargeti === void 0 ? {} : _ref$variationTargeti,
+      _ref$userStorageData = _ref.userStorageData,
+      userStorageData = _ref$userStorageData === void 0 ? {} : _ref$userStorageData;
   return [{
     key: 'campaignKey',
     value: campaignKey,
@@ -5267,6 +5281,10 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
     key: 'variationTargetingVariables',
     value: variationTargetingVariables,
     type: DataTypeEnum.OBJECT
+  }, {
+    key: 'userStorageData',
+    value: userStorageData,
+    type: DataTypeEnum.OBJECT
   }];
 }), _defineProperty(_APIMethodArgumentsVa, ApiEnum.TRACK, function (_ref2) {
   var campaignKey = _ref2.campaignKey,
@@ -5276,6 +5294,8 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
       customVariables = _ref2$customVariables === void 0 ? {} : _ref2$customVariables,
       _ref2$variationTarget = _ref2.variationTargetingVariables,
       variationTargetingVariables = _ref2$variationTarget === void 0 ? {} : _ref2$variationTarget,
+      _ref2$userStorageData = _ref2.userStorageData,
+      userStorageData = _ref2$userStorageData === void 0 ? {} : _ref2$userStorageData,
       _ref2$goalTypeToTrack = _ref2.goalTypeToTrack,
       goalTypeToTrack = _ref2$goalTypeToTrack === void 0 ? GoalTypeEnum.ALL : _ref2$goalTypeToTrack,
       _ref2$shouldTrackRetu = _ref2.shouldTrackReturningUser,
@@ -5301,6 +5321,10 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
     value: variationTargetingVariables,
     type: DataTypeEnum.OBJECT
   }, {
+    key: 'userStorageData',
+    value: userStorageData,
+    type: DataTypeEnum.OBJECT
+  }, {
     key: 'goalTypeToTrack',
     value: goalTypeToTrack,
     type: DataTypeEnum.STRING
@@ -5315,7 +5339,9 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
       _ref3$customVariables = _ref3.customVariables,
       customVariables = _ref3$customVariables === void 0 ? {} : _ref3$customVariables,
       _ref3$variationTarget = _ref3.variationTargetingVariables,
-      variationTargetingVariables = _ref3$variationTarget === void 0 ? {} : _ref3$variationTarget;
+      variationTargetingVariables = _ref3$variationTarget === void 0 ? {} : _ref3$variationTarget,
+      _ref3$userStorageData = _ref3.userStorageData,
+      userStorageData = _ref3$userStorageData === void 0 ? {} : _ref3$userStorageData;
   return [{
     key: 'campaignKey',
     value: campaignKey,
@@ -5332,6 +5358,10 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
     key: 'variationTargetingVariables',
     value: variationTargetingVariables,
     type: DataTypeEnum.OBJECT
+  }, {
+    key: 'userStorageData',
+    value: userStorageData,
+    type: DataTypeEnum.OBJECT
   }];
 }), _defineProperty(_APIMethodArgumentsVa, ApiEnum.GET_FEATURE_VARIABLE_VALUE, function (_ref4) {
   var campaignKey = _ref4.campaignKey,
@@ -5340,7 +5370,9 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
       _ref4$customVariables = _ref4.customVariables,
       customVariables = _ref4$customVariables === void 0 ? {} : _ref4$customVariables,
       _ref4$variationTarget = _ref4.variationTargetingVariables,
-      variationTargetingVariables = _ref4$variationTarget === void 0 ? {} : _ref4$variationTarget;
+      variationTargetingVariables = _ref4$variationTarget === void 0 ? {} : _ref4$variationTarget,
+      _ref4$userStorageData = _ref4.userStorageData,
+      userStorageData = _ref4$userStorageData === void 0 ? {} : _ref4$userStorageData;
   return [{
     key: 'campaignKey',
     value: campaignKey,
@@ -5360,6 +5392,10 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
   }, {
     key: 'variationTargetingVariables',
     value: variationTargetingVariables,
+    type: DataTypeEnum.OBJECT
+  }, {
+    key: 'userStorageData',
+    value: userStorageData,
     type: DataTypeEnum.OBJECT
   }];
 }), _defineProperty(_APIMethodArgumentsVa, ApiEnum.PUSH, function (_ref5) {
