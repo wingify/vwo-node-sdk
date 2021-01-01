@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2021-01-02
+
+### Changed
+
+- `userStorageData` key can be passed in `options` parameter for utilizing already fetched storage data. It also helps in implementing the asynchronous nature of the User Storage Service's `get` method. For more info read [this](https://developers.vwo.com/reference#fullstack-is-user-storage-service-synchronous-or-asynchronous).
+
 ## [1.10.0] - 2020-12-02
 
 ### Added
