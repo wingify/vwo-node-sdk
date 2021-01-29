@@ -16,7 +16,7 @@
     "check:versions": "node -e 'require(\"./scripts/check-versions\")'",
     "check:license": "yarn check:versions && node -e 'require(\"./scripts/check-license\")'",
     "commit:dist": "git add dist/ && git commit -m 'chore(dist): Automatically build and update dist for vwo-javascript-sdk'",
-    "coverage": "jest --config=jest.config.prod.js --detectOpenHandles --coverage --coverageReporters=text-lcov && cat ./coverage/lcov.info",
+    "coverage": "jest --collect-coverage && cat ./coverage/lcov.info",
     "coveralls": "yarn coverage | coveralls",
     "lint": "yarn check:versions && eslint '**/*.js' --fix",
     "prettier": "./node_modules/prettier/bin-prettier.js --write",
