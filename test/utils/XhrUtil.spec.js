@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ describe('XhrUtil', () => {
       expect(XhrUtil.send()).toBeUndefined();
       expect(XhrUtil.send({ method: 'GET' })).toBeUndefined();
       expect(XhrUtil.send({ url: 'https://vwo.com' })).toBeUndefined();
-      const promise = XhrUtil.send({ url: 'https://vwo.com', method: 'GET' });
+      const promise = XhrUtil.send({ url: 'https://vwo.com', method: 'GET' }).catch(() => {});
       expect(typeof promise.then).toBe('function');
     });
   });

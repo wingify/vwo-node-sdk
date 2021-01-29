@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,6 @@ describe('ConsoleLogManager', () => {
     test('should set logLevel as the level passed', () => {
       logger.setLogLevel(LogLevelEnum.DEBUG);
       expect(logger.logLevel).toBe(LogLevelEnum.DEBUG);
-    });
-  });
-
-  describe('method: getCurrentTime', () => {
-    const logger = new ConsoleLogManager();
-    test('should return a string value', () => {
-      expect(typeof logger.getCurrentTime()).toBe('string');
     });
   });
 

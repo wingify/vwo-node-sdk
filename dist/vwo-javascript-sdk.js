@@ -1,8 +1,8 @@
 /*!
- * vwo-javascript-sdk - v1.10.0
+ * vwo-javascript-sdk - v1.11.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -387,7 +387,7 @@ module.exports = VWO;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -540,7 +540,7 @@ module.exports = activate;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -729,7 +729,7 @@ module.exports = getFeatureVariableValue;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -861,7 +861,7 @@ module.exports = getVariation;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -906,7 +906,7 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1069,7 +1069,7 @@ module.exports = isFeatureEnabled;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1178,7 +1178,7 @@ module.exports = push;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1420,7 +1420,7 @@ module.exports = track;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1442,7 +1442,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.10.0"
+    version: "1.11.0"
   };
 } else {}
 
@@ -1473,7 +1473,7 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1652,7 +1652,7 @@ module.exports = BucketingService;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1784,7 +1784,7 @@ function SegmentEvaluator(dsl) {
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1909,7 +1909,7 @@ module.exports = VariationDecider;
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1945,7 +1945,7 @@ module.exports = AnsiColorEnum;
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1980,7 +1980,7 @@ module.exports = ApiEnum;
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2011,7 +2011,7 @@ module.exports = CampaignTypeEnum;
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2044,7 +2044,7 @@ module.exports = DataTypeEnum;
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2076,7 +2076,7 @@ module.exports = FeatureVariableTypeEnum;
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2135,7 +2135,7 @@ module.exports = {
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2170,7 +2170,7 @@ var _LogLevelColorInfoEnu, _LogLevelInfoEnum;
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2219,7 +2219,7 @@ module.exports = {
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2336,7 +2336,7 @@ module.exports = {
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2365,7 +2365,7 @@ module.exports = {
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2400,7 +2400,7 @@ module.exports = UrlEnum;
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2429,7 +2429,7 @@ module.exports = {
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2464,7 +2464,7 @@ module.exports = {
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2497,7 +2497,7 @@ module.exports = {
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2527,7 +2527,7 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2567,7 +2567,7 @@ module.exports = SegmentEnum;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2753,7 +2753,7 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2855,7 +2855,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2951,7 +2951,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3115,7 +3115,7 @@ function () {
           _this2.updateSettingsFile(settings);
 
           resolve(settings);
-        });
+        })["catch"](function (_err) {});
       });
     }
     /**
@@ -3169,7 +3169,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3183,10 +3183,13 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var _require = __webpack_require__(/*! ../../enums/LogLevelEnum */ "./lib/enums/LogLevelEnum.js"),
-    LogLevelEnum = _require.LogLevelEnum,
-    LogLevelInfoEnum = _require.LogLevelInfoEnum,
-    LogLevelColorInfoEnum = _require.LogLevelColorInfoEnum;
+var _require = __webpack_require__(/*! ../../utils/FunctionUtil */ "./lib/utils/FunctionUtil.js"),
+    getCurrentTime = _require.getCurrentTime;
+
+var _require2 = __webpack_require__(/*! ../../enums/LogLevelEnum */ "./lib/enums/LogLevelEnum.js"),
+    LogLevelEnum = _require2.LogLevelEnum,
+    LogLevelInfoEnum = _require2.LogLevelInfoEnum,
+    LogLevelColorInfoEnum = _require2.LogLevelColorInfoEnum;
 
 var ConsoleLogManager =
 /*#__PURE__*/
@@ -3209,9 +3212,9 @@ function () {
       var logMessage;
 
       if (this.isColoredLogEnabled) {
-        logMessage = "".concat(this.prefix, " - ").concat(LogLevelColorInfoEnum[level], " ").concat(this.getCurrentTime(), " ").concat(message);
+        logMessage = "".concat(this.prefix, " - ").concat(LogLevelColorInfoEnum[level], " ").concat(getCurrentTime(), " ").concat(message);
       } else {
-        logMessage = "".concat(this.prefix, " - ").concat(LogLevelInfoEnum[level], " ").concat(this.getCurrentTime(), " ").concat(message);
+        logMessage = "".concat(this.prefix, " - ").concat(LogLevelInfoEnum[level], " ").concat(getCurrentTime(), " ").concat(message);
       }
 
       this.consoleLog(level, [logMessage]);
@@ -3220,11 +3223,6 @@ function () {
     key: "shouldLog",
     value: function shouldLog(targetLogLevel) {
       return targetLogLevel >= this.logLevel;
-    }
-  }, {
-    key: "getCurrentTime",
-    value: function getCurrentTime() {
-      return new Date().toISOString();
     }
   }, {
     key: "setLogLevel",
@@ -3279,7 +3277,7 @@ function _defineProperties(target, props) { for (var i = 0; i < props.length; i+
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3427,7 +3425,7 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3455,7 +3453,7 @@ module.exports = logging;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3761,7 +3759,7 @@ module.exports = CampaignUtil;
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3816,7 +3814,7 @@ module.exports = DataTypeUtil;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4220,7 +4218,7 @@ module.exports = DecisionUtil;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4257,9 +4255,7 @@ var EventDispatcher = {
     }
 
     try {
-      if (false) {} // Require files only if required in respective Engine i.e. Node / Browser
-
-
+      // Require files only if required in respective Engine i.e. Node / Browser
       if (true) {
         parsedUrl = new URL(properties.url);
 
@@ -4289,7 +4285,7 @@ module.exports = EventDispatcher;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4427,7 +4423,7 @@ module.exports = FeatureUtil;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4441,15 +4437,6 @@ module.exports = FeatureUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
-var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
-var logger = logging.getLogger();
-var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
-var file = FileNameEnum.FunctionUtil;
 var FunctionUtil = {
   cloneObject: function cloneObject(obj) {
     if (!obj) {
@@ -4469,11 +4456,23 @@ var FunctionUtil = {
     try {
       return string.match(new RegExp(regex));
     } catch (err) {
+      var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
+
+      var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
+
+      var logger = logging.getLogger();
+      var LogLevelEnum = logging.LogLevelEnum,
+          LogMessageEnum = logging.LogMessageEnum,
+          LogMessageUtil = logging.LogMessageUtil;
+      var file = FileNameEnum.FunctionUtil;
       logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.REGEX_CREATION_FAILED, {
         file: file
       }));
       return null;
     }
+  },
+  getCurrentTime: function getCurrentTime() {
+    return new Date().toISOString();
   }
 };
 module.exports = FunctionUtil;
@@ -4488,7 +4487,7 @@ module.exports = FunctionUtil;
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4550,7 +4549,7 @@ module.exports = HttpImageUtil;
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4738,7 +4737,7 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4815,7 +4814,7 @@ module.exports = LogMessageUtil;
 /***/ (function(module, exports) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4864,7 +4863,7 @@ module.exports = ObjectUtil;
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -5101,7 +5100,7 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -5119,7 +5118,9 @@ var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.j
 
 var UrlEnum = __webpack_require__(/*! ../enums/UrlEnum */ "./lib/enums/UrlEnum.js");
 
-var FunctionUtil = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUtil.js");
+var _require = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUtil.js"),
+    getRandomNumber = _require.getRandomNumber,
+    getCurrentTime = _require.getCurrentTime;
 
 module.exports = {
   get: function get(accountId, sdkKey) {
@@ -5139,7 +5140,7 @@ module.exports = {
       path = UrlEnum.WEBHOOK_SETTINGS_URL;
     }
 
-    path += "?a=".concat(accountId, "&") + "i=".concat(sdkKey, "&") + "r=".concat(FunctionUtil.getRandomNumber(), "&") + 'platform=server&' + "sdk=".concat(Constants.SDK_NAME, "&") + "sdk-v=".concat(Constants.SDK_VERSION, "&") + 'api-version=1';
+    path += "?a=".concat(accountId, "&") + "i=".concat(sdkKey, "&") + "r=".concat(getRandomNumber(), "&") + 'platform=server&' + "sdk=".concat(Constants.SDK_NAME, "&") + "sdk-v=".concat(Constants.SDK_VERSION, "&") + 'api-version=1';
 
     if (config.hostname && config.path) {
       protocol = config.protocol;
@@ -5167,7 +5168,7 @@ module.exports = {
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -5234,7 +5235,7 @@ var _APIMethodArgumentsVa;
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -5493,10 +5494,10 @@ module.exports = ValidateUtil;
   !*** ./lib/utils/XhrUtil.js ***!
   \******************************/
 /*! no static exports found */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /**
- * Copyright 2019-2020 Wingify Software Pvt. Ltd.
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -5510,6 +5511,9 @@ module.exports = ValidateUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+var _require = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUtil.js"),
+    getCurrentTime = _require.getCurrentTime;
+
 var XhrUtil = {
   send: function send() {
     var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
@@ -5534,7 +5538,7 @@ var XhrUtil = {
       };
 
       xhr.onerror = function () {
-        var error = "Request failed for fetching account settings. Got Status Code: ".concat(xhr.status);
+        var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(xhr.status);
         console.error(error);
         reject(error);
       };
