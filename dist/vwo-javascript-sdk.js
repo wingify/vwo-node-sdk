@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.11.0
+ * vwo-javascript-sdk - v1.11.1
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -153,14 +153,14 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  */
 var api = __webpack_require__(/*! ./api */ "./lib/api/index.js");
 
-var Constants;
-var BatchEventsDispatcher;
-var customEventUtil;
-
 var EventQueue = __webpack_require__(/*! ./services/EventQueue */ "./lib/services/EventQueue.js");
 
 var SettingsFileService = __webpack_require__(/*! ./services/SettingsFileManager */ "./lib/services/SettingsFileManager.js");
 
+var ImpressionUtil = __webpack_require__(/*! ./utils/ImpressionUtil */ "./lib/utils/ImpressionUtil.js");
+
+var BatchEventsDispatcher;
+var customEventUtil;
 var BatchEventsQueue;
 
 if (false) {}
@@ -1442,7 +1442,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.11.0"
+    version: "1.11.1"
   };
 } else {}
 
@@ -1460,7 +1460,9 @@ module.exports = {
   STATUS_RUNNING: 'RUNNING',
   SEED_URL: 'https://vwo.com',
   HTTP_PROTOCOL: 'http://',
-  HTTPS_PROTOCOL: 'https://'
+  HTTPS_PROTOCOL: 'https://',
+  SDK_QUERY_PARAM: 'sdk',
+  SDK_VERSION_QUERY_PARAM: 'sdk-v'
 };
 
 /***/ }),
@@ -4240,19 +4242,15 @@ var LogLevelEnum = logging.LogLevelEnum,
     LogMessageEnum = logging.LogMessageEnum,
     LogMessageUtil = logging.LogMessageUtil;
 var logger = logging.getLogger();
+
+var FunctionUtil = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUtil.js");
+
 var excludedProperties = ['url'];
 var EventDispatcher = {
   dispatch: function dispatch(properties, callback) {
     var parsedUrl;
     var queryParams = '?';
-
-    for (var prop in properties) {
-      if (properties.hasOwnProperty(prop)) {
-        if (excludedProperties.indexOf(prop) === -1) {
-          queryParams += prop + '=' + properties[prop] + '&';
-        }
-      }
-    }
+    queryParams += FunctionUtil.convertObjectKeysToString(properties, excludedProperties);
 
     try {
       // Require files only if required in respective Engine i.e. Node / Browser
@@ -4473,6 +4471,20 @@ var FunctionUtil = {
   },
   getCurrentTime: function getCurrentTime() {
     return new Date().toISOString();
+  },
+  convertObjectKeysToString: function convertObjectKeysToString(properties, excludedProperties) {
+    var queryParams = '';
+    excludedProperties = excludedProperties || [];
+
+    for (var prop in properties) {
+      if (properties.hasOwnProperty(prop)) {
+        if (excludedProperties.indexOf(prop) === -1) {
+          queryParams += prop + '=' + properties[prop] + '&';
+        }
+      }
+    }
+
+    return queryParams;
   }
 };
 module.exports = FunctionUtil;
@@ -4583,29 +4595,40 @@ var LogLevelEnum = logging.LogLevelEnum,
     LogMessageEnum = logging.LogMessageEnum,
     LogMessageUtil = logging.LogMessageUtil;
 var logger = logging.getLogger();
+/**
+ * Return primary properties required for every network call to VWO server
+ * @param {Object} configObj
+ * @param {String} userId
+ *
+ * @returns primary properties
+ */
 
-function getBaseProperties(configObj, userId) {
-  var accountId = configObj.accountId;
-  return {
-    account_id: accountId,
-    uId: encodeURIComponent(userId),
-    random: FunctionUtil.getRandomNumber(),
-    sId: FunctionUtil.getCurrentUnixTimestamp(),
-    u: UuidUtil.generateFor(userId, accountId),
-    sdk: Constants.SDK_NAME,
-    'sdk-v': Constants.SDK_VERSION,
-    ap: Constants.PLATFORM
-  };
-}
-
-function getBasePropertiesForBulk(configObj, userId) {
+function getPrimaryProperties(configObj, userId) {
   return {
     sId: FunctionUtil.getCurrentUnixTimestamp(),
     u: UuidUtil.generateFor(userId, configObj.accountId)
   };
 }
+/**
+ * Return base properties required for every network call to VWO server
+ * @param {Object} configObj
+ * @param {String} userId
+ *
+ * @returns base properties
+ */
 
-module.exports = {
+
+function getBaseProperties(configObj, userId) {
+  var accountId = configObj.accountId;
+  return Object.assign({}, getPrimaryProperties(configObj, userId), ImpressionUtil.getReportingProperties(configObj), {
+    account_id: accountId,
+    uId: encodeURIComponent(userId),
+    random: FunctionUtil.getRandomNumber(),
+    ap: Constants.PLATFORM
+  });
+}
+
+var ImpressionUtil = {
   /**
    * Build properties for the impression event
    *
@@ -4724,8 +4747,21 @@ module.exports = {
     var revenue = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
 
     if (false) { var properties; }
+  },
+
+  /**
+   * Return an object containing properties required for segmenting reports
+   * @param {Object} configObj
+   * @returns reporting properties
+   */
+  getReportingProperties: function getReportingProperties(configObj) {
+    var _ref;
+
+    var sdkKey = configObj.sdkKey;
+    return _ref = {}, _defineProperty(_ref, Constants.SDK_QUERY_PARAM, Constants.SDK_NAME), _defineProperty(_ref, Constants.SDK_VERSION_QUERY_PARAM, Constants.SDK_VERSION), _defineProperty(_ref, "env", sdkKey), _ref;
   }
 };
+module.exports = ImpressionUtil;
 
 /***/ }),
 
@@ -5140,7 +5176,7 @@ module.exports = {
       path = UrlEnum.WEBHOOK_SETTINGS_URL;
     }
 
-    path += "?a=".concat(accountId, "&") + "i=".concat(sdkKey, "&") + "r=".concat(getRandomNumber(), "&") + 'platform=server&' + "sdk=".concat(Constants.SDK_NAME, "&") + "sdk-v=".concat(Constants.SDK_VERSION, "&") + 'api-version=1';
+    path += "?a=".concat(accountId, "&") + "i=".concat(sdkKey, "&") + "r=".concat(getRandomNumber(), "&") + "platform=".concat(Constants.PLATFORM, "&") + "".concat(Constants.SDK_QUERY_PARAM, "=").concat(Constants.SDK_NAME, "&") + "".concat(Constants.SDK_VERSION_QUERY_PARAM, "=").concat(Constants.SDK_VERSION);
 
     if (config.hostname && config.path) {
       protocol = config.protocol;
