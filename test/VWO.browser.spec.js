@@ -225,6 +225,38 @@ describe('Class VWO', () => {
       expect(vwoClientInstance.activate('NO_SUCH_CAMPAIGN_KEY', userId)).toBe(null);
     });
 
+    test('should return false if metadata is not passed as object', () => {
+      let options = {
+        metaData: false
+      };
+      expect(vwoClientInstance.activate(campaignKey, userId, options)).toBe(null);
+      options.metaData = 'any_string';
+      expect(vwoClientInstance.activate(campaignKey, userId, options)).toBe(null);
+      options.metaData = 20;
+      expect(vwoClientInstance.activate(campaignKey, userId, options)).toBe(null);
+    });
+
+    test('should return metaData in set method of userStorage when passed as an object', () => {
+      const campaignKey = settingsFile1.campaigns[0].key;
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService: userStorageService1
+      });
+
+      let options = {
+        metaData: {
+          username: 'any_user'
+        }
+      };
+      let spyUserStorage = jest.spyOn(vwoClientInstance.userStorageService, 'set');
+      vwoClientInstance.activate(campaignKey, 'Ashley', options);
+      let userData = spyUserStorage.mock.calls[0][0];
+      expect(userData.metaData).toBe(options.metaData);
+      spyUserStorage.mockRestore();
+    });
+
     test('should test against a campaign settings: traffic:50 and split:50-50', () => {
       const campaignKey = settingsFile1.campaigns[0].key;
 
@@ -490,14 +522,46 @@ describe('Class VWO', () => {
       expect(vwoClientInstance.getVariationName('NO_SUCH_CAMPAIGN_KEY', userId)).toBe(null);
     });
 
+    test('should return false if metadata is not passed as object', () => {
+      let options = {
+        metaData: false
+      };
+      expect(vwoClientInstance.getVariationName(campaignKey, userId, options)).toBe(null);
+      options.metaData = 'any_string';
+      expect(vwoClientInstance.getVariationName(campaignKey, userId, options)).toBe(null);
+      options.metaData = 20;
+      expect(vwoClientInstance.getVariationName(campaignKey, userId, options)).toBe(null);
+    });
+
+    test('should return metaData in set method of userStorage when passed as an object', () => {
+      const campaignKey = settingsFile2.campaigns[0].key;
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile2,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService: userStorageService1
+      });
+
+      let options = {
+        metaData: {
+          username: 'any_user'
+        }
+      };
+      let spyUserStorage = jest.spyOn(vwoClientInstance.userStorageService, 'set');
+      vwoClientInstance.activate(campaignKey, userId, options);
+      vwoClientInstance.getVariationName(campaignKey, userId, options);
+      let userData = spyUserStorage.mock.calls[0][0];
+      expect(userData.metaData).toBe(options.metaData);
+      spyUserStorage.mockRestore();
+    });
+
     test('should test against a campaign settings: traffic:50 and split:50-50', () => {
       const campaignKey = settingsFile1.campaigns[0].key;
 
       vwoClientInstance = new VWO({
         settingsFile: settingsFile1,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -511,8 +575,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile2,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -526,8 +589,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile3,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -541,8 +603,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile4,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -556,8 +617,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile5,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -571,8 +631,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile6,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -586,8 +645,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile6,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -603,8 +661,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile7,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -620,8 +677,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile7,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -638,8 +694,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile8,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -696,6 +751,40 @@ describe('Class VWO', () => {
 
     test('should return false if goalIdentifier is not found in settingsFile', () => {
       expect(vwoClientInstance.track(campaignKey, userId, 'NO_SUCH_GOAL_IDENTIFIER')[campaignKey]).toBe(false);
+    });
+
+    test('should return false if metadata is not passed as object', () => {
+      let options = {
+        metaData: false
+      };
+      expect(vwoClientInstance.track(campaignKey, userId, goalIdentifier, options)).toBe(null);
+      options.metaData = 'any_string';
+      expect(vwoClientInstance.track(campaignKey, userId, goalIdentifier, options)).toBe(null);
+      options.metaData = 20;
+      expect(vwoClientInstance.track(campaignKey, userId, goalIdentifier, options)).toBe(null);
+    });
+
+    test('should return metaData in set method of userStorage when passed as an object', () => {
+      const campaignKey = settingsFile1.campaigns[0].key;
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService: userStorageService1
+      });
+
+      let options = {
+        metaData: {
+          username: 'any_user'
+        }
+      };
+      let spyUserStorage = jest.spyOn(vwoClientInstance.userStorageService, 'set');
+      vwoClientInstance.activate(campaignKey, 'Bob', options);
+      vwoClientInstance.track(campaignKey, 'Bob', goalIdentifier, options);
+      let userData = spyUserStorage.mock.calls[1][0];
+      expect(userData.metaData).toBe(options.metaData);
+      expect(userData.goalIdentifier).toBe(goalIdentifier);
+      spyUserStorage.mockRestore();
     });
 
     test('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_0', () => {
@@ -916,6 +1005,8 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        vwoClientInstance.isFeatureEnabled(campaignKey1, users[j]);
+        vwoClientInstance.activate(campaignKey2, users[j]);
         let isTracked = vwoClientInstance.track([campaignKey1, campaignKey2], users[j], 'track', {
           revenueValue: 1,
           shouldTrackReturningUser: false
@@ -1187,6 +1278,38 @@ describe('Class VWO', () => {
       expect(vwoClientInstance.isFeatureEnabled('NO_SUCH_CAMPAIGN_KEY', userId)).toBe(false);
     });
 
+    test('should return false if metadata is not passed as object', () => {
+      let options = {
+        metaData: false
+      };
+      expect(vwoClientInstance.isFeatureEnabled(campaignKey, userId, options)).toBe(false);
+      options.metaData = 'any_string';
+      expect(vwoClientInstance.isFeatureEnabled(campaignKey, userId, options)).toBe(false);
+      options.metaData = 20;
+      expect(vwoClientInstance.isFeatureEnabled(campaignKey, userId, options)).toBe(false);
+    });
+
+    test('should return metaData in set method of userStorage when passed as an object', () => {
+      const campaignKey = FEATURE_ROLLOUT_TRAFFIC_100.campaigns[0].key;
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_ROLLOUT_TRAFFIC_100,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService: userStorageService1
+      });
+
+      let options = {
+        metaData: {
+          username: 'any_user'
+        }
+      };
+      let spyUserStorage = jest.spyOn(vwoClientInstance.userStorageService, 'set');
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Faizan', options);
+      let userData = spyUserStorage.mock.calls[0][0];
+      expect(userData.metaData).toBe(options.metaData);
+      spyUserStorage.mockRestore();
+    });
+
     test('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_0', () => {
       const campaignKey = FEATURE_ROLLOUT_TRAFFIC_0.campaigns[0].key;
 
@@ -1408,6 +1531,39 @@ describe('Class VWO', () => {
       expect(vwoClientInstance.getFeatureVariableValue('DEV_TEST_1', 'variable-key', userId)).toBe(null);
     });
 
+    test('should return false if metadata is not passed as object', () => {
+      let options = {
+        metaData: false
+      };
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'variable-key', userId, options)).toBe(null);
+      options.metaData = 'any_string';
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'variable-key', userId, options)).toBe(null);
+      options.metaData = 20;
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'variable-key', userId, options)).toBe(null);
+    });
+
+    test('should return metaData in set method of userStorage when passed as an object', () => {
+      const campaignKey = FEATURE_TEST_TRAFFIC_100.campaigns[0].key;
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_100,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService: userStorageService1
+      });
+
+      let options = {
+        metaData: {
+          username: 'any_user'
+        }
+      };
+      let spyUserStorage = jest.spyOn(vwoClientInstance.userStorageService, 'set');
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Faizan', options);
+      vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', 'Faizan', options);
+      let userData = spyUserStorage.mock.calls[0][0];
+      expect(userData.metaData).toBe(options.metaData);
+      spyUserStorage.mockRestore();
+    });
+
     test('should return null if feature rollout campaign but percent traffic is 0', () => {
       const campaignKey = FEATURE_ROLLOUT_TRAFFIC_0.campaigns[0].key;
 
@@ -1430,8 +1586,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: FEATURE_ROLLOUT_TRAFFIC_100,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', userId)).toBe(
@@ -1464,8 +1619,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: FEATURE_TEST_TRAFFIC_100,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       expect(
@@ -1543,8 +1697,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: FEATURE_TEST_TRAFFIC_100_WHITELISTING,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       expect(

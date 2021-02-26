@@ -363,6 +363,99 @@ describe('Class VWO', () => {
       expect(vwoClientInstance.activate('NO_SUCH_CAMPAIGN_KEY', userId)).toBe(null);
     });
 
+    test('should return null if shouldTrackReturningUser is not passed as boolean', () => {
+      let options = {
+        shouldTrackReturningUser: 20
+      };
+      expect(vwoClientInstance.activate('campaign_key', userId, options)).toBe(null);
+      options.shouldTrackReturningUser = 'string';
+      expect(vwoClientInstance.activate('campaign_key', userId, options)).toBe(null);
+      options.shouldTrackReturningUser = [20];
+      expect(vwoClientInstance.activate('campaign_key', userId, options)).toBe(null);
+      options.shouldTrackReturningUser = { 20: 20 };
+      expect(vwoClientInstance.activate('campaign_key', userId, options)).toBe(null);
+    });
+
+    test('should return variation and send track user impression if userStorageService is not passed', () => {
+      const campaignKey = settingsFile1.campaigns[0].key;
+
+      // without user storage
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        shouldTrackReturningUser: true
+      });
+
+      let options = {
+        shouldTrackReturningUser: false
+      };
+
+      let spyTrackUser = jest.spyOn(ImpressionUtil, 'buildEventForTrackingUser');
+
+      vwoClientInstance.activate(campaignKey, 'Ashley', options);
+      expect(spyTrackUser.mock.calls.length).toBe(1);
+      vwoClientInstance.activate(campaignKey, 'Ashley', options);
+      expect(spyTrackUser.mock.calls.length).toBe(2);
+
+      // shouldTrackReturning user set to true
+      options.shouldTrackReturningUser = true;
+      vwoClientInstance.activate(campaignKey, 'Ashley', options);
+      expect(spyTrackUser.mock.calls.length).toBe(3);
+      vwoClientInstance.activate(campaignKey, 'Ashley', options);
+      expect(spyTrackUser.mock.calls.length).toBe(4);
+      spyTrackUser.mockRestore();
+    });
+
+    test('should return variation and no trackuser impression should be sent if userstorage is passed and shouldTrack is false', () => {
+      const campaignKey = settingsFile1.campaigns[0].key;
+
+      // without user storage
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        shouldTrackReturningUser: false,
+        userStorageService: userStorageService1
+      });
+
+      let options = {
+        shouldTrackReturningUser: false
+      };
+
+      let spyTrackUser = jest.spyOn(ImpressionUtil, 'buildEventForTrackingUser');
+
+      vwoClientInstance.activate(campaignKey, 'Ashley', options);
+      expect(spyTrackUser.mock.calls.length).toBe(1);
+      vwoClientInstance.activate(campaignKey, 'Ashley', options);
+      // should not be tracked again
+      expect(spyTrackUser.mock.calls.length).toBe(1);
+
+      // shouldTrackReturning user set to true
+      options.shouldTrackReturningUser = true;
+      // shoudl be tracked now
+      vwoClientInstance.activate(campaignKey, 'Ashley', options);
+      expect(spyTrackUser.mock.calls.length).toBe(2);
+      vwoClientInstance.activate(campaignKey, 'Ashley', options);
+      expect(spyTrackUser.mock.calls.length).toBe(3);
+
+      // when options are not passed in activate api, global value of shouldTrackReturningUser should be used.
+      vwoClientInstance.activate(campaignKey, 'Ashley');
+      // should not be tracked again
+      expect(spyTrackUser.mock.calls.length).toBe(3);
+
+      // change global value to true
+      vwoClientInstance.SettingsFileManager._configObj.shouldTrackReturningUser = true;
+      vwoClientInstance.activate(campaignKey, 'Ashley');
+      expect(spyTrackUser.mock.calls.length).toBe(4);
+
+      // when the global or local shouldTrackReturningUser is not passed, by default it should be false
+      vwoClientInstance.SettingsFileManager._configObj.shouldTrackReturningUser = undefined;
+      vwoClientInstance.activate(campaignKey, 'Ashley');
+      expect(spyTrackUser.mock.calls.length).toBe(4);
+      spyTrackUser.mockRestore();
+    });
+
     test('should test against a campaign settings: traffic:50 and split:50-50', () => {
       const campaignKey = settingsFile1.campaigns[0].key;
 
@@ -628,14 +721,42 @@ describe('Class VWO', () => {
       expect(vwoClientInstance.getVariationName('NO_SUCH_CAMPAIGN_KEY', userId)).toBe(null);
     });
 
+    test('should return null if called before activate API with userStorage passed', () => {
+      const campaignKey = settingsFile2.campaigns[0].key;
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile2,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService: userStorageService1
+      });
+
+      expect(vwoClientInstance.getVariationName(campaignKey, 'Ashley')).toBe(null);
+
+      // activate the api
+      let variationName = vwoClientInstance.activate(campaignKey, 'Ashley');
+      // verify the getVariation API again, this time a variation will be returned
+      expect(vwoClientInstance.getVariationName(campaignKey, 'Ashley')).toBe(variationName);
+      userData = {};
+    });
+
+    test('should return variation if called before activate API with no userStorage passed', () => {
+      const campaignKey = settingsFile2.campaigns[0].key;
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile2,
+        logger,
+        isDevelopmentMode: true
+      });
+
+      expect(vwoClientInstance.getVariationName(campaignKey, 'Ashley')).toBe('Control');
+    });
+
     test('should test against a campaign settings: traffic:50 and split:50-50', () => {
       const campaignKey = settingsFile1.campaigns[0].key;
 
       vwoClientInstance = new VWO({
         settingsFile: settingsFile1,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -649,8 +770,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile2,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -664,8 +784,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile3,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -679,8 +798,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile4,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -694,8 +812,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile5,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -709,8 +826,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile6,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -724,8 +840,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile6,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -741,8 +856,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile7,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -758,8 +872,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile7,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -776,8 +889,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile8,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -796,8 +908,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile8,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
@@ -834,6 +945,47 @@ describe('Class VWO', () => {
 
     test('should return false if goalIdentifier is not found in settingsFile', () => {
       expect(vwoClientInstance.track(campaignKey, userId, 'NO_SUCH_GOAL_IDENTIFIER')[campaignKey]).toBe(false);
+    });
+
+    test('should return false if called before activate/isFeatureEnabled with storage service', () => {
+      const campaignKey = settingsFile2.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile2,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService: userStorageService1
+      });
+      // calling track api without activating
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        expect(vwoClientInstance.track(campaignKey, users[j], goalIdentifier)[campaignKey]).toBe(false);
+      }
+
+      // calling track goal after activating user
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        vwoClientInstance.activate(campaignKey, users[j]);
+        expect(vwoClientInstance.track(campaignKey, users[j], goalIdentifier)[campaignKey]).toBe(true);
+      }
+    });
+
+    test('should always return true if called before activate/isFeatureEnabled and without storage', () => {
+      const campaignKey = settingsFile2.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile2,
+        logger,
+        isDevelopmentMode: true
+      });
+      // calling track api without activating
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        expect(vwoClientInstance.track(campaignKey, users[j], goalIdentifier)[campaignKey]).toBe(true);
+      }
+
+      // calling track goal after activating user
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        vwoClientInstance.activate(campaignKey, users[j]);
+        expect(vwoClientInstance.track(campaignKey, users[j], goalIdentifier)[campaignKey]).toBe(true);
+      }
     });
 
     test('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_0', () => {
@@ -1054,6 +1206,8 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        vwoClientInstance.isFeatureEnabled(campaignKey1, users[j]);
+        vwoClientInstance.activate(campaignKey2, users[j]);
         let isTracked = vwoClientInstance.track([campaignKey1, campaignKey2], users[j], 'track', {
           revenueValue: 1,
           shouldTrackReturningUser: false
@@ -1325,6 +1479,100 @@ describe('Class VWO', () => {
       expect(vwoClientInstance.isFeatureEnabled('NO_SUCH_CAMPAIGN_KEY', userId)).toBe(false);
     });
 
+    test('should return null if shouldTrackReturningUser is not passed as boolean', () => {
+      let options = {
+        shouldTrackReturningUser: 20
+      };
+      expect(vwoClientInstance.isFeatureEnabled('campaign_key', userId, options)).toBe(false);
+      options.shouldTrackReturningUser = 'string';
+      expect(vwoClientInstance.isFeatureEnabled('campaign_key', userId, options)).toBe(false);
+      options.shouldTrackReturningUser = [20];
+      expect(vwoClientInstance.isFeatureEnabled('campaign_key', userId, options)).toBe(false);
+      options.shouldTrackReturningUser = { 20: 20 };
+      expect(vwoClientInstance.isFeatureEnabled('campaign_key', userId, options)).toBe(false);
+    });
+
+    test('should return result and send track user impression if userStorageService is not passed', () => {
+      const campaignKey = FEATURE_TEST_TRAFFIC_100.campaigns[0].key;
+
+      // without user storage
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_100,
+        logger,
+        isDevelopmentMode: true,
+        shouldTrackReturningUser: true
+      });
+
+      let options = {
+        shouldTrackReturningUser: false
+      };
+
+      spyImpressionEventTrackUser.mockRestore();
+      let spyTrackUser = jest.spyOn(ImpressionUtil, 'buildEventForTrackingUser');
+
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley', options);
+      expect(spyTrackUser.mock.calls.length).toBe(1);
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley', options);
+      expect(spyTrackUser.mock.calls.length).toBe(2);
+
+      // shouldTrackReturning user set to true
+      options.shouldTrackReturningUser = true;
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley', options);
+      expect(spyTrackUser.mock.calls.length).toBe(3);
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley', options);
+      expect(spyTrackUser.mock.calls.length).toBe(4);
+      spyTrackUser.mockRestore();
+    });
+
+    test('should return variation and no trackuser impression should be sent if userstorage is passed and shouldTrack is false', () => {
+      const campaignKey = FEATURE_TEST_TRAFFIC_100.campaigns[0].key;
+
+      // without user storage
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_100,
+        logger,
+        isDevelopmentMode: true,
+        shouldTrackReturningUser: false,
+        userStorageService: userStorageService1
+      });
+
+      let options = {
+        shouldTrackReturningUser: false
+      };
+
+      spyImpressionEventTrackUser = jest.spyOn(ImpressionUtil, 'buildEventForTrackingUser');
+
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley', options);
+      expect(spyImpressionEventTrackUser.mock.calls.length).toBe(1);
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley', options);
+      // should not be tracked again
+      expect(spyImpressionEventTrackUser.mock.calls.length).toBe(1);
+
+      // shouldTrackReturning user set to true
+      options.shouldTrackReturningUser = true;
+      // shoudl be tracked now
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley', options);
+      expect(spyImpressionEventTrackUser.mock.calls.length).toBe(2);
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley', options);
+      expect(spyImpressionEventTrackUser.mock.calls.length).toBe(3);
+
+      // when options are not passed in isFeatureEnabled api, global value of shouldTrackReturningUser should be used.
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley');
+      // should not be tracked again
+      expect(spyImpressionEventTrackUser.mock.calls.length).toBe(3);
+
+      // change global value to true
+      vwoClientInstance.SettingsFileManager._configObj.shouldTrackReturningUser = true;
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley');
+      expect(spyImpressionEventTrackUser.mock.calls.length).toBe(4);
+
+      // when the global or local shouldTrackReturningUser is not passed, by default it should be false
+      vwoClientInstance.SettingsFileManager._configObj.shouldTrackReturningUser = undefined;
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley');
+      expect(spyImpressionEventTrackUser.mock.calls.length).toBe(4);
+      userData = {};
+    });
+
     test('should test against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_0', () => {
       const campaignKey = FEATURE_ROLLOUT_TRAFFIC_0.campaigns[0].key;
 
@@ -1546,6 +1794,38 @@ describe('Class VWO', () => {
       expect(vwoClientInstance.getFeatureVariableValue('DEV_TEST_1', 'variable-key', userId)).toBe(null);
     });
 
+    test('should return null if called before isFeatureEnabled API with userStorage passed', () => {
+      const campaignKey = FEATURE_TEST_TRAFFIC_100.campaigns[0].key;
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_100,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService: userStorageService1
+      });
+
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', 'Faizan')).toBe(null);
+
+      // call the track api
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Faizan');
+      // verify the getVariation API again, this time a variation will be returned
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', 'Faizan')).toBe(
+        'Variation-2 string'
+      );
+    });
+
+    test('should return variation if called before activate API with no userStorage passed', () => {
+      const campaignKey = FEATURE_TEST_TRAFFIC_100.campaigns[0].key;
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_100,
+        logger,
+        isDevelopmentMode: true
+      });
+
+      expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', 'Faizan')).toBe(
+        'Variation-2 string'
+      );
+    });
+
     test('should return null if feature rollout campaign but percent traffic is 0', () => {
       const campaignKey = FEATURE_ROLLOUT_TRAFFIC_0.campaigns[0].key;
 
@@ -1568,8 +1848,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: FEATURE_ROLLOUT_TRAFFIC_100,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', userId)).toBe(
@@ -1602,8 +1881,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: FEATURE_TEST_TRAFFIC_100,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       expect(
@@ -1681,8 +1959,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: FEATURE_TEST_TRAFFIC_100_WHITELISTING,
         logger,
-        isDevelopmentMode: true,
-        userStorageService
+        isDevelopmentMode: true
       });
 
       expect(
