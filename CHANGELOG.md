@@ -4,6 +4,68 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2021-02-26
+
+### Changed
+
+- Pass meta information from APIs to the User Storage Service's `set` method.
+
+```js
+const options = {
+  metaData: {
+    browser: 'chrome',
+    os: 'linux'
+  }
+};
+
+vwoClientInstance.activate(campaignKey, userId, options);
+```
+
+Same for other APIs - `getVariationName`, `track`, `isFeatureEnabled`, and `getFeatureVariableValue`.
+
+- If User Storage Service is provided, do not track same visitor multiple times.
+
+You can pass `shouldTrackReturningUser` as `true` in case you prefer to track duplicate visitors.
+
+```js
+const options = {
+  shouldTrackReturningUser: true
+};
+
+vwoClientInstance.activate(campaignKey, userId, options);
+```
+
+Or, you can also pass `shouldTrackReturningUser` at the time of instantiating VWO SDK client. This will avoid passing the flag in different API calls.
+
+```js
+let vwoClientInstance = vwoSDK.launch({
+  settingsFile,
+  shouldTrackReturningUser: true
+});
+```
+
+If `shouldTrackReturningUser` param is passed at the time of instantiating the SDK as well as in the API options as mentioned above, then the API options value will be considered.
+
+- If User Storage Service is provided, campaign activation is mandatory before tracking any goal, getting variation of a campaign, and getting value of the feature's variable.
+
+**Correct Usage**
+
+```js
+vwoClientInstance.activate(campaignKey, userId, options);
+vwoClientInstance.track(campaignKey, userId, goalIdentifier, options);
+```
+
+**Wrong Usage**
+
+```js
+// Calling track API before activate API
+// This will not track goal as campaign has not been activated yet.
+vwoClientInstance.track(campaignKey, userId, goalIdentifier, options);
+
+// After calling track APi
+vwoClientInstance.activate(campaignKey, userId, options);
+```
+
 ## [1.12.0] - 2021-02-11
 
 ### Changed
