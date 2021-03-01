@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.12.0
+ * vwo-javascript-sdk - v1.14.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -1488,7 +1488,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.12.0"
+    version: "1.14.0"
   };
 } else {}
 
@@ -4085,12 +4085,14 @@ var DecisionUtil = {
         variationId = whitelistingResult.variationId; // Executing the callback when SDK has made a decision in case of whitelisting
 
         HooksManager.execute(Object.assign({
-          fromUserStorageService: false
+          fromUserStorageService: false,
+          isUserWhitelisted: false
         }, campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? {
           isFeatureEnabled: !!variationName
         } : {
           variationName: variationName,
-          variationId: variationId
+          variationId: variationId,
+          isUserWhitelisted: !!variationName
         }, decision));
         return whitelistingResult;
       }
@@ -4120,7 +4122,8 @@ var DecisionUtil = {
       })); // Executing the callback when SDK gets the decision from user storage service
 
       HooksManager.execute(Object.assign({
-        fromUserStorageService: !!variationName
+        fromUserStorageService: !!variationName,
+        isUserWhitelisted: false
       }, campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? {
         isFeatureEnabled: !!variationName
       } : {
@@ -4208,7 +4211,8 @@ var DecisionUtil = {
 
 
     HooksManager.execute(Object.assign({
-      fromUserStorageService: false
+      fromUserStorageService: false,
+      isUserWhitelisted: false
     }, campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? {
       isFeatureEnabled: !!variationName
     } : {
