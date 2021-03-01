@@ -169,6 +169,8 @@ var logging = __webpack_require__(/*! ./services/logging */ "./lib/services/logg
 
 var FileNameEnum = __webpack_require__(/*! ./enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
 
+var HooksManager = __webpack_require__(/*! ./services/HooksManager */ "./lib/services/HooksManager.js");
+
 var LogLevelEnum = logging.LogLevelEnum,
     LogMessageEnum = logging.LogMessageEnum,
     LogMessageUtil = logging.LogMessageUtil;
@@ -186,7 +188,9 @@ function () {
     this.getVariation = this.getVariationName; // to be backward compatible
 
     this.userStorageService = config.userStorageService;
-    this.logger = config.logger;
+    this.logger = config.logger; // Initialize Hooks manager so that callbacks can be invoked
+
+    HooksManager.init(config);
     var settingsFileManager = new SettingsFileService(config); // Validate the config file i.e. check if required fields contain appropriate data
 
     if (!settingsFileManager.isSettingsFileValid()) {
@@ -506,7 +510,7 @@ function activate(vwoInstance, campaignKey, userId) {
   } // Once the matching RUNNING campaign is found, assign the deterministic variation to the userId provided
 
 
-  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, true),
+  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, true, undefined, api),
       variationId = _DecisionUtil$getVari.variationId,
       variationName = _DecisionUtil$getVari.variationName,
       isStoredVariation = _DecisionUtil$getVari.isStoredVariation; // Check if variation-name has been assigned to the userId. If not, return no variation
@@ -684,7 +688,7 @@ function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) 
 
     var variable;
 
-    var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false),
+    var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false, undefined, api),
         variation = _DecisionUtil$getVari.variation,
         variationName = _DecisionUtil$getVari.variationName;
 
@@ -862,7 +866,7 @@ function getVariation(vwoInstance, campaignKey, userId) {
     return null;
   }
 
-  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false),
+  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false, undefined, api),
       variationName = _DecisionUtil$getVari.variationName;
 
   if (!variationName) {
@@ -1046,7 +1050,7 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
     return false;
   }
 
-  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, true),
+  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, true, undefined, api),
       variation = _DecisionUtil$getVari.variation,
       variationName = _DecisionUtil$getVari.variationName,
       variationId = _DecisionUtil$getVari.variationId,
@@ -1407,7 +1411,7 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
     return false;
   }
 
-  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false, goalIdentifier),
+  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false, goalIdentifier, api),
       variationId = _DecisionUtil$getVari.variationId,
       variationName = _DecisionUtil$getVari.variationName,
       storedGoalIdentifier = _DecisionUtil$getVari.storedGoalIdentifier; // Is User is a part of Campaign and has been decided to be a part of particular variation
@@ -2202,6 +2206,37 @@ module.exports = GoalTypeEnum;
 
 /***/ }),
 
+/***/ "./lib/enums/HooksEnum.js":
+/*!********************************!*\
+  !*** ./lib/enums/HooksEnum.js ***!
+  \********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var HooksEnum = {
+  DECISION_TYPES: {
+    CAMPAIGN_DECISION: 'CAMPAIGN_DECISION'
+  }
+};
+module.exports = HooksEnum;
+
+/***/ }),
+
 /***/ "./lib/enums/LogLevelEnum.js":
 /*!***********************************!*\
   !*** ./lib/enums/LogLevelEnum.js ***!
@@ -2981,6 +3016,59 @@ function () {
 }();
 
 module.exports = EventQueue;
+
+/***/ }),
+
+/***/ "./lib/services/HooksManager.js":
+/*!**************************************!*\
+  !*** ./lib/services/HooksManager.js ***!
+  \**************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var DataTypeUtil = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
+/**
+ * Hooks Manager is responsible for triggering callbacks useful to the end-user based on certain lifecycle events.
+ * Possible use with integrations when the user intends to send an event when a visitor is part of the experiment.
+ */
+
+
+var HooksManager = {
+  /**
+   * Initializes with configuration from VWO Object.
+   * @param {Object} config
+   */
+  init: function init() {
+    var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+    this.callback = config.integrations && config.integrations.callback;
+  },
+
+  /**
+   * Executes the callback
+   * @param {Object} properties Properties from the callback
+   */
+  execute: function execute(properties) {
+    if (DataTypeUtil.isFunction(this.callback)) {
+      this.callback(properties);
+    }
+  }
+};
+module.exports = HooksManager;
 
 /***/ }),
 
@@ -3898,6 +3986,16 @@ var logger = logging.getLogger();
 
 var SegmentEvaluator = __webpack_require__(/*! ../core/SegmentEvaluator */ "./lib/core/SegmentEvaluator.js");
 
+var HooksManager = __webpack_require__(/*! ../services/HooksManager */ "./lib/services/HooksManager.js");
+
+var HooksEnum = __webpack_require__(/*! ../enums/HooksEnum */ "./lib/enums/HooksEnum.js");
+
+var UuidUtil = __webpack_require__(/*! ./UuidUtil */ "./lib/utils/UuidUtil.js");
+
+var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
+
+var CampaignTypeEnum = __webpack_require__(/*! ../enums/CampaignTypeEnum */ "./lib/enums/CampaignTypeEnum.js");
+
 var ApiEnum = __webpack_require__(/*! ../enums/ApiEnum */ "./lib/enums/ApiEnum.js");
 
 var file = FileNameEnum.DecisionUtil;
@@ -3931,8 +4029,33 @@ var DecisionUtil = {
     var metaData = arguments.length > 8 ? arguments[8] : undefined;
     var isTrackUserAPI = arguments.length > 9 ? arguments[9] : undefined;
     var newGoalIdentifier = arguments.length > 10 ? arguments[10] : undefined;
+    var api = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : '';
     var status;
     var variation, variationName, variationId;
+    var storedVariation, goalIdentifier;
+    var decision = {
+      // campaign info
+      campaignId: campaign.id,
+      campaignKey: campaignKey,
+      campaignType: campaign.type,
+      // campaign segmentation conditions
+      customVariables: customVariables,
+      // event name
+      event: HooksEnum.DECISION_TYPES.CAMPAIGN_DECISION,
+      // goal tracked in case of track API
+      goalIdentifier: newGoalIdentifier,
+      // campaign whitelisting flag
+      isForcedVariationEnabled: campaign.isForcedVariationEnabled,
+      sdkVersion: Constants.SDK_VERSION,
+      // API name which triggered the event
+      source: api,
+      // Passed in API
+      userId: userId,
+      // Campaign Whitelisting conditions
+      variationTargetingVariables: variationTargetingVariables,
+      // VWO generated UUID based on passed UserId and Account ID
+      vwoUserId: UuidUtil.generateFor(userId, config.accountId)
+    };
 
     if (campaign.isForcedVariationEnabled) {
       var whitelistingResult = DecisionUtil._evaluateWhitelisting(campaign, campaignKey, userId, variationTargetingVariables);
@@ -3959,6 +4082,16 @@ var DecisionUtil = {
 
       if (whitelistingResult) {
         variationName = whitelistingResult.variationName;
+        variationId = whitelistingResult.variationId; // Executing the callback when SDK has made a decision in case of whitelisting
+
+        HooksManager.execute(Object.assign({
+          fromUserStorageService: false
+        }, campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? {
+          isFeatureEnabled: !!variationName
+        } : {
+          variationName: variationName,
+          variationId: variationId
+        }, decision));
         return whitelistingResult;
       }
     } else {
@@ -3970,18 +4103,30 @@ var DecisionUtil = {
     } // If userStorageService is used, get the variation from the stored data
 
 
-    var _ref = DecisionUtil._getStoredVariationAndGoalIdentifiers(config, settingsFile, campaign.key, userId, userStorageData) || {},
-        storedVariation = _ref.storedVariation,
-        goalIdentifier = _ref.goalIdentifier; // If stored variation is found, simply return the same
+    var _ref = DecisionUtil._getStoredVariationAndGoalIdentifiers(config, settingsFile, campaign.key, userId, userStorageData) || {};
 
+    storedVariation = _ref.storedVariation;
+    goalIdentifier = _ref.goalIdentifier;
 
+    // If stored variation is found, simply return the same
     if (storedVariation) {
+      variationName = storedVariation.name;
+      variationId = storedVariation.id;
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GOT_STORED_VARIATION, {
         file: file,
         campaignKey: campaignKey,
         userId: userId,
         variationName: storedVariation.name
-      }));
+      })); // Executing the callback when SDK gets the decision from user storage service
+
+      HooksManager.execute(Object.assign({
+        fromUserStorageService: !!variationName
+      }, campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? {
+        isFeatureEnabled: !!variationName
+      } : {
+        variationName: variationName,
+        variationId: variationId
+      }, decision));
       return {
         variation: storedVariation,
         variationName: storedVariation.name,
@@ -4059,8 +4204,17 @@ var DecisionUtil = {
         campaignKey: campaignKey,
         userId: userId
       }));
-    }
+    } // Executing the callback when SDK makes the decision
 
+
+    HooksManager.execute(Object.assign({
+      fromUserStorageService: false
+    }, campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? {
+      isFeatureEnabled: !!variationName
+    } : {
+      variationName: variationName,
+      variationId: variationId
+    }, decision));
     return {
       variation: variation && variation.variation,
       variationName: variationName,
