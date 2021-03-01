@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2021-03-01
+
+### Added
+
+- Expose lifecycle hook events. This feature allows sending VWO data to third party integrations.
+
+### Changed
+
+- Introduce `integrations` key in `launch` API to enable receiving hooks for the third party integrations.
+
+```js
+let vwoClientInstance = vwoSDK.launch({
+  settingsFile,
+  integrations: {
+    callback: (properties) => {
+      console.log(properties);
+    }
+  }
+});
+```
+
 ## [1.13.0] - 2021-02-26
 
 ### Changed
