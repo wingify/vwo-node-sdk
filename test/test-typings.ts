@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-/// <reference path="../lib/index.d.ts" />
 import * as vwoSDK from 'vwo-node-sdk'
 
 let settings: object = vwoSDK.getSettingsFile('accountId', 'apikey');

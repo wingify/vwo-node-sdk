@@ -17,20 +17,20 @@
 declare module 'vwo-node-sdk' {
 
   /** Fetches the latest settings file from the VWO servers.
-   * 
+   *
    * @param accountId   AccountId associated with the VWO account.
    * @param apiKey      apiKey of the project whose settigns are to be fetched.
-   * 
+   *
    * @returns           Settings file.
    */
   export function getSettingsFile(accountId: string, apiKey: string): Promise < object > ;
 
   /**
    * Creates an instance of the VWO
-   * 
+   *
    * This instance can then be used to call other APIs.
    * @param launchConfig    Launch configuration settings.
-   * 
+   *
    * @returns               The VWO instance.
    */
   export function launch(launchConfig: VWOLaunchConfig): vwoInstance;
@@ -43,73 +43,73 @@ declare module 'vwo-node-sdk' {
 
     /**
      * This API method: Gets the variation assigned for the user for the campaign and send the metrics to VWO server
-     * 
+     *
      * @param campaignKey       unique campaign key specified in VWO app
      * @param userId            ID assigned to a user
      * @param options           VWOApiOptions optional params - customVariables, variationTargetingVariables, metaData, shouldTrackReturningUser, userStorageData
-     * 
+     *
      * @returns                 If variation is assigned then variation-name otherwise null in case of user not becoming part
      */
     activate(campaignKey: string, userId: string, options ? : VWOApiOptions): string | null;
 
     /**
      * This API method: Gets the variation assigned for the user for the campaign.
-     * 
+     *
      * @param campaignKey       unique campaign key specified in VWO app
      * @param userId            ID assigned to a user
      * @param options           VWOApiOptions optional params - customVariables, variationTargetingVariables, metaData, userStorageData
-     * 
+     *
      * @returns                 If variation is assigned then variation-name otherwise null in case of user not becoming part
      */
     getVariationName(campaignKey: string, userId: string, options ? : VWOApiOptions): string | null;
 
     /**
      * This API method: Marks the conversion of the campaign for a particular goal.
-     * 
+     *
      * @param campaignSpecifier       campaign keys to track/unique campaignSpecifier. It could be null also.
      * @param userId                  ID assigned to a user
      * @param goalIdentifier          unique campaign's goal identifier which needs to be tracked.
      * @param options                 VWOApiOptions optional params - customVariables, variationTargetingVariables, revenueValue, metaData, shouldTrackReturningUser, userStorageData, goalTypeToTrack
-     * 
+     *
      * @returns                       A dictionary with campaignKey as key and value as true if the goal is tracked, else false.
      */
     track(campaignSpecifier: string | Array < String > | null | undefined, userId: string, goalIdentifier: string, options ? : VWOTrackGoalOptions): Record < string, boolean > ;
 
     /**
      * This API method checks: Whether a feature is enabled or not for the given user
-     * 
+     *
      * @param campaignKey          Unique key for a campaign
      * @param userId               Unique identifier for the user
      * @param options              VWOApiOptions optional params - customVariables, variationTargetingVariables, metaData, userStorageData, shouldTrackReturningUser
-     * 
+     *
      * @returns                    true if feature enabled, false otherwise
      */
     isFeatureEnabled(campaignKey: string, userId: string, options ? : VWOApiOptions): boolean;
 
     /**
      * This API method: Return the variable for that variation(if Feature Test), otherwise the default values being set in Feature
-     * 
-     * @param campaignKey           Unique key for a campaign         
-     * @param variableKey           Unique key for a feature's variable 
-     * @param userId                Unique identifier for the user 
+     *
+     * @param campaignKey           Unique key for a campaign
+     * @param variableKey           Unique key for a feature's variable
+     * @param userId                Unique identifier for the user
      * @param options               VWOApiOptions optional params - customVariables, variationTargetingVariables, metaData, userStorageData
      */
     getFeatureVariableValue(campaignKey: string, variableKey: string, userId: string, options ? : VWOApiOptions): string | number | boolean | null;
 
     /**
      * This API method: Pushes the key-value tag pair for a particular user
-     * 
-     * @param tagKey                tag key 
-     * @param tagValue              tag Value 
+     *
+     * @param tagKey                tag key
+     * @param tagValue              tag Value
      * @param userId                ID assigned to a user
-     * 
-     * @returns                     true if request is pushed to eventQueue, false if params are invalid or settings file is unavailable 
+     *
+     * @returns                     true if request is pushed to eventQueue, false if params are invalid or settings file is unavailable
      */
     push(tagKey: string, tagValue: string, userId: string): boolean;
 
     /**
      * Manually flush impression events to VWO which are queued in batch queue as per batchEvents config
-     * 
+     *
      * @returns                     A dictionary with message and status.
      */
     flushEvents(): Promise < Record < string, any >> ;
@@ -117,7 +117,7 @@ declare module 'vwo-node-sdk' {
     /**
      * Fetch latest settings-file and update so that vwoClientInstance could use latest settings
      * Helpful especially when using webhooks
-     * 
+     *
      * @param accountId             AccountId associated with the VWO account.
      * @param apiKey                apiKey of the project whose settigns are to be fetched.
      */
@@ -199,7 +199,7 @@ declare module 'vwo-node-sdk' {
   }
 
   /**
-   * VWO initialization configurations. 
+   * VWO initialization configurations.
    */
   export interface VWOLaunchConfig {
     /**
@@ -244,7 +244,7 @@ declare module 'vwo-node-sdk' {
 
     /**
      * This is equivalent to apiKey.
-     * 
+     *
      * This key should be passed along with pollingInterval to fetch settigns file at regular intervals.
      */
     sdkKey ? : string
@@ -265,7 +265,7 @@ declare module 'vwo-node-sdk' {
       eventsPerRequest ? : number,
 
       /**
-       * Callback triggered as soon as the event batching queue is flushed and data is synced with VWO servers. 
+       * Callback triggered as soon as the event batching queue is flushed and data is synced with VWO servers.
        */
       flushCallback ? : Function
   }
@@ -278,14 +278,14 @@ declare module 'vwo-node-sdk' {
      * Get the User Variation mapping.
      * @param userId              Unique identifier of the user.
      * @param campaignKey         Unique campaign key specified in VWO app
-     * 
+     *
      * @returns                   Variation mapping.
      */
     get(userId: string, campaignKey: string): Record < string, any > ;
 
     /**
      * Save the assigned variation.
-     * @param userStorageData     Variation mapping. 
+     * @param userStorageData     Variation mapping.
      */
     set(userStorageData: Record < string, any > ): void;
   }
@@ -330,8 +330,8 @@ declare module 'vwo-node-sdk' {
     metaData ? : Record < string, any >
 
     /**
-     * An object for utilizing already fetched storage data. 
-     * 
+     * An object for utilizing already fetched storage data.
+     *
      * It also helps in implementing the asynchronous nature of the User Storage Service's 'get' method
      */
       userStorageData ? : object

@@ -6,4 +6,4 @@ node_modules
 *.rdb
 *.todo
 coverage/
-
+test/test-typings.js
