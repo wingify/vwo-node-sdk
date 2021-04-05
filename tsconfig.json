@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "target": "es5",
+    "module": "commonjs",
+    "esModuleInterop": true
+  },
+  "files": [
+    "lib/index.d.ts",
+    "test/test-typings.ts"
+  ],
+}
