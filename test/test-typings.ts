@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-import * as vwoSDK from 'vwo-node-sdk'
+import * as vwoSDK from 'vwo-node-sdk';
 
 let settings: object = vwoSDK.getSettingsFile('accountId', 'apikey');
 
 let vwoLog: vwoSDK.VWOLog = {
   log(level: any, message: string) {}
-}
+};
 
 let logging: vwoSDK.VWOLogger = {
   level: vwoSDK.LogLevelEnum.DEBUG,
@@ -31,17 +31,15 @@ let batchEvents: vwoSDK.VWOBatchConfig = {
   eventsPerRequest: 200,
   requestTimeInterval: 234,
   flushCallback(error: any, events: any) {}
-
-}
+};
 
 let userStorage: vwoSDK.VWOUserStorageConfig = {
-  get(userId: string, campaignKey: string): Record < string,
-  any > {
-    return {}
+  get(userId: string, campaignKey: string): Record<string, any> {
+    return {};
   },
 
-  set(data: Record < string, any > ): void {}
-}
+  set(data: Record<string, any>): void {}
+};
 
 let vwoLaunchOptions: vwoSDK.VWOLaunchConfig = {
   settingsFile: settings,
@@ -56,39 +54,41 @@ let vwoLaunchOptions: vwoSDK.VWOLaunchConfig = {
 
 let apiOptions: vwoSDK.VWOApiOptions = {
   customVariables: {
-    browser: 'chrome',
+    browser: 'chrome'
   },
   variationTargetingVariables: {
-    os: 'macOS',
+    os: 'macOS'
   },
   shouldTrackReturningUser: true,
   metaData: {
     userId: 'userId'
   },
   userStorageData: {}
-
-}
+};
 
 let trackOptions: vwoSDK.VWOTrackGoalOptions = {
   revenueValue: 20,
   goalTypeToTrack: vwoSDK.GoalTypeEnum.REVENUE
-}
-
-
+};
 
 let vwoInstance: vwoSDK.vwoInstance = vwoSDK.launch(vwoLaunchOptions);
 
 let variationName: string | null = vwoInstance.activate('campaignKey', 'userId', apiOptions);
 
-variationName = vwoInstance.getVariationName('campaignKey', 'userId', apiOptions)
+variationName = vwoInstance.getVariationName('campaignKey', 'userId', apiOptions);
 
 let isFeatureEnabled: boolean = vwoInstance.isFeatureEnabled('campaignKey', 'userId', apiOptions);
 
-let variableValue: any = vwoInstance.getFeatureVariableValue('campaignKey', 'variableKey', 'userId', apiOptions)
+let variableValue: any = vwoInstance.getFeatureVariableValue('campaignKey', 'variableKey', 'userId', apiOptions);
 
-let isGoalTracked: Record < string, boolean > = vwoInstance.track('campaignKey', 'userId', 'goalIdentifier', Object.assign({}, trackOptions, apiOptions))
+let isGoalTracked: Record<string, boolean> = vwoInstance.track(
+  'campaignKey',
+  'userId',
+  'goalIdentifier',
+  Object.assign({}, trackOptions, apiOptions)
+);
 
-let isPostDimensionPushed = vwoInstance.push('tagKey', 'tagValue', 'userId')
+let isPostDimensionPushed = vwoInstance.push('tagKey', 'tagValue', 'userId');
 
 ///flush batch events manually
 

@@ -99,7 +99,7 @@
         "prettier",
         "git add"
       ],
-      "**/*.{json,md}": [
+      "**/*.{json,md,ts}": [
         "prettier",
         "git add"
       ]

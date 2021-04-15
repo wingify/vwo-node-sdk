@@ -15,7 +15,6 @@
  */
 
 declare module 'vwo-node-sdk' {
-
   /** Fetches the latest settings file from the VWO servers.
    *
    * @param accountId   AccountId associated with the VWO account.
@@ -23,7 +22,7 @@ declare module 'vwo-node-sdk' {
    *
    * @returns           Settings file.
    */
-  export function getSettingsFile(accountId: string, apiKey: string): Promise < object > ;
+  export function getSettingsFile(accountId: string, apiKey: string): Promise<object>;
 
   /**
    * Creates an instance of the VWO
@@ -35,12 +34,10 @@ declare module 'vwo-node-sdk' {
    */
   export function launch(launchConfig: VWOLaunchConfig): vwoInstance;
 
-
   /**
    * APIs offered by the VWO fullstack which can be accessed using the VWO instance.
    */
   export interface vwoInstance {
-
     /**
      * This API method: Gets the variation assigned for the user for the campaign and send the metrics to VWO server
      *
@@ -50,7 +47,7 @@ declare module 'vwo-node-sdk' {
      *
      * @returns                 If variation is assigned then variation-name otherwise null in case of user not becoming part
      */
-    activate(campaignKey: string, userId: string, options ? : VWOApiOptions): string | null;
+    activate(campaignKey: string, userId: string, options?: VWOApiOptions): string | null;
 
     /**
      * This API method: Gets the variation assigned for the user for the campaign.
@@ -61,7 +58,7 @@ declare module 'vwo-node-sdk' {
      *
      * @returns                 If variation is assigned then variation-name otherwise null in case of user not becoming part
      */
-    getVariationName(campaignKey: string, userId: string, options ? : VWOApiOptions): string | null;
+    getVariationName(campaignKey: string, userId: string, options?: VWOApiOptions): string | null;
 
     /**
      * This API method: Marks the conversion of the campaign for a particular goal.
@@ -73,7 +70,12 @@ declare module 'vwo-node-sdk' {
      *
      * @returns                       A dictionary with campaignKey as key and value as true if the goal is tracked, else false.
      */
-    track(campaignSpecifier: string | Array < String > | null | undefined, userId: string, goalIdentifier: string, options ? : VWOTrackGoalOptions): Record < string, boolean > ;
+    track(
+      campaignSpecifier: string | Array<String> | null | undefined,
+      userId: string,
+      goalIdentifier: string,
+      options?: VWOTrackGoalOptions
+    ): Record<string, boolean>;
 
     /**
      * This API method checks: Whether a feature is enabled or not for the given user
@@ -84,7 +86,7 @@ declare module 'vwo-node-sdk' {
      *
      * @returns                    true if feature enabled, false otherwise
      */
-    isFeatureEnabled(campaignKey: string, userId: string, options ? : VWOApiOptions): boolean;
+    isFeatureEnabled(campaignKey: string, userId: string, options?: VWOApiOptions): boolean;
 
     /**
      * This API method: Return the variable for that variation(if Feature Test), otherwise the default values being set in Feature
@@ -94,7 +96,12 @@ declare module 'vwo-node-sdk' {
      * @param userId                Unique identifier for the user
      * @param options               VWOApiOptions optional params - customVariables, variationTargetingVariables, metaData, userStorageData
      */
-    getFeatureVariableValue(campaignKey: string, variableKey: string, userId: string, options ? : VWOApiOptions): string | number | boolean | null;
+    getFeatureVariableValue(
+      campaignKey: string,
+      variableKey: string,
+      userId: string,
+      options?: VWOApiOptions
+    ): string | number | boolean | null;
 
     /**
      * This API method: Pushes the key-value tag pair for a particular user
@@ -112,7 +119,7 @@ declare module 'vwo-node-sdk' {
      *
      * @returns                     A dictionary with message and status.
      */
-    flushEvents(): Promise < Record < string, any >> ;
+    flushEvents(): Promise<Record<string, any>>;
 
     /**
      * Fetch latest settings-file and update so that vwoClientInstance could use latest settings
@@ -121,20 +128,19 @@ declare module 'vwo-node-sdk' {
      * @param accountId             AccountId associated with the VWO account.
      * @param apiKey                apiKey of the project whose settigns are to be fetched.
      */
-    getAndUpdateSettingsFile(accountId ? : string, apiKey ? : string): Promise < object > ;
+    getAndUpdateSettingsFile(accountId?: string, apiKey?: string): Promise<object>;
   }
 
   /**
    * An object that containing the function which can be implemented to display custom logs.
    */
   export interface VWOLog {
-
     /**
      * A fucntion which can be implemented to display the custom logs.
      * @param level           Level describes the type of the log set while creating VWO instance.
      * @param message         Message to be displayed in the log.
      */
-    log(level: any, message: string): void,
+    log(level: any, message: string): void;
   }
 
   /**
@@ -145,22 +151,22 @@ declare module 'vwo-node-sdk' {
      * display NOTSET logs.
      */
     NOTSET = 0,
-      /**
-       * display DEBUG logs.
-       */
-      DEBUG = 1,
-      /**
-       * display INFO logs.
-       */
-      INFO = 2,
-      /**
-       * display WARN logs.
-       */
-      WARN = 3,
-      /**
-       * display ERROR logs.
-       */
-      ERROR = 4
+    /**
+     * display DEBUG logs.
+     */
+    DEBUG = 1,
+    /**
+     * display INFO logs.
+     */
+    INFO = 2,
+    /**
+     * display WARN logs.
+     */
+    WARN = 3,
+    /**
+     * display ERROR logs.
+     */
+    ERROR = 4
   }
 
   /**
@@ -172,15 +178,15 @@ declare module 'vwo-node-sdk' {
      */
     REVENUE = 'REVENUE_TRACKING',
 
-      /**
-       * Tracks only custom goals.
-       */
-      CUSTOM = 'CUSTOM_GOAL',
+    /**
+     * Tracks only custom goals.
+     */
+    CUSTOM = 'CUSTOM_GOAL',
 
-      /**
-       * Tracks both revenue and custom goals.
-       */
-      ALL = 'ALL'
+    /**
+     * Tracks both revenue and custom goals.
+     */
+    ALL = 'ALL'
   }
 
   /**
@@ -190,12 +196,12 @@ declare module 'vwo-node-sdk' {
     /**
      * An object to display custom logs
      */
-    logger ? : VWOLog
+    logger?: VWOLog;
 
     /**
      * Type/Level of the logs to be displayed.
      */
-    level ? : LogLevelEnum,
+    level?: LogLevelEnum;
   }
 
   /**
@@ -205,49 +211,49 @@ declare module 'vwo-node-sdk' {
     /**
      * settings file obtained from the getSettingsFile Function.
      */
-    settingsFile: object,
+    settingsFile: object;
 
-      /**
-       * Flag determining whether the tracking data to be sent to VWO servers.
-       */
-      isDevelopmentMode ? : boolean,
+    /**
+     * Flag determining whether the tracking data to be sent to VWO servers.
+     */
+    isDevelopmentMode?: boolean;
 
-      /**
-       * Flag determining  whether the returning user should be tracked again or not.
-       */
-      shouldTrackReturningUser ? : boolean,
+    /**
+     * Flag determining  whether the returning user should be tracked again or not.
+     */
+    shouldTrackReturningUser?: boolean;
 
-      /**
-       * Interval at which the settings file should be fetched again.
-       */
-      pollingInterval ? : number,
+    /**
+     * Interval at which the settings file should be fetched again.
+     */
+    pollingInterval?: number;
 
-      /**
-       * An object describing the level of the logs to be displayed and the callback to display custom logs.
-       */
-      logging ? : VWOLogger,
+    /**
+     * An object describing the level of the logs to be displayed and the callback to display custom logs.
+     */
+    logging?: VWOLogger;
 
-      /**
-       * An object describing the event batching configs.
-       */
-      batchEvents ? : VWOBatchConfig,
+    /**
+     * An object describing the event batching configs.
+     */
+    batchEvents?: VWOBatchConfig;
 
-      /**
-       * An object containing the callback for get and set method of UserStorage.
-       */
-      userStorageService ? : VWOUserStorageConfig,
+    /**
+     * An object containing the callback for get and set method of UserStorage.
+     */
+    userStorageService?: VWOUserStorageConfig;
 
-      /**
-       * Type of the goal to be tracked.
-       */
-      goalTypeToTrack ? : GoalTypeEnum
+    /**
+     * Type of the goal to be tracked.
+     */
+    goalTypeToTrack?: GoalTypeEnum;
 
     /**
      * This is equivalent to apiKey.
      *
      * This key should be passed along with pollingInterval to fetch settigns file at regular intervals.
      */
-    sdkKey ? : string
+    sdkKey?: string;
   }
 
   /**
@@ -257,17 +263,17 @@ declare module 'vwo-node-sdk' {
     /**
      * Time interval at which the event batching queue should be flushed and data in the queue is synced with VWO servers.
      */
-    requestTimeInterval ? : number,
+    requestTimeInterval?: number;
 
-      /**
-       * Number of events after which the event batching queue should be flushed and data in the queue is synced with VWO servers.
-       */
-      eventsPerRequest ? : number,
+    /**
+     * Number of events after which the event batching queue should be flushed and data in the queue is synced with VWO servers.
+     */
+    eventsPerRequest?: number;
 
-      /**
-       * Callback triggered as soon as the event batching queue is flushed and data is synced with VWO servers.
-       */
-      flushCallback ? : Function
+    /**
+     * Callback triggered as soon as the event batching queue is flushed and data is synced with VWO servers.
+     */
+    flushCallback?: Function;
   }
 
   /**
@@ -281,13 +287,13 @@ declare module 'vwo-node-sdk' {
      *
      * @returns                   Variation mapping.
      */
-    get(userId: string, campaignKey: string): Record < string, any > ;
+    get(userId: string, campaignKey: string): Record<string, any>;
 
     /**
      * Save the assigned variation.
      * @param userStorageData     Variation mapping.
      */
-    set(userStorageData: Record < string, any > ): void;
+    set(userStorageData: Record<string, any>): void;
   }
 
   /**
@@ -297,12 +303,12 @@ declare module 'vwo-node-sdk' {
     /**
      * Revenue value.
      */
-    revenueValue ? : number,
+    revenueValue?: number;
 
-      /**
-       * Type of the goal to be tracked.
-       */
-      goalTypeToTrack ? : GoalTypeEnum
+    /**
+     * Type of the goal to be tracked.
+     */
+    goalTypeToTrack?: GoalTypeEnum;
   }
 
   /**
@@ -312,28 +318,28 @@ declare module 'vwo-node-sdk' {
     /**
      * Custom variables for segmentation.
      */
-    customVariables ? : Record < string, any >
+    customVariables?: Record<string, any>;
 
     /**
      * variation targeting variables for whitelisting.
      */
-      variationTargetingVariables ? : Record < string, any >
+    variationTargetingVariables?: Record<string, any>;
 
-      /**
-       * Flag determining  whether returning user should be tracked again or not.
-       */
-      shouldTrackReturningUser ? : boolean
+    /**
+     * Flag determining  whether returning user should be tracked again or not.
+     */
+    shouldTrackReturningUser?: boolean;
 
-      /**
-       * Pass meta information from APIs to the User Storage Service's set method.
-       */
-    metaData ? : Record < string, any >
+    /**
+     * Pass meta information from APIs to the User Storage Service's set method.
+     */
+    metaData?: Record<string, any>;
 
     /**
      * An object for utilizing already fetched storage data.
      *
      * It also helps in implementing the asynchronous nature of the User Storage Service's 'get' method
      */
-      userStorageData ? : object
+    userStorageData?: object;
   }
 }

@@ -5,8 +5,5 @@
     "module": "commonjs",
     "esModuleInterop": true
   },
-  "files": [
-    "lib/index.d.ts",
-    "test/test-typings.ts"
-  ],
+  "files": ["lib/index.d.ts", "test/test-typings.ts"]
 }
