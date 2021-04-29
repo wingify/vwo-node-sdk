@@ -1,22 +1,22 @@
 /*!
  * vwo-javascript-sdk - v1.16.0
  * URL - https://github.com/wingify/vwo-node-sdk
- *
+ * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * Dependencies used -
+ * 
+ * Dependencies used - 
  *  1. murmurhash - ^0.0.2
  *  2. superstruct - ^0.8.3
  *  3. uuid - ^3.3.2
@@ -7750,7 +7750,7 @@ function bytesToUuid(buf, offset) {
   var i = offset || 0;
   var bth = byteToHex;
   // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
-  return ([bth[buf[i++]], bth[buf[i++]],
+  return ([bth[buf[i++]], bth[buf[i++]], 
 	bth[buf[i++]], bth[buf[i++]], '-',
 	bth[buf[i++]], bth[buf[i++]], '-',
 	bth[buf[i++]], bth[buf[i++]], '-',
