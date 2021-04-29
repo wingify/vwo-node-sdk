@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0] - 2021-04-29
+
+### Added
+
+- Sending stats which are used for launching the SDK like storage service, logger, and integrations, etc. in tracking calls(track-user and batch-event). This is solely for debugging purpose. We are only sending whether a particular key(feature) is used not the actual value of the key
+
+### Changed
+
+- Removed sending user-id, that is provided in the various APIs, in the tracking calls to VWO server as it might contain sensitive PII data.
+
+- SDK Key will not be logged in any log message, for example, tracking call logs.
+
+- TypeScript files were properly formatted using prettier. Prettier will run on `.ts` files whenever a commit is made.
+
+
+
 ## [1.15.0] - 2021-04-05
 
 ### Added

@@ -17,7 +17,7 @@
 const impressionUtil = require('../../lib/utils/ImpressionUtil');
 const GoalTypeEnum = require('../../lib/enums/GoalTypeEnum');
 
-const baseProperties = ['account_id', 'uId', 'random', 'sId', 'u', 'sdk', 'sdk-v', 'ap', 'url'];
+const baseProperties = ['account_id', 'random', 'sId', 'u', 'sdk', 'sdk-v', 'ap', 'url'];
 
 function checkBaseProperties(properties) {
   for (let i = 0; i < baseProperties.length; i++) {

@@ -1,22 +1,22 @@
 /*!
- * vwo-javascript-sdk - v1.14.0
+ * vwo-javascript-sdk - v1.16.0
  * URL - https://github.com/wingify/vwo-node-sdk
- * 
+ *
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
- * Dependencies used - 
+ *
+ * Dependencies used -
  *  1. murmurhash - ^0.0.2
  *  2. superstruct - ^0.8.3
  *  3. uuid - ^3.3.2
@@ -157,8 +157,6 @@ var EventQueue = __webpack_require__(/*! ./services/EventQueue */ "./lib/service
 
 var SettingsFileService = __webpack_require__(/*! ./services/SettingsFileManager */ "./lib/services/SettingsFileManager.js");
 
-var ImpressionUtil = __webpack_require__(/*! ./utils/ImpressionUtil */ "./lib/utils/ImpressionUtil.js");
-
 var BatchEventsDispatcher;
 var customEventUtil;
 var BatchEventsQueue;
@@ -171,6 +169,8 @@ var FileNameEnum = __webpack_require__(/*! ./enums/FileNameEnum */ "./lib/enums/
 
 var HooksManager = __webpack_require__(/*! ./services/HooksManager */ "./lib/services/HooksManager.js");
 
+var UsageStats = __webpack_require__(/*! ./services/UsageStats */ "./lib/services/UsageStats.js");
+
 var LogLevelEnum = logging.LogLevelEnum,
     LogMessageEnum = logging.LogMessageEnum,
     LogMessageUtil = logging.LogMessageUtil;
@@ -181,6 +181,8 @@ var VWO =
 function () {
   // Setting various services on the instance to be accessible by its member functions
   function VWO() {
+    var _this = this;
+
     var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
     _classCallCheck(this, VWO);
@@ -208,6 +210,11 @@ function () {
 
     this.eventQueue = new EventQueue();
     this.SettingsFileManager = settingsFileManager;
+    this.usageStats = new UsageStats();
+
+    if (!settingsFileManager.getConfig().isDevelopmentMode) {
+      this.usageStats.collectUsageStats(settingsFileManager.getConfig());
+    }
 
     if (false) { var sdkKey, accountId; } // Process settingsFile for various things. For eg: assign bucket range to variation, etc.
 
@@ -355,7 +362,7 @@ function () {
   }, {
     key: "flushEvents",
     value: function flushEvents() {
-      var _this = this;
+      var _this2 = this;
 
       if (false) {}
     }
@@ -541,7 +548,7 @@ function activate(vwoInstance, campaignKey, userId) {
     var properties = ImpressionUtil.buildBatchEventForTrackingUser(settingsFile, campaign.id, variationId, userId);
     vwoInstance.batchEventsQueue.enqueue(properties);
   } else {
-    var _properties = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId);
+    var _properties = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId, vwoInstance.usageStats.getUsageStats());
 
     vwoInstance.eventQueue.process(config, _properties, vwoInstance);
   }
@@ -1074,7 +1081,7 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
         var properties = ImpressionUtil.buildBatchEventForTrackingUser(settingsFile, campaign.id, variationId, userId);
         vwoInstance.batchEventsQueue.enqueue(properties);
       } else {
-        var _properties = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId);
+        var _properties = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId, vwoInstance.usageStats.getUsageStats());
 
         vwoInstance.eventQueue.process(config, _properties, vwoInstance);
       }
@@ -1488,7 +1495,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.14.0"
+    version: "1.15.0"
   };
 } else {}
 
@@ -2170,7 +2177,8 @@ module.exports = {
   UuidUtil: "".concat(UTIL_PATH, "/UuidUtil"),
   ValidateUtil: "".concat(UTIL_PATH, "/ValidateUtil"),
   DecisionUtil: "".concat(UTIL_PATH, "/DecisionUtils"),
-  HttpHandlerUtil: "".concat(UTIL_PATH, "/HttpHandlerUtil")
+  HttpHandlerUtil: "".concat(UTIL_PATH, "/HttpHandlerUtil"),
+  UsageStatsUtil: "".concat(SERVICES_PATH, "/UsageStats")
 };
 
 /***/ }),
@@ -2382,7 +2390,7 @@ module.exports = {
   INFO_MESSAGES: {
     FEATURE_ENABLED_FOR_USER: "({file}): Campaign:{campaignKey} for user ID:{userId} is enabled",
     FEATURE_NOT_ENABLED_FOR_USER: "({file}): Campaign:{campaignKey} for user ID:{userId} is not enabled",
-    IMPRESSION_SUCCESS: '({file}): Impression event - {endPoint} was successfully received by VWO having main keys: accountId:{accountId}, User ID:{userId}, campaignId:{campaignId} and variationId:{variationId}',
+    IMPRESSION_SUCCESS: '({file}): Impression event - {endPoint} was successfully received by VWO having main keys: accountId:{accountId}, campaignId:{campaignId} and variationId:{variationId}',
     INVALID_VARIATION_KEY: '({file}): Variation was not assigned to User ID:{userId} for Campaign:{campaignKey}',
     GETTING_DATA_USER_STORAGE_SERVICE: '({file}): Getting data from UserStorageService for User ID:{userId} successful',
     SETTING_DATA_USER_STORAGE_SERVICE: '({file}): Setting data into UserStorageService for User ID:{userId} successful',
@@ -2819,7 +2827,7 @@ module.exports = {
     } // Set logger on config Obkect, to be required later
 
 
-    config.logger = config.logger || logger; // Create an instance of VWO class which exposes API methods
+    config.logger = config.logging && config.logging.logger || logger; // Create an instance of VWO class which exposes API methods
 
     return new VWO(config);
   }
@@ -3287,6 +3295,87 @@ function () {
 }();
 
 module.exports = SettingsFileManager;
+
+/***/ }),
+
+/***/ "./lib/services/UsageStats.js":
+/*!************************************!*\
+  !*** ./lib/services/UsageStats.js ***!
+  \************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+/**
+ * Copyright 2019-2021 Wingify Software Pvt. Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var _require = __webpack_require__(/*! ./logging */ "./lib/services/logging/index.js"),
+    LogManager = _require.LogManager;
+
+var UsageStats =
+/*#__PURE__*/
+function () {
+  function UsageStats() {
+    _classCallCheck(this, UsageStats);
+
+    this.data = {};
+  }
+  /**
+   * Collect the usage stats from the params passed at the time of instantiating VWO and send them to VWO Server
+   * @param {Object} config    config passed at the time of instantiation.
+   */
+
+
+  _createClass(UsageStats, [{
+    key: "collectUsageStats",
+    value: function collectUsageStats(config) {
+      this.data['is_eb'] = Number(!!config.batchEvents);
+      this.data['is_i'] = Number(!!config.integrations);
+      this.data['is_ss'] = Number(!!config.userStorageService);
+      this.data['is_cl'] = Number(!(config.logger instanceof LogManager));
+      this.data['is_ll'] = Number(config.logging && config.logging.level);
+      this.data['tru'] = Number(config.shouldTrackReturningUser);
+      this.data['gt'] = Number(!!config.goalTypeToTrack);
+      this.data['poll'] = Number(!!config.pollingInterval);
+      Object.keys(this.data).forEach(function (key) {
+        if (!this.data[key]) {
+          delete this.data[key];
+        }
+      }, this);
+    }
+    /**
+     * Get the collected usage stats.
+     * @returns     collected usage stats data
+     */
+
+  }, {
+    key: "getUsageStats",
+    value: function getUsageStats() {
+      return this.data;
+    }
+  }]);
+
+  return UsageStats;
+}();
+
+module.exports = UsageStats;
 
 /***/ }),
 
@@ -4848,7 +4937,6 @@ function getBaseProperties(configObj, userId) {
   var accountId = configObj.accountId;
   return Object.assign({}, getPrimaryProperties(configObj, userId), ImpressionUtil.getReportingProperties(configObj), {
     account_id: accountId,
-    uId: encodeURIComponent(userId),
     random: FunctionUtil.getRandomNumber(),
     ap: Constants.PLATFORM
   });
@@ -4870,7 +4958,7 @@ var ImpressionUtil = {
     });
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_PUSH, {
       file: FileNameEnum.ImpressionUtil,
-      properties: JSON.stringify(properties)
+      properties: this._getStringifiedLogProperties(properties)
     }));
     return properties;
   },
@@ -4895,18 +4983,18 @@ var ImpressionUtil = {
    *
    * @return null if campaign ID or variation ID is invalid
    */
-  buildEventForTrackingUser: function buildEventForTrackingUser(configObj, campaignKey, variationId, userId) {
+  buildEventForTrackingUser: function buildEventForTrackingUser(configObj, campaignKey, variationId, userId, usageStats) {
     var properties = Object.assign({
       experiment_id: campaignKey,
       combination: variationId
-    }, getBaseProperties(configObj, userId));
+    }, getBaseProperties(configObj, userId), usageStats);
     properties.ed = JSON.stringify({
       p: 'server'
     });
     properties.url = Constants.HTTPS_PROTOCOL + UrlEnum.BASE_URL + UrlEnum.TRACK_USER;
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_TRACK_USER, {
       file: FileNameEnum.ImpressionUtil,
-      properties: JSON.stringify(properties)
+      properties: this._getStringifiedLogProperties(properties)
     }));
     return properties;
   },
@@ -4952,7 +5040,7 @@ var ImpressionUtil = {
 
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_TRACK_GOAL, {
       file: FileNameEnum.ImpressionUtil,
-      properties: JSON.stringify(properties)
+      properties: this._getStringifiedLogProperties(properties)
     }));
     return properties;
   },
@@ -4985,6 +5073,17 @@ var ImpressionUtil = {
 
     var sdkKey = configObj.sdkKey;
     return _ref = {}, _defineProperty(_ref, Constants.SDK_QUERY_PARAM, Constants.SDK_NAME), _defineProperty(_ref, Constants.SDK_VERSION_QUERY_PARAM, Constants.SDK_VERSION), _defineProperty(_ref, "env", sdkKey), _ref;
+  },
+
+  /**
+   * Remove the sensitive keys from the properties to te displayed in the log.
+   * @param {Object} properties
+   * @returns properties without sensitive keys
+   */
+  _getStringifiedLogProperties: function _getStringifiedLogProperties(properties) {
+    var logProperties = Object.assign({}, properties);
+    delete logProperties.env;
+    return JSON.stringify(logProperties);
   }
 };
 module.exports = ImpressionUtil;
@@ -7651,7 +7750,7 @@ function bytesToUuid(buf, offset) {
   var i = offset || 0;
   var bth = byteToHex;
   // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
-  return ([bth[buf[i++]], bth[buf[i++]], 
+  return ([bth[buf[i++]], bth[buf[i++]],
 	bth[buf[i++]], bth[buf[i++]], '-',
 	bth[buf[i++]], bth[buf[i++]], '-',
 	bth[buf[i++]], bth[buf[i++]], '-',
