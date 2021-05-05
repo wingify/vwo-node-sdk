@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-const index = require('../../lib/index');
+const vwo = require('../../lib');
 const settingsFile1 = require('../test-utils/data/settingsFile-1');
 const GoalTypeEnum = require('../../lib/enums/GoalTypeEnum');
 
@@ -28,7 +28,7 @@ let userStorageService = {
 describe('UsageStats', () => {
   describe('method: collectUsageStats', () => {
     it('when vwo is launched only with settings file', () => {
-      let vwoClientInstance = index.launch({
+      const vwoClientInstance = vwo.launch({
         settingsFile: settingsFile1
       });
 
@@ -36,7 +36,7 @@ describe('UsageStats', () => {
     });
 
     it('when vwo is launched along with logging config', () => {
-      let vwoClientInstance = index.launch({
+      const vwoClientInstance = vwo.launch({
         settingsFile: settingsFile1,
         logging: logger
       });
@@ -51,7 +51,7 @@ describe('UsageStats', () => {
     });
 
     it('when vwo is launched along with userStorageService config', () => {
-      let vwoClientInstance = index.launch({
+      const vwoClientInstance = vwo.launch({
         settingsFile: settingsFile1,
         logging: logger,
         userStorageService
@@ -67,13 +67,13 @@ describe('UsageStats', () => {
     });
 
     it('when vwo is launched along with integrations config', () => {
-      let vwoClientInstance = index.launch({
+      const vwoClientInstance = vwo.launch({
         settingsFile: settingsFile1,
         logging: logger,
         userStorageService,
         integrations: {
-          callback: function() {
-            console.log('sdfg');
+          callback: function(data) {
+            console.log(data);
           }
         }
       });
@@ -88,13 +88,13 @@ describe('UsageStats', () => {
     });
 
     it('when vwo is launched along with shouldTrackReturningUser as true config', () => {
-      let vwoClientInstance = index.launch({
+      const vwoClientInstance = vwo.launch({
         settingsFile: settingsFile1,
         logging: logger,
         userStorageService,
         integrations: {
-          callback: function() {
-            console.log('sdfg');
+          callback: function(data) {
+            console.log(data);
           }
         },
         shouldTrackReturningUser: true
@@ -110,13 +110,13 @@ describe('UsageStats', () => {
     });
 
     it('when vwo is launched along with goalTypeToTrack config', () => {
-      let vwoClientInstance = index.launch({
+      const vwoClientInstance = vwo.launch({
         settingsFile: settingsFile1,
         logging: logger,
         userStorageService,
         integrations: {
-          callback: function() {
-            console.log('sdfg');
+          callback: function(data) {
+            console.log(data);
           }
         },
         shouldTrackReturningUser: true,
@@ -132,20 +132,20 @@ describe('UsageStats', () => {
       expect(vwoClientInstance.usageStats.getUsageStats()['is_eb']).toBeUndefined();
     });
 
-    it('when vwo is launched along with polling config', () => {
-      let vwoClientInstance = index.launch({
+    it('when vwo is launched along with polling config', done => {
+      const vwoClientInstance = vwo.launch({
         settingsFile: settingsFile1,
         logging: logger,
         userStorageService,
         integrations: {
-          callback: function() {
-            console.log('sdfg');
+          callback: function(data) {
+            console.log(data);
           }
         },
         shouldTrackReturningUser: true,
         goalTypeToTrack: GoalTypeEnum.CUSTOM,
         pollingInterval: 50000,
-        sdkKey: 'edsfghgfdasdfgf'
+        sdkKey: 'po87170ad94079aa190bc7c9b85d26mm'
       });
 
       expect(vwoClientInstance.usageStats.getUsageStats()['is_ss']).toBe(1);
@@ -155,22 +155,24 @@ describe('UsageStats', () => {
       expect(vwoClientInstance.usageStats.getUsageStats()['gt']).toBe(1);
       expect(vwoClientInstance.usageStats.getUsageStats()['poll']).toBe(1);
       expect(vwoClientInstance.usageStats.getUsageStats()['is_eb']).toBeUndefined();
+
+      done();
     });
 
-    it('when vwo is launched along with polling config', () => {
-      let vwoClientInstance = index.launch({
+    it('when vwo is launched along with polling config', done => {
+      const vwoClientInstance = vwo.launch({
         settingsFile: settingsFile1,
         logging: logger,
         userStorageService,
         integrations: {
-          callback: function() {
-            console.log('sdfg');
+          callback: function(data) {
+            console.log(data);
           }
         },
         shouldTrackReturningUser: true,
         goalTypeToTrack: GoalTypeEnum.CUSTOM,
         pollingInterval: 50000,
-        sdkKey: 'edsfghgfdasdfgf',
+        sdkKey: 'po87170ad94079aa190bc7c9b85d26mm',
         batchEvents: {
           eventsPerRequest: 2,
           requestTimeInterval: 200000
@@ -184,6 +186,8 @@ describe('UsageStats', () => {
       expect(vwoClientInstance.usageStats.getUsageStats()['gt']).toBe(1);
       expect(vwoClientInstance.usageStats.getUsageStats()['poll']).toBe(1);
       expect(vwoClientInstance.usageStats.getUsageStats()['is_eb']).toBe(1);
+
+      done();
     });
   });
 });
