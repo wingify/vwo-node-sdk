@@ -176,9 +176,7 @@ var LogLevelEnum = logging.LogLevelEnum,
     LogMessageUtil = logging.LogMessageUtil;
 var file = FileNameEnum.VWO;
 
-var VWO =
-/*#__PURE__*/
-function () {
+var VWO = /*#__PURE__*/function () {
   // Setting various services on the instance to be accessible by its member functions
   function VWO() {
     var _this = this;
@@ -1495,7 +1493,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.15.0"
+    version: "1.16.0"
   };
 } else {}
 
@@ -2963,9 +2961,7 @@ var DataTypeUtil = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils
 
 var EventDispatcher = __webpack_require__(/*! ../utils/EventDispatcherUtil */ "./lib/utils/EventDispatcherUtil.js");
 
-var EventQueue =
-/*#__PURE__*/
-function () {
+var EventQueue = /*#__PURE__*/function () {
   function EventQueue() {
     _classCallCheck(this, EventQueue);
 
@@ -3125,9 +3121,7 @@ var LogLevelEnum = logging.LogLevelEnum,
     LogMessageUtil = logging.LogMessageUtil;
 var file = FileNameEnum.SettingsFileManager;
 
-var SettingsFileManager =
-/*#__PURE__*/
-function () {
+var SettingsFileManager = /*#__PURE__*/function () {
   // PRIVATE METHODS
   function SettingsFileManager(config) {
     _classCallCheck(this, SettingsFileManager);
@@ -3329,9 +3323,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 var _require = __webpack_require__(/*! ./logging */ "./lib/services/logging/index.js"),
     LogManager = _require.LogManager;
 
-var UsageStats =
-/*#__PURE__*/
-function () {
+var UsageStats = /*#__PURE__*/function () {
   function UsageStats() {
     _classCallCheck(this, UsageStats);
 
@@ -3415,9 +3407,7 @@ var _require2 = __webpack_require__(/*! ../../enums/LogLevelEnum */ "./lib/enums
     LogLevelInfoEnum = _require2.LogLevelInfoEnum,
     LogLevelColorInfoEnum = _require2.LogLevelColorInfoEnum;
 
-var ConsoleLogManager =
-/*#__PURE__*/
-function () {
+var ConsoleLogManager = /*#__PURE__*/function () {
   function ConsoleLogManager() {
     _classCallCheck(this, ConsoleLogManager);
 
@@ -3542,9 +3532,7 @@ var globalLogLevel = LogLevelEnum.NOTSET;
 var isColoredLogEnabled = false;
 var globalLogHandler = new ConsoleLogManager();
 
-var LogManager =
-/*#__PURE__*/
-function () {
+var LogManager = /*#__PURE__*/function () {
   function LogManager(name) {
     _classCallCheck(this, LogManager);
 
@@ -6167,7 +6155,7 @@ function _setPrototypeOf(o, p) {
   return _setPrototypeOf(o, p);
 }
 
-function isNativeReflectConstruct() {
+function _isNativeReflectConstruct() {
   if (typeof Reflect === "undefined" || !Reflect.construct) return false;
   if (Reflect.construct.sham) return false;
   if (typeof Proxy === "function") return true;
@@ -6181,7 +6169,7 @@ function isNativeReflectConstruct() {
 }
 
 function _construct(Parent, args, Class) {
-  if (isNativeReflectConstruct()) {
+  if (_isNativeReflectConstruct()) {
     _construct = Reflect.construct;
   } else {
     _construct = function _construct(Parent, args, Class) {
@@ -6258,6 +6246,48 @@ function _assertThisInitialized(self) {
   return self;
 }
 
+function _unsupportedIterableToArray(o, minLen) {
+  if (!o) return;
+  if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+  var n = Object.prototype.toString.call(o).slice(8, -1);
+  if (n === "Object" && o.constructor) n = o.constructor.name;
+  if (n === "Map" || n === "Set") return Array.from(o);
+  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+}
+
+function _arrayLikeToArray(arr, len) {
+  if (len == null || len > arr.length) len = arr.length;
+
+  for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+
+  return arr2;
+}
+
+function _createForOfIteratorHelperLoose(o, allowArrayLike) {
+  var it;
+
+  if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) {
+    if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") {
+      if (it) o = it;
+      var i = 0;
+      return function () {
+        if (i >= o.length) return {
+          done: true
+        };
+        return {
+          done: false,
+          value: o[i++]
+        };
+      };
+    }
+
+    throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  }
+
+  it = o[Symbol.iterator]();
+  return it.next.bind(it);
+}
+
 var toString = Object.prototype.toString;
 
 var kindOf = function kindOf(val) {
@@ -6326,7 +6356,7 @@ var kindOf = function kindOf(val) {
 };
 
 function ctorName(val) {
-  return val.constructor ? val.constructor.name : null;
+  return typeof val.constructor === 'function' ? val.constructor.name : null;
 }
 
 function isArray(val) {
@@ -6716,9 +6746,7 @@ function invariant(condition, message) {
  * information for all of the failures encountered.
  */
 
-var StructError =
-/*#__PURE__*/
-function (_TypeError) {
+var StructError = /*#__PURE__*/function (_TypeError) {
   _inheritsLoose(StructError, _TypeError);
 
   function StructError(failures) {
@@ -6747,7 +6775,7 @@ function (_TypeError) {
   }
 
   return StructError;
-}(_wrapNativeSuper(TypeError));
+}( /*#__PURE__*/_wrapNativeSuper(TypeError));
 
 /**
  * A symbol to set on `Struct` objects to test them against later.
@@ -6830,7 +6858,7 @@ var createStruct = function createStruct(props) {
   };
 
   Struct.fail = function (obj) {
-    return _objectSpread2({}, obj, {
+    return _objectSpread2(_objectSpread2({}, obj), {}, {
       type: 'type' in obj ? obj.type : Struct.type
     });
   };
@@ -6949,19 +6977,8 @@ var createFunction = function createFunction(schema, defaults, struct) {
         path: path
       }));
     } else if (Array.isArray(result) && result.length > 0) {
-      for (var _iterator = result, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-        var _ref;
-
-        if (_isArray) {
-          if (_i >= _iterator.length) break;
-          _ref = _iterator[_i++];
-        } else {
-          _i = _iterator.next();
-          if (_i.done) break;
-          _ref = _i.value;
-        }
-
-        var r = _ref;
+      for (var _iterator = _createForOfIteratorHelperLoose(result), _step; !(_step = _iterator()).done;) {
+        var r = _step.value;
         failures.push(Struct.fail(_objectSpread2({
           value: value,
           branch: branch,
@@ -7067,19 +7084,8 @@ var createIntersection = function createIntersection(schema, defaults, struct) {
 
     var result = value;
 
-    for (var _iterator = Structs, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-      var _ref;
-
-      if (_isArray) {
-        if (_i >= _iterator.length) break;
-        _ref = _iterator[_i++];
-      } else {
-        _i = _iterator.next();
-        if (_i.done) break;
-        _ref = _i.value;
-      }
-
-      var _struct = _ref;
+    for (var _iterator = _createForOfIteratorHelperLoose(Structs), _step; !(_step = _iterator()).done;) {
+      var _struct = _step.value;
 
       var _struct$check = _struct.check(value, branch, path),
           fs = _struct$check[0],
@@ -7185,19 +7191,8 @@ var createObject = function createObject(schema, defaults, struct) {
     var failures = [];
     var keys = new Set(Object.keys(Props).concat(Object.keys(value)));
 
-    for (var _iterator = keys, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-      var _ref;
-
-      if (_isArray) {
-        if (_i >= _iterator.length) break;
-        _ref = _iterator[_i++];
-      } else {
-        _i = _iterator.next();
-        if (_i.done) break;
-        _ref = _i.value;
-      }
-
-      var k = _ref;
+    for (var _iterator = _createForOfIteratorHelperLoose(keys), _step; !(_step = _iterator()).done;) {
+      var k = _step.value;
       var v = value[k];
       var p = path.concat(k);
       var b = branch.concat(v);
@@ -7271,19 +7266,8 @@ var createPartial = function createPartial(schema, defaults, struct) {
     var result = {};
     var failures = [];
 
-    for (var _iterator = value, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-      var _ref;
-
-      if (_isArray) {
-        if (_i >= _iterator.length) break;
-        _ref = _iterator[_i++];
-      } else {
-        _i = _iterator.next();
-        if (_i.done) break;
-        _ref = _i.value;
-      }
-
-      var k = _ref;
+    for (var _iterator = _createForOfIteratorHelperLoose(value), _step; !(_step = _iterator()).done;) {
+      var k = _step.value;
       var v = value[k];
       var p = path.concat(k);
       var b = branch.concat(v);
@@ -7400,7 +7384,7 @@ var createRecord = function createRecord(schema, defaults, struct) {
     // are for the entries themselves, not for the entire value. So we can't use
     // JavaScript's built-in default handling here.
     var defs = Struct.default();
-    value = defs ? _objectSpread2({}, defs, {}, value) : value;
+    value = defs ? _objectSpread2(_objectSpread2({}, defs), value) : value;
 
     if (kindOf(value) !== 'object') {
       return [[Struct.fail({
@@ -7589,19 +7573,8 @@ var createUnion = function createUnion(schema, defaults, struct) {
       value = Struct.default();
     }
 
-    for (var _iterator = Structs, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-      var _ref;
-
-      if (_isArray) {
-        if (_i >= _iterator.length) break;
-        _ref = _iterator[_i++];
-      } else {
-        _i = _iterator.next();
-        if (_i.done) break;
-        _ref = _i.value;
-      }
-
-      var _struct = _ref;
+    for (var _iterator = _createForOfIteratorHelperLoose(Structs), _step; !(_step = _iterator()).done;) {
+      var _struct = _step.value;
 
       var _struct$check = _struct.check(value, branch, path),
           fs = _struct$check[0],
@@ -7709,7 +7682,7 @@ var superstruct = function superstruct(settings) {
   };
 
   struct.Error = settings.error || StructError;
-  struct.Types = _objectSpread2({}, Types, {}, settings.types);
+  struct.Types = _objectSpread2(_objectSpread2({}, Types), settings.types);
   return struct;
 };
 
@@ -7750,14 +7723,16 @@ function bytesToUuid(buf, offset) {
   var i = offset || 0;
   var bth = byteToHex;
   // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
-  return ([bth[buf[i++]], bth[buf[i++]], 
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]],
-	bth[buf[i++]], bth[buf[i++]],
-	bth[buf[i++]], bth[buf[i++]]]).join('');
+  return ([
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]]
+  ]).join('');
 }
 
 module.exports = bytesToUuid;

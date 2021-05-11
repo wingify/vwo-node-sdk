@@ -17,9 +17,7 @@
 const EventQueue = require('../../lib/services/EventQueue');
 const VWO = require('../../lib/VWO');
 
-const mockFn = jest.fn();
-
-const logger = { log: mockFn };
+const logger = { log: jest.fn() };
 
 describe('EventQueue', () => {
   describe('method: process', () => {

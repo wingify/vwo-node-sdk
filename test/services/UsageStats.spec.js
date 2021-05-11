@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 const vwo = require('../../lib');
 const settingsFile1 = require('../test-utils/data/settingsFile-1');
 const GoalTypeEnum = require('../../lib/enums/GoalTypeEnum');
+const SettingsFileManager = require('../../lib/services/SettingsFileManager');
 
 const mockFn = jest.fn();
 const logger = { logger: { log: mockFn } };
@@ -133,6 +133,9 @@ describe('UsageStats', () => {
     });
 
     it('when vwo is launched along with polling config', done => {
+      const spyPolling = (SettingsFileManager.checkAndPoll = jest.spyOn(SettingsFileManager.prototype, 'checkAndPoll'));
+      spyPolling.mockImplementation(() => undefined);
+
       const vwoClientInstance = vwo.launch({
         settingsFile: settingsFile1,
         logging: logger,
@@ -160,6 +163,9 @@ describe('UsageStats', () => {
     });
 
     it('when vwo is launched along with polling config', done => {
+      const spyPolling = (SettingsFileManager.checkAndPoll = jest.spyOn(SettingsFileManager.prototype, 'checkAndPoll'));
+      spyPolling.mockImplementation(() => undefined);
+
       const vwoClientInstance = vwo.launch({
         settingsFile: settingsFile1,
         logging: logger,
