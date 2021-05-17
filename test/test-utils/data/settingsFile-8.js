@@ -59,6 +59,7 @@ module.exports = {
       id: 235,
       percentTraffic: 100,
       key: 'DEV_TEST_6',
+      name: 'DEV_TEST_6',
       status: 'RUNNING',
       type: 'VISUAL_AB',
       isForcedVariationEnabled: true,

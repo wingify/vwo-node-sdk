@@ -95,6 +95,7 @@ const FEATURE_TEST_TRAFFIC_0 = {
       id: 22,
       percentTraffic: 0,
       key: 'FEATURE_ROLLOUT_TEST_TRAFFIC_0_WEIGHT_10_20_30_40',
+      name: 'FEATURE_ROLLOUT_TEST_TRAFFIC_0_WEIGHT_10_20_30_40',
       status: 'RUNNING',
       type: 'FEATURE_TEST'
     }
@@ -200,6 +201,7 @@ const FEATURE_TEST_TRAFFIC_25 = {
       id: 22,
       percentTraffic: 25,
       key: 'FEATURE_ROLLOUT_TEST_TRAFFIC_25_WEIGHT_10_20_30_40',
+      name: 'FEATURE_ROLLOUT_TEST_TRAFFIC_25_WEIGHT_10_20_30_40',
       status: 'RUNNING',
       type: 'FEATURE_TEST'
     }
@@ -305,6 +307,7 @@ const FEATURE_TEST_TRAFFIC_50 = {
       id: 22,
       percentTraffic: 50,
       key: 'FEATURE_ROLLOUT_TEST_TRAFFIC_50_WEIGHT_10_20_30_40',
+      name: 'FEATURE_ROLLOUT_TEST_TRAFFIC_50_WEIGHT_10_20_30_40',
       status: 'RUNNING',
       type: 'FEATURE_TEST'
     }
@@ -410,6 +413,7 @@ const FEATURE_TEST_TRAFFIC_75 = {
       id: 22,
       percentTraffic: 75,
       key: 'FEATURE_ROLLOUT_TEST_TRAFFIC_75_WEIGHT_10_20_30_40',
+      name: 'FEATURE_ROLLOUT_TEST_TRAFFIC_75_WEIGHT_10_20_30_40',
       status: 'RUNNING',
       type: 'FEATURE_TEST'
     }
@@ -515,6 +519,7 @@ const FEATURE_TEST_TRAFFIC_100 = {
       id: 22,
       percentTraffic: 100,
       key: 'FEATURE_ROLLOUT_TEST_TRAFFIC_100_WEIGHT_10_20_30_40',
+      name: 'FEATURE_ROLLOUT_TEST_TRAFFIC_100_WEIGHT_10_20_30_40',
       status: 'RUNNING',
       type: 'FEATURE_TEST'
     }
@@ -630,6 +635,7 @@ const FEATURE_TEST_TRAFFIC_100_WHITELISTING = {
       id: 235,
       percentTraffic: 100,
       key: 'DEV_TEST_6',
+      name: 'DEV_TEST_6',
       status: 'RUNNING',
       type: 'FEATURE_TEST',
       isForcedVariationEnabled: true,
@@ -891,6 +897,7 @@ const FEATURE_TEST_TRAFFIC_100_DISABLED = {
       id: 22,
       percentTraffic: 100,
       key: 'FEATURE_ROLLOUT_TEST_TRAFFIC_100_WEIGHT_10_20_30_40_DISABLED',
+      name: 'FEATURE_ROLLOUT_TEST_TRAFFIC_100_WEIGHT_10_20_30_40_DISABLED',
       status: 'RUNNING',
       type: 'FEATURE_TEST'
     }

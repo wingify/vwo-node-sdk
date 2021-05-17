@@ -26,6 +26,7 @@ module.exports = {
       id: 234,
       percentTraffic: 100,
       key: 'DEV_TEST_5',
+      name: 'DEV_TEST_5',
       status: 'RUNNING',
       type: 'VISUAL_AB',
       segments: {}

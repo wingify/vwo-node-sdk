@@ -24,6 +24,7 @@ module.exports = {
       ],
       isForcedVariationEnabled: false,
       key: 'track1',
+      name: 'track1',
       variations: [
         {
           id: 1,
@@ -64,6 +65,7 @@ module.exports = {
       ],
       isForcedVariationEnabled: false,
       key: 'track2',
+      name: 'track2',
       variations: [
         {
           id: 1,

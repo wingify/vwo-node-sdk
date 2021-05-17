@@ -39,6 +39,7 @@ const FEATURE_ROLLOUT_TRAFFIC_0 = {
       id: 29,
       percentTraffic: 0,
       key: 'FEATURE_ROLLOUT_TRAFFIC_0',
+      name: 'FEATURE_ROLLOUT_TRAFFIC_0',
       status: 'RUNNING',
       type: 'FEATURE_ROLLOUT',
       segments: {}
@@ -89,6 +90,7 @@ const FEATURE_ROLLOUT_WITH_SEGMENTS_TRAFFIC_100 = {
       id: 29,
       percentTraffic: 100,
       key: 'FEATURE_ROLLOUT_TRAFFIC_100',
+      name: 'FEATURE_ROLLOUT_TRAFFIC_100',
       status: 'RUNNING',
       type: 'FEATURE_ROLLOUT',
       segments: {
@@ -292,6 +294,7 @@ const FEATURE_ROLLOUT_TRAFFIC_25 = {
       id: 29,
       percentTraffic: 25,
       key: 'FEATURE_ROLLOUT_TRAFFIC_25',
+      name: 'FEATURE_ROLLOUT_TRAFFIC_25',
       status: 'RUNNING',
       type: 'FEATURE_ROLLOUT',
       segments: {}
@@ -342,6 +345,7 @@ const FEATURE_ROLLOUT_TRAFFIC_50 = {
       id: 29,
       percentTraffic: 50,
       key: 'FEATURE_ROLLOUT_TRAFFIC_50',
+      name: 'FEATURE_ROLLOUT_TRAFFIC_50',
       status: 'RUNNING',
       type: 'FEATURE_ROLLOUT',
       segments: {}
@@ -392,6 +396,7 @@ const FEATURE_ROLLOUT_TRAFFIC_75 = {
       id: 29,
       percentTraffic: 75,
       key: 'FEATURE_ROLLOUT_TRAFFIC_75',
+      name: 'FEATURE_ROLLOUT_TRAFFIC_75',
       status: 'RUNNING',
       type: 'FEATURE_ROLLOUT',
       segments: {}
@@ -442,6 +447,7 @@ const FEATURE_ROLLOUT_TRAFFIC_100 = {
       id: 29,
       percentTraffic: 100,
       key: 'FEATURE_ROLLOUT_TRAFFIC_100',
+      name: 'FEATURE_ROLLOUT_TRAFFIC_100',
       status: 'RUNNING',
       type: 'FEATURE_ROLLOUT',
       segments: {}
@@ -492,6 +498,7 @@ const FEATURE_ROLLOUT_INCORRECT_VARIABLE_TYPE = {
       id: 29,
       percentTraffic: 100,
       key: 'FEATURE_ROLLOUT_TRAFFIC_INCORRECT_DATATYPE',
+      name: 'FEATURE_ROLLOUT_TRAFFIC_INCORRECT_DATATYPE',
       status: 'RUNNING',
       type: 'FEATURE_ROLLOUT',
       segments: {}
