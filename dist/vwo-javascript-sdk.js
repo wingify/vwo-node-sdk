@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.16.0
+ * vwo-javascript-sdk - v1.17.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -1495,7 +1495,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.16.0"
+    version: "1.17.0"
   };
 } else {}
 
@@ -4128,6 +4128,7 @@ var DecisionUtil = {
       campaignId: campaign.id,
       campaignKey: campaignKey,
       campaignType: campaign.type,
+      campaignName: campaign.name,
       // campaign segmentation conditions
       customVariables: customVariables,
       // event name
