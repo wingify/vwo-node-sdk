@@ -41,13 +41,14 @@ describe('UsageStats', () => {
         logging: logger
       });
 
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_cl']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_ss']).toBeUndefined();
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_i']).toBeUndefined();
-      expect(vwoClientInstance.usageStats.getUsageStats()['tru']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['cl']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['_l']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['ss']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['ig']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['tr']).toBeUndefined();
       expect(vwoClientInstance.usageStats.getUsageStats()['gt']).toBeUndefined();
-      expect(vwoClientInstance.usageStats.getUsageStats()['poll']).toBeUndefined();
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_eb']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['pi']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['eb']).toBeUndefined();
     });
 
     it('when vwo is launched along with userStorageService config', () => {
@@ -57,13 +58,14 @@ describe('UsageStats', () => {
         userStorageService
       });
 
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_ss']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_cl']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_i']).toBeUndefined();
-      expect(vwoClientInstance.usageStats.getUsageStats()['tru']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['ss']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['cl']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['_l']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['ig']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['tr']).toBeUndefined();
       expect(vwoClientInstance.usageStats.getUsageStats()['gt']).toBeUndefined();
-      expect(vwoClientInstance.usageStats.getUsageStats()['poll']).toBeUndefined();
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_eb']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['pi']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['eb']).toBeUndefined();
     });
 
     it('when vwo is launched along with integrations config', () => {
@@ -78,13 +80,14 @@ describe('UsageStats', () => {
         }
       });
 
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_ss']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_cl']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_i']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['tru']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['ss']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['cl']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['_l']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['ig']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['tr']).toBeUndefined();
       expect(vwoClientInstance.usageStats.getUsageStats()['gt']).toBeUndefined();
-      expect(vwoClientInstance.usageStats.getUsageStats()['poll']).toBeUndefined();
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_eb']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['pi']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['eb']).toBeUndefined();
     });
 
     it('when vwo is launched along with shouldTrackReturningUser as true config', () => {
@@ -100,13 +103,14 @@ describe('UsageStats', () => {
         shouldTrackReturningUser: true
       });
 
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_ss']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_cl']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_i']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['tru']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['ss']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['cl']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['_l']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['ig']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['tr']).toBe(1);
       expect(vwoClientInstance.usageStats.getUsageStats()['gt']).toBeUndefined();
-      expect(vwoClientInstance.usageStats.getUsageStats()['poll']).toBeUndefined();
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_eb']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['pi']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['eb']).toBeUndefined();
     });
 
     it('when vwo is launched along with goalTypeToTrack config', () => {
@@ -123,13 +127,14 @@ describe('UsageStats', () => {
         goalTypeToTrack: GoalTypeEnum.CUSTOM
       });
 
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_ss']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_cl']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_i']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['tru']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['ss']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['cl']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['_l']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['ig']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['tr']).toBe(1);
       expect(vwoClientInstance.usageStats.getUsageStats()['gt']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['poll']).toBeUndefined();
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_eb']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['pi']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['eb']).toBeUndefined();
     });
 
     it('when vwo is launched along with polling config', done => {
@@ -151,13 +156,14 @@ describe('UsageStats', () => {
         sdkKey: 'po87170ad94079aa190bc7c9b85d26mm'
       });
 
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_ss']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_cl']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_i']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['tru']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['ss']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['cl']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['_l']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['ig']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['tr']).toBe(1);
       expect(vwoClientInstance.usageStats.getUsageStats()['gt']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['poll']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_eb']).toBeUndefined();
+      expect(vwoClientInstance.usageStats.getUsageStats()['pi']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['eb']).toBeUndefined();
 
       done();
     });
@@ -185,13 +191,14 @@ describe('UsageStats', () => {
         }
       });
 
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_ss']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_cl']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_i']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['tru']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['ss']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['cl']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['_l']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['ig']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['tr']).toBe(1);
       expect(vwoClientInstance.usageStats.getUsageStats()['gt']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['poll']).toBe(1);
-      expect(vwoClientInstance.usageStats.getUsageStats()['is_eb']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['pi']).toBe(1);
+      expect(vwoClientInstance.usageStats.getUsageStats()['eb']).toBe(1);
 
       done();
     });

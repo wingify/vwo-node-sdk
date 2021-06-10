@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.17.0
+ * vwo-javascript-sdk - v1.17.1
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -1495,7 +1495,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.17.0"
+    version: "1.17.1"
   };
 } else {}
 
@@ -3347,14 +3347,14 @@ function () {
   _createClass(UsageStats, [{
     key: "collectUsageStats",
     value: function collectUsageStats(config) {
-      this.data['is_eb'] = Number(!!config.batchEvents);
-      this.data['is_i'] = Number(!!config.integrations);
-      this.data['is_ss'] = Number(!!config.userStorageService);
-      this.data['is_cl'] = Number(!(config.logger instanceof LogManager));
-      this.data['is_ll'] = Number(config.logging && config.logging.level);
-      this.data['tru'] = Number(config.shouldTrackReturningUser);
+      this.data['eb'] = Number(!!config.batchEvents);
+      this.data['ig'] = Number(!!config.integrations);
+      this.data['ss'] = Number(!!config.userStorageService);
+      this.data['cl'] = Number(!(config.logger instanceof LogManager));
+      this.data['ll'] = Number(config.logging && config.logging.level);
+      this.data['tr'] = Number(config.shouldTrackReturningUser);
       this.data['gt'] = Number(!!config.goalTypeToTrack);
-      this.data['poll'] = Number(!!config.pollingInterval);
+      this.data['pi'] = Number(!!config.pollingInterval);
       Object.keys(this.data).forEach(function (key) {
         if (!this.data[key]) {
           delete this.data[key];
@@ -3369,6 +3369,10 @@ function () {
   }, {
     key: "getUsageStats",
     value: function getUsageStats() {
+      if (Object.keys(this.data).length > 0) {
+        this.data['_l'] = 1;
+      }
+
       return this.data;
     }
   }]);
