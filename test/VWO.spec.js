@@ -46,6 +46,7 @@ const {
   // FEATURE_TEST_TRAFFIC_50,
   // FEATURE_TEST_TRAFFIC_75,
   FEATURE_TEST_TRAFFIC_100,
+  FEATURE_TEST_TRAFFIC_JSON_100,
   FEATURE_TEST_TRAFFIC_100_WHITELISTING
 } = require('./test-utils/data/feature-test-settingsFile');
 
@@ -1792,6 +1793,72 @@ describe('Class VWO', () => {
 
     test('should return null if campaignKey is not found in settingsFile', () => {
       expect(vwoClientInstance.getFeatureVariableValue('DEV_TEST_1', 'variable-key', userId)).toBe(null);
+    });
+
+    test('should return json variable', () => {
+      const campaignKey = FEATURE_TEST_TRAFFIC_JSON_100.campaigns[0].key;
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_JSON_100,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService: userStorageService1
+      });
+
+      // call the track api
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Faizan');
+      // verify the getVariation API again, this time a variation will be returned
+      let variableValue = vwoClientInstance.getFeatureVariableValue(campaignKey, 'JSON_VARIABLE1', 'Faizan');
+      expect(variableValue).toStrictEqual({
+        type: 'json',
+        value: 'json'
+      });
+
+      variableValue = vwoClientInstance.getFeatureVariableValue(campaignKey, 'JSON_VARIABLE2', 'Faizan');
+      expect(variableValue).toStrictEqual({
+        json: {
+          type: 'json',
+          value: 'json'
+        },
+        json1: {
+          type: 'json1',
+          value: 'json1'
+        }
+      });
+
+      vwoClientInstance.isFeatureEnabled(campaignKey, 'Chris');
+      variableValue = vwoClientInstance.getFeatureVariableValue(campaignKey, 'JSON_VARIABLE1', 'Chris');
+      expect(variableValue).toStrictEqual({
+        jsonArray: [
+          {
+            type: 'json',
+            value: 'json'
+          }
+        ]
+      });
+
+      variableValue = vwoClientInstance.getFeatureVariableValue(campaignKey, 'JSON_VARIABLE2', 'Chris');
+      expect(variableValue).toStrictEqual({
+        jsonObject: {
+          type: 'json',
+          value: 'json'
+        },
+        jsonArray: [
+          {
+            type1: 'json1',
+            value1: 'json1'
+          },
+          {
+            type2: 'json2',
+            value2: 'json2'
+          }
+        ]
+      });
+      variableValue = vwoClientInstance.getFeatureVariableValue(campaignKey, 'JSON_VARIABLE3', 'Chris');
+      expect(variableValue).toStrictEqual(null);
+      variableValue = vwoClientInstance.getFeatureVariableValue(campaignKey, 'JSON_VARIABLE4', 'Chris');
+      expect(variableValue).toStrictEqual(null);
+      variableValue = vwoClientInstance.getFeatureVariableValue(campaignKey, 'JSON_VARIABLE5', 'Chris');
+      expect(variableValue).toStrictEqual(null);
     });
 
     test('should return null if called before isFeatureEnabled API with userStorage passed', () => {

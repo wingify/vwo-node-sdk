@@ -528,6 +528,124 @@ const FEATURE_TEST_TRAFFIC_100 = {
   version: 2
 };
 
+const FEATURE_TEST_TRAFFIC_JSON_100 = {
+  sdkKey: 'someuniquestuff1234567',
+  campaigns: [
+    {
+      segments: {},
+      goals: [
+        {
+          identifier: 'FEATURE_TEST_GOAL',
+          id: 203,
+          type: 'CUSTOM_GOAL'
+        }
+      ],
+      variations: [
+        {
+          id: '1',
+          name: 'Control',
+          weight: 50,
+          variables: [
+            {
+              id: 1,
+              key: 'JSON_VARIABLE1',
+              type: 'json',
+              value: {
+                type: 'json',
+                value: 'json'
+              }
+            },
+            {
+              id: 2,
+              key: 'JSON_VARIABLE2',
+              type: 'json',
+              value: {
+                json: {
+                  type: 'json',
+                  value: 'json'
+                },
+                json1: {
+                  type: 'json1',
+                  value: 'json1'
+                }
+              }
+            }
+          ],
+          isFeatureEnabled: true
+        },
+        {
+          id: '2',
+          name: 'Variation-1',
+          weight: 50,
+          variables: [
+            {
+              id: 1,
+              key: 'JSON_VARIABLE1',
+              type: 'json',
+              value: {
+                jsonArray: [
+                  {
+                    type: 'json',
+                    value: 'json'
+                  }
+                ]
+              }
+            },
+            {
+              id: 2,
+              key: 'JSON_VARIABLE2',
+              type: 'json',
+              value: {
+                jsonObject: {
+                  type: 'json',
+                  value: 'json'
+                },
+                jsonArray: [
+                  {
+                    type1: 'json1',
+                    value1: 'json1'
+                  },
+                  {
+                    type2: 'json2',
+                    value2: 'json2'
+                  }
+                ]
+              }
+            },
+            {
+              id: 3,
+              key: 'JSON_VARIABLE3',
+              type: 'json',
+              value: true
+            },
+            {
+              id: 4,
+              key: 'JSON_VARIABLE4',
+              type: 'json',
+              value: 20
+            },
+            {
+              id: 5,
+              key: 'JSON_VARIABLE5',
+              type: 'json',
+              value: 'value'
+            }
+          ],
+          isFeatureEnabled: true
+        }
+      ],
+      id: 22,
+      percentTraffic: 100,
+      key: 'FEATURE_ROLLOUT_TEST_TRAFFIC_JSON_100_WEIGHT_50_50',
+      name: 'FEATURE_ROLLOUT_TEST_TRAFFIC_JSON_100_WEIGHT_50_50',
+      status: 'RUNNING',
+      type: 'FEATURE_TEST'
+    }
+  ],
+  accountId: 123456,
+  version: 2
+};
+
 const FEATURE_TEST_TRAFFIC_100_WHITELISTING = {
   sdkKey: 'someuniquestuff1234567',
   campaigns: [
@@ -912,6 +1030,7 @@ module.exports = {
   FEATURE_TEST_TRAFFIC_50,
   FEATURE_TEST_TRAFFIC_75,
   FEATURE_TEST_TRAFFIC_100,
+  FEATURE_TEST_TRAFFIC_JSON_100,
   FEATURE_TEST_TRAFFIC_100_DISABLED,
   FEATURE_TEST_TRAFFIC_100_WHITELISTING
 };

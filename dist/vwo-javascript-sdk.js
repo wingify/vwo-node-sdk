@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.17.1
+ * vwo-javascript-sdk - v1.17.2
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -1495,7 +1495,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.17.1"
+    version: "1.17.2"
   };
 } else {}
 
@@ -2117,7 +2117,8 @@ var FeatureVariableTypeEnum = {
   BOOLEAN: 'boolean',
   DOUBLE: 'double',
   INTEGER: 'integer',
-  STRING: 'string'
+  STRING: 'string',
+  JSON: 'json'
 };
 module.exports = FeatureVariableTypeEnum;
 
@@ -2896,7 +2897,7 @@ var variableObjectSchema = struct([{
   id: 'number|string',
   type: 'string',
   key: 'string',
-  value: 'number|string|boolean'
+  value: 'number|string|boolean|object'
 }]);
 var campaignVariationSchema = struct([{
   id: 'number|string',
@@ -4710,6 +4711,20 @@ var FeatureUtil = {
 
       case FeatureVariableTypeEnum.BOOLEAN:
         if (!DataTypeUtil.isBoolean(variableValue)) {
+          logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.UNABLE_TO_CAST_VALUE, {
+            file: file,
+            variableValue: variableValue,
+            variableType: variableType
+          }));
+          typeCastedValue = null;
+        } else {
+          typeCastedValue = variableValue;
+        }
+
+        break;
+
+      case FeatureVariableTypeEnum.JSON:
+        if (!DataTypeUtil.isObject(variableValue)) {
           logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.UNABLE_TO_CAST_VALUE, {
             file: file,
             variableValue: variableValue,
