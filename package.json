@@ -55,7 +55,7 @@
   ],
   "dependencies": {
     "murmurhash": "^0.0.2",
-    "superstruct": "^0.8.3",
+    "superstruct": "^0.10.12",
     "uuid": "^3.3.2"
   },
   "devDependencies": {

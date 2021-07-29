@@ -1,5 +1,7 @@
 module.exports = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       goals: [

@@ -33,5 +33,7 @@ module.exports = {
     }
   ],
   accountId: 888888,
+  groups: {},
+  campaignGroups: {},
   version: 1
 };

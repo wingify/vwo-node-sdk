@@ -1,4 +1,6 @@
 module.exports = {
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       id: 160,

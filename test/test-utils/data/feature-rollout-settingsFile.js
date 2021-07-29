@@ -1,5 +1,7 @@
 const FEATURE_ROLLOUT_TRAFFIC_0 = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       goals: [],
@@ -51,6 +53,8 @@ const FEATURE_ROLLOUT_TRAFFIC_0 = {
 
 const FEATURE_ROLLOUT_WITH_SEGMENTS_TRAFFIC_100 = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       goals: [],
@@ -255,6 +259,8 @@ const FEATURE_ROLLOUT_WITH_SEGMENTS_TRAFFIC_100 = {
 
 const FEATURE_ROLLOUT_TRAFFIC_25 = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       goals: [],
@@ -306,6 +312,8 @@ const FEATURE_ROLLOUT_TRAFFIC_25 = {
 
 const FEATURE_ROLLOUT_TRAFFIC_50 = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       goals: [],
@@ -357,6 +365,8 @@ const FEATURE_ROLLOUT_TRAFFIC_50 = {
 
 const FEATURE_ROLLOUT_TRAFFIC_75 = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       goals: [],
@@ -408,6 +418,8 @@ const FEATURE_ROLLOUT_TRAFFIC_75 = {
 
 const FEATURE_ROLLOUT_TRAFFIC_100 = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       goals: [],
@@ -459,6 +471,8 @@ const FEATURE_ROLLOUT_TRAFFIC_100 = {
 
 const FEATURE_ROLLOUT_INCORRECT_VARIABLE_TYPE = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       goals: [],

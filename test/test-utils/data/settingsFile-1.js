@@ -32,6 +32,8 @@ module.exports = {
       segments: {}
     }
   ],
+  groups: {},
+  campaignGroups: {},
   accountId: 888888,
   version: 1
 };

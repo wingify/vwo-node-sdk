@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.17.2
+ * vwo-javascript-sdk - v1.18.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -18,7 +18,7 @@
  * 
  * Dependencies used - 
  *  1. murmurhash - ^0.0.2
- *  2. superstruct - ^0.8.3
+ *  2. superstruct - ^0.10.12
  *  3. uuid - ^3.3.2
  */
 (function webpackUniversalModuleDefinition(root, factory) {
@@ -1495,7 +1495,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.17.2"
+    version: "1.18.0"
   };
 } else {}
 
@@ -1602,7 +1602,7 @@ var BucketingService = {
    *
    * @return {Number} the bucket Value allotted to User (between 1 to $this->$MAX_TRAFFIC_PERCENT)
    */
-  _getBucketValueForUser: function _getBucketValueForUser(userId) {
+  _getBucketValueForUser: function _getBucketValueForUser(userId, disableLog) {
     var hashValue = Hasher.v3(userId, Constants.SEED_VALUE);
 
     var bucketValue = BucketingService._generateBucketValue(hashValue, Constants.MAX_TRAFFIC_PERCENT);
@@ -1612,7 +1612,7 @@ var BucketingService = {
       hashValue: hashValue,
       bucketValue: bucketValue,
       userId: userId
-    }));
+    }), disableLog);
     return bucketValue;
   },
 
@@ -1625,20 +1625,22 @@ var BucketingService = {
    * @return {Boolean} if User is a part of Campaign or not
    */
   isUserPartOfCampaign: function isUserPartOfCampaign(userId, campaign) {
+    var disableLog = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
     if (!ValidateUtil.isValidValue(userId) || !campaign) {
       return false;
     }
 
     var trafficAllocation = campaign.percentTraffic;
 
-    var valueAssignedToUser = BucketingService._getBucketValueForUser(userId);
+    var valueAssignedToUser = BucketingService._getBucketValueForUser(userId, disableLog);
 
     var isUserPart = valueAssignedToUser !== 0 && valueAssignedToUser <= trafficAllocation;
     logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_ELIGIBILITY_FOR_CAMPAIGN, {
       file: FileNameEnum.BucketingService,
       userId: userId,
       isUserPart: isUserPart
-    }));
+    }), disableLog);
     return isUserPart;
   },
 
@@ -1800,6 +1802,7 @@ function SegmentEvaluator(dsl) {
   var campaignKey = arguments.length > 2 ? arguments[2] : undefined;
   var userId = arguments.length > 3 ? arguments[3] : undefined;
   var variation = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : '';
+  var disableLogs = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : false;
 
   try {
     if (DataTypeUtil.isObject(dsl) && !Object.keys(dsl).length) {
@@ -1807,7 +1810,7 @@ function SegmentEvaluator(dsl) {
         campaignKey: campaignKey,
         userId: userId,
         file: file
-      }));
+      }), disableLogs);
       return true;
     }
 
@@ -1824,7 +1827,7 @@ function SegmentEvaluator(dsl) {
       file: file,
       err: err,
       variation: variation
-    }));
+    }), disableLogs);
     return false;
   }
 }
@@ -2353,7 +2356,8 @@ module.exports = {
     BULK_NOT_PROCESSED: "({file}): Batch events couldn't be received by VWO. Calling Flush Callback with error and data",
     BEFORE_FLUSHING: '({file}): Flushing events queue {manually} having {length} events for account:{accountId}. {timer}',
     FLUSH_EVENTS: '{{file}}: Manually flushing events for account:{accountId} having {queueLength} events',
-    CAMPAIGN_NOT_ACTIVATED: '({file}): Campaign:{campaignKey} for User ID:{userId} is not yet activated for API:{api}. Use activate API to activate A/B test or isFeatureEnabled API to activate Feature Test.'
+    CAMPAIGN_NOT_ACTIVATED: '({file}): Campaign:{campaignKey} for User ID:{userId} is not yet activated for API:{api}. Use activate API to activate A/B test or isFeatureEnabled API to activate Feature Test.',
+    GOT_ELIGIBLE_CAMPAIGNS: '({file}): Campaigns: {eligibleCampaignKeys} are eligible, {inEligibleText} are ineligible from the Group:{groupName} for the User Id:{userId}'
   },
   ERROR_MESSAGES: {
     API_HAS_CORRUPTED_SETTINGS_FILE: '({file}): "{api}" API has corrupted settings-file. Please check or reach out to VWO support',
@@ -2412,7 +2416,11 @@ module.exports = {
     AFTER_FLUSHING: '({file}): Events queue having {length} events has been flushed {manually}',
     SETTINGS_NOT_UPDATED: '{{file}}: Settings-file fetched are same as earlier fetched settings',
     GOT_STORED_VARIATION: '({file}): Got stored variation for User ID:{userId} of Campaign:{campaignKey} as Variation:{variationName}, found in UserStorageService',
-    CAMPAIGN_NOT_ACTIVATED: '({file}): Activate the campaign:{campaignKey} for User ID:{userId} to {reason}.'
+    CAMPAIGN_NOT_ACTIVATED: '({file}): Activate the campaign:{campaignKey} for User ID:{userId} to {reason}.',
+    GOT_WINNER_CAMPAIGN: '({file}): Campaign:{campaignKey} is selected from the mutually exclusive group:{groupName} for the User ID:{userId}.',
+    GOT_ELIGIBLE_CAMPAIGNS: '({file}): Got {noOfEligibleCampaigns} eligible winners out of {noOfGroupCampaigns} campaigns from the Group:{groupName} and for User ID:{userId}',
+    CALLED_CAMPAIGN_NOT_WINNER: '({file}): Campaign:{campaignKey} does not qualify from the mutually exclusive group:{groupName} for User ID:{userId}',
+    OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE: '({file}): Campaign:{campaignKey} of Group:{groupName} satisfies {type} for User ID:{userId}'
   },
   WARNING_MESSAGES: {}
 };
@@ -2843,6 +2851,14 @@ module.exports = {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
 /**
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
  *
@@ -2859,77 +2875,74 @@ module.exports = {
  * limitations under the License.
  */
 var _require = __webpack_require__(/*! superstruct */ "./node_modules/superstruct/lib/index.es.js"),
-    superstruct = _require.superstruct,
-    struct = _require.struct;
+    validate = _require.validate,
+    number = _require.number,
+    string = _require.string,
+    _boolean = _require["boolean"],
+    array = _require.array,
+    object = _require.object,
+    optional = _require.optional,
+    union = _require.union,
+    type = _require.type,
+    record = _require.record;
 
-function objectOrArrayMatcher(value, schema) {
-  if (Object.prototype.toString.call(value) === '[object Object]') {
-    return struct({}).test(value);
-  } else if (Object.prototype.toString.call(value) === '[object Array]') {
-    return schema.test(value);
-  }
-
-  return false;
-}
-
-struct = superstruct({
-  types: {
-    variationsType: function variationsType(value) {
-      return objectOrArrayMatcher(value, campaignVariationSchema);
-    },
-    goalsType: function goalsType(value) {
-      return objectOrArrayMatcher(value, campaignGoalSchema);
-    },
-    variablesType: function variablesType(value) {
-      return objectOrArrayMatcher(value, variableObjectSchema);
-    },
-    campaignsType: function campaignsType(value) {
-      return objectOrArrayMatcher(value, campaignObjectSchema);
-    }
-  }
+var campaignGoalSchema = type({
+  id: union([number(), string()]),
+  identifier: string(),
+  type: string()
 });
-var campaignGoalSchema = struct([{
-  id: 'number|string',
-  identifier: 'string',
-  type: 'string'
-}]);
-var variableObjectSchema = struct([{
-  id: 'number|string',
-  type: 'string',
-  key: 'string',
-  value: 'number|string|boolean|object'
-}]);
-var campaignVariationSchema = struct([{
-  id: 'number|string',
-  name: 'string',
-  weight: 'number|string',
-  changes: 'object?',
-  segments: 'object?',
-  variables: 'variablesType?',
-  isFeatureEnabled: 'boolean?',
-  startVariationAllocation: 'number?',
-  endVariationAllocation: 'number?'
-}]);
-var campaignObjectSchema = struct([{
-  id: 'number|string',
-  type: 'string',
-  key: 'string',
-  name: 'string',
-  status: 'string',
-  percentTraffic: 'number',
-  goals: 'goalsType',
-  variations: 'variationsType',
-  variables: 'variablesType?',
-  segments: 'object',
-  isForcedVariationEnabled: 'boolean?'
-}]);
-var settingsFileSchema = struct({
-  sdkKey: 'string?',
-  version: 'number|string',
-  accountId: 'number|string',
-  campaigns: 'campaignsType'
+var variableObjectSchema = type({
+  id: union([number(), string()]),
+  type: string(),
+  key: string(),
+  value: union([number(), string(), _boolean()])
 });
-module.exports = settingsFileSchema;
+var campaignVariationSchema = type({
+  id: union([number(), string()]),
+  name: string(),
+  weight: union([number(), string()]),
+  changes: optional(object()),
+  segments: optional(object()),
+  variables: optional(union([object(), array(variableObjectSchema)])),
+  isFeatureEnabled: optional(_boolean()),
+  startVariationAllocation: optional(number()),
+  endVariationAllocation: optional(number())
+});
+var campaignObjectSchema = type({
+  id: union([number(), string()]),
+  type: string(),
+  key: string(),
+  status: string(),
+  name: string(),
+  percentTraffic: number(),
+  goals: union([object(), array(campaignGoalSchema)]),
+  variations: union([object(), array(campaignVariationSchema)]),
+  variables: optional(union([object(), array(variableObjectSchema)])),
+  segments: object(),
+  isForcedVariationEnabled: optional(_boolean())
+});
+var groupSchema = type({
+  groupName: string(),
+  campaigns: array(number())
+});
+var settingsFileSchema = type({
+  sdkKey: optional(string()),
+  version: union([number(), string()]),
+  accountId: union([number(), string()]),
+  campaigns: array(campaignObjectSchema),
+  campaignGroups: optional(record(string(), number())),
+  groups: optional(union([object(), record(string(), groupSchema)]))
+});
+
+var validateSettingsFile = function validateSettingsFile(settings) {
+  var _validate = validate(settings, settingsFileSchema),
+      _validate2 = _slicedToArray(_validate, 1),
+      error = _validate2[0];
+
+  return !error;
+};
+
+module.exports = validateSettingsFile;
 
 /***/ }),
 
@@ -3110,8 +3123,6 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var settingsFileSchema = __webpack_require__(/*! ../schemas/SettingsFileSchema */ "./lib/schemas/SettingsFileSchema.js");
-
 var CampaignUtil = __webpack_require__(/*! ../utils/CampaignUtil */ "./lib/utils/CampaignUtil.js");
 
 var FunctionUtil = __webpack_require__(/*! ../utils/FunctionUtil */ "./lib/utils/FunctionUtil.js");
@@ -3121,6 +3132,8 @@ var SettingsFileUtil = __webpack_require__(/*! ../utils/SettingsFileUtil */ "./l
 var logging = __webpack_require__(/*! ./logging */ "./lib/services/logging/index.js");
 
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
+
+var validateSettingsFile = __webpack_require__(/*! ../schemas/SettingsFileSchema */ "./lib/schemas/SettingsFileSchema.js");
 
 var LogLevelEnum = logging.LogLevelEnum,
     LogMessageEnum = logging.LogMessageEnum,
@@ -3160,7 +3173,7 @@ function () {
         return false;
       }
 
-      var isValidSettingsFile = settingsFileSchema.test(this._clonedSettingsFile);
+      var isValidSettingsFile = validateSettingsFile(this._clonedSettingsFile);
 
       if (!isValidSettingsFile) {
         this._configObj.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SETTINGS_FILE_CORRUPTED, {
@@ -3570,6 +3583,12 @@ function () {
   }, {
     key: "log",
     value: function log(level, message) {
+      var disableLogs = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+
+      if (disableLogs) {
+        return;
+      }
+
       try {
         this._customLog(level, message);
       } catch (err) {
@@ -3729,6 +3748,15 @@ var CampaignUtil = {
     var startRange = Math.ceil(variationWeight * 100);
     return Math.min(startRange, Constants.MAX_TRAFFIC_VALUE);
   },
+
+  /**
+   * Get the campaign on the basis of campaign id
+   *
+   * @param {Object} settingsFile
+   * @param {Number} campaignId
+   *
+   * @returns {Object} campaign object
+   */
   getCampaignBasedOnId: function getCampaignBasedOnId(settingsFile, campaignId) {
     var campaign;
 
@@ -3877,6 +3905,21 @@ var CampaignUtil = {
       }));
     }
   },
+
+  /**
+   * Assign range allocation to the campaigns in the list to decide which campaign to choose out of the Mutually Exclusive group
+   *
+   * @param {Array} campaigns
+   */
+  setCampaignAllocation: function setCampaignAllocation(campaigns) {
+    var stepFactor = 0;
+
+    for (var i = 0, currentAllocation = 0; i < campaigns.length; i++) {
+      var campaign = campaigns[i];
+      stepFactor = CampaignUtil.assignRangeValues(campaign, currentAllocation);
+      currentAllocation += stepFactor;
+    }
+  },
   assignRangeValues: function assignRangeValues(variation, currentAllocation) {
     var stepFactor;
     stepFactor = CampaignUtil._getVariationBucketRange(variation.weight);
@@ -3975,6 +4018,49 @@ var CampaignUtil = {
     }
 
     return false;
+  },
+
+  /**
+   * Check if the campaign is a part of mutually exclusive group
+   *
+   * @param {Object} settingsFile
+   * @param {Number} campaignId
+   *
+   * @returns {Number} group id of the campaign.
+   */
+  isPartOfGroup: function isPartOfGroup(settingsFile, campaignId) {
+    if (settingsFile.campaignGroups && Object.prototype.hasOwnProperty.call(settingsFile.campaignGroups, campaignId)) {
+      return {
+        groupId: settingsFile.campaignGroups[campaignId],
+        groupName: settingsFile.groups[settingsFile.campaignGroups[campaignId]].name
+      };
+    }
+
+    return {};
+  },
+
+  /**
+   * Get the list of campaigns on the basis of their id
+   *
+   * @param {Object} settingsFile
+   * @param {Number} groupId
+   *
+   * @returns {Array} list of campaigns
+   */
+  getGroupCampaigns: function getGroupCampaigns(settingsFile, groupId) {
+    var campaigns = [];
+
+    if (Object.prototype.hasOwnProperty.call(settingsFile.groups, groupId)) {
+      settingsFile.groups[groupId].campaigns.forEach(function (campaignId) {
+        var campaign = CampaignUtil.getCampaignBasedOnId(settingsFile, campaignId);
+
+        if (campaign) {
+          campaigns.push(campaign);
+        }
+      });
+    }
+
+    return campaigns;
   }
 };
 module.exports = CampaignUtil;
@@ -4104,8 +4190,9 @@ var DecisionUtil = {
   /**
    *  1. Checks if there is a variation stored in userStorage, returns it
    *  2. If Whitelisting is applicable, evaluate it, if any eligible variation is found, store it in User Storage service and return, otherwise skip it.
-   *  3. If Pre-segmentation is applied and passes then go further otherwise return early and no further processing
-   *  4. If no user storage value, no whitelisted variation and pre-segmentation evaluates to true, get variation using hashing logic if campaign traffic passes for that userId
+   *  3. Check if the campaign is part of mutually exclusive group, if yes, get the winner campaign using campaign traffic normalization.
+   *  4. If Pre-segmentation is applied and passes then go further otherwise return early and no further processing
+   *  5. If no user storage value, no whitelisted variation and pre-segmentation evaluates to true, get variation using hashing logic if campaign traffic passes for that userId
    *
    *
    *  @param {Object} config
@@ -4125,9 +4212,6 @@ var DecisionUtil = {
     var isTrackUserAPI = arguments.length > 9 ? arguments[9] : undefined;
     var newGoalIdentifier = arguments.length > 10 ? arguments[10] : undefined;
     var api = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : '';
-    var status;
-    var variation, variationName, variationId;
-    var storedVariation, goalIdentifier;
     var decision = {
       // campaign info
       campaignId: campaign.id,
@@ -4151,178 +4235,107 @@ var DecisionUtil = {
       variationTargetingVariables: variationTargetingVariables,
       // VWO generated UUID based on passed UserId and Account ID
       vwoUserId: UuidUtil.generateFor(userId, config.accountId)
-    };
+    }; // check if the campaign is a part of group
 
-    if (campaign.isForcedVariationEnabled) {
-      var whitelistingResult = DecisionUtil._evaluateWhitelisting(campaign, campaignKey, userId, variationTargetingVariables);
+    var _CampaignUtil$isPartO = CampaignUtil.isPartOfGroup(settingsFile, campaign.id),
+        groupId = _CampaignUtil$isPartO.groupId,
+        groupName = _CampaignUtil$isPartO.groupName;
 
-      var variationString;
-
-      if (whitelistingResult) {
-        status = StatusEnum.PASSED;
-        variationString = "for ".concat(whitelistingResult.variationName);
-      } else {
-        status = StatusEnum.FAILED;
-        variationString = '';
-      }
-
-      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SEGMENTATION_STATUS, {
-        campaignKey: campaignKey,
-        userId: userId,
-        customVariables: JSON.stringify(variationTargetingVariables),
-        file: file,
-        status: status,
-        segmentationType: SegmentationTypeEnum.WHITELISTING,
-        variation: variationString
-      }));
-
-      if (whitelistingResult) {
-        variationName = whitelistingResult.variationName;
-        variationId = whitelistingResult.variationId; // Executing the callback when SDK has made a decision in case of whitelisting
-
-        HooksManager.execute(Object.assign({
-          fromUserStorageService: false,
-          isUserWhitelisted: false
-        }, campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? {
-          isFeatureEnabled: !!variationName
-        } : {
-          variationName: variationName,
-          variationId: variationId,
-          isUserWhitelisted: !!variationName
-        }, decision));
-        return whitelistingResult;
-      }
-    } else {
-      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.WHITELISTING_SKIPPED, {
-        campaignKey: campaignKey,
-        userId: userId,
-        file: file
-      }));
-    } // If userStorageService is used, get the variation from the stored data
+    if (groupId) {
+      // append groupId and groupName, if campaign is a part of group
+      decision['groupId'] = groupId;
+      decision['groupName'] = groupName;
+    } // check if tbe campaign satisfies the whitelisting before checking for the group
 
 
-    var _ref = DecisionUtil._getStoredVariationAndGoalIdentifiers(config, settingsFile, campaign.key, userId, userStorageData) || {};
+    var whitelistedVariation = DecisionUtil._checkForWhitelisting(campaign, campaignKey, userId, variationTargetingVariables, decision);
 
-    storedVariation = _ref.storedVariation;
-    goalIdentifier = _ref.goalIdentifier;
+    if (whitelistedVariation) {
+      return whitelistedVariation;
+    } // check if the campaign is present in the storage before checking for the group
 
-    // If stored variation is found, simply return the same
+
+    var storedVariation = DecisionUtil._checkForUserStorage(config, settingsFile, campaign, campaignKey, userId, userStorageData, isTrackUserAPI, decision);
+
     if (storedVariation) {
-      variationName = storedVariation.name;
-      variationId = storedVariation.id;
-      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GOT_STORED_VARIATION, {
-        file: file,
-        campaignKey: campaignKey,
-        userId: userId,
-        variationName: storedVariation.name
-      })); // Executing the callback when SDK gets the decision from user storage service
+      return storedVariation;
+    } // check if the called campaign satisfies the pre-segmentatin before further proccessing.
 
-      HooksManager.execute(Object.assign({
-        fromUserStorageService: !!variationName,
-        isUserWhitelisted: false
-      }, campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? {
-        isFeatureEnabled: !!variationName
-      } : {
-        variationName: variationName,
-        variationId: variationId
-      }, decision));
-      return {
-        variation: storedVariation,
-        variationName: storedVariation.name,
-        variationId: storedVariation.id,
-        storedGoalIdentifier: goalIdentifier,
-        isStoredVariation: true
-      };
-    } else if (!DataTypeUtil.isUndefined(config.userStorageService) && !isTrackUserAPI && DataTypeUtil.isUndefined(storedVariation) && !CampaignUtil.isFeatureRolloutCampaign(campaign)) {
-      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.CAMPAIGN_NOT_ACTIVATED, {
-        file: file,
-        campaignKey: campaignKey,
-        userId: userId,
-        api: config.apiName
-      }));
-      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CAMPAIGN_NOT_ACTIVATED, {
-        file: file,
-        campaignKey: campaignKey,
-        userId: userId,
-        reason: config.apiName === ApiEnum.TRACK ? 'track it' : 'get the decision/value'
-      }));
+
+    if (!(DecisionUtil._checkForPreSegmentation(campaign, campaignKey, userId, customVariables, decision) && BucketingService.isUserPartOfCampaign(userId, campaign, true))) {
       return {};
     }
 
-    if (DataTypeUtil.isObject(campaign.segments) && !Object.keys(campaign.segments).length) {
-      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.SEGMENTATION_SKIPPED, {
-        campaignKey: campaignKey,
-        userId: userId,
-        file: file
-      }));
-    } else {
-      var preSegmentationResult = SegmentEvaluator(campaign.segments, customVariables, campaignKey, userId);
+    if (groupId) {
+      // mutually exclusive group exists
+      // get the list of the all the campaigns in a group
+      var campaignList = CampaignUtil.getGroupCampaigns(settingsFile, groupId);
 
-      if (!preSegmentationResult) {
-        status = StatusEnum.FAILED;
-      } else {
-        status = StatusEnum.PASSED;
-      }
-
-      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SEGMENTATION_STATUS, {
-        campaignKey: campaignKey,
-        userId: userId,
-        customVariables: JSON.stringify(customVariables || {}),
-        file: file,
-        status: status,
-        segmentationType: SegmentationTypeEnum.PRE_SEGMENTATION,
-        variation: ''
-      }));
-
-      if (status === StatusEnum.FAILED) {
+      if (campaignList.length === 0) {
+        // return if no campaigns are active in a group
         return {};
-      }
-    } // Use our core's VariationDecider utility to get the deterministic variation assigned to the userId for that campaign
+      } // checking other campaigns for whitelisting and user storage.
 
 
-    var _VariationDecider$get = VariationDecider.getVariationAllotted(userId, campaign);
+      var isWhitelistedOrStoredVariation = DecisionUtil._checkForStorageAndWhitelisting(config, settingsFile, groupName, campaignList, campaign, userId, userStorageData, variationTargetingVariables, isTrackUserAPI);
 
-    variation = _VariationDecider$get.variation;
-    variationName = _VariationDecider$get.variationName;
-    variationId = _VariationDecider$get.variationId;
+      if (isWhitelistedOrStoredVariation) {
+        // other campaigns satisfy the whitelisting or storage, therfore returning
+        logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CALLED_CAMPAIGN_NOT_WINNER, {
+          userId: userId,
+          groupName: groupName,
+          file: file,
+          campaignKey: campaignKey
+        }));
+        return {};
+      } // none of the group campaigns satisfy whitelisting or user storage
+      // check each campaign for pre-segmentation and traffic allocation.
 
-    // Check if variation-name has been assigned to the userId. If not, return no variation
-    if (variationName) {
-      // If userStorageService is provided, look into it for the saved variation for the campaign and userId
-      DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, newGoalIdentifier);
 
-      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.VARIATION_ALLOCATED, {
-        file: file,
-        campaignKey: campaignKey,
+      var inEligibleCampaignKeys = '';
+      var eligibleCampaignKeys = '';
+
+      var _DecisionUtil$getElig = DecisionUtil.getEligbleCampaigns(campaignList, userId, customVariables),
+          eligibleCampaigns = _DecisionUtil$getElig.eligibleCampaigns,
+          inEligibleCampaigns = _DecisionUtil$getElig.inEligibleCampaigns;
+
+      inEligibleCampaigns.forEach(function (campaign) {
+        inEligibleCampaignKeys = inEligibleCampaignKeys + campaign.key + ',';
+      });
+      eligibleCampaigns.forEach(function (campaign) {
+        eligibleCampaignKeys = eligibleCampaignKeys + campaign.key + ',';
+      });
+      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.GOT_ELIGIBLE_CAMPAIGNS, {
         userId: userId,
-        variationName: variationName
-      }));
-    } else {
-      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.NO_VARIATION_ALLOCATED, {
+        groupName: groupName,
         file: file,
-        campaignKey: campaignKey,
-        userId: userId
+        eligibleCampaignKeys: eligibleCampaignKeys.slice(0, -1),
+        inEligibleText: inEligibleCampaignKeys === '' ? 'no campaigns' : "campaigns: ".concat(inEligibleCampaignKeys.slice(0, -1))
       }));
-    } // Executing the callback when SDK makes the decision
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GOT_ELIGIBLE_CAMPAIGNS, {
+        userId: userId,
+        groupName: groupName,
+        file: file,
+        noOfEligibleCampaigns: eligibleCampaigns.length,
+        noOfGroupCampaigns: inEligibleCampaigns.length + eligibleCampaigns.length
+      }));
 
-
-    HooksManager.execute(Object.assign({
-      fromUserStorageService: false,
-      isUserWhitelisted: false
-    }, campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? {
-      isFeatureEnabled: !!variationName
-    } : {
-      variationName: variationName,
-      variationId: variationId
-    }, decision));
-    return {
-      variation: variation && variation.variation,
-      variationName: variationName,
-      variationId: variationId
-    };
+      if (eligibleCampaigns.length === 1) {
+        // if the called campaign is the only winner.
+        return DecisionUtil.evaluateTrafficAndGetVariation(config, eligibleCampaigns[0], eligibleCampaigns[0].key, userId, metaData, newGoalIdentifier, decision);
+      } else {
+        // normalize the eligible campaigns and decide winner
+        return DecisionUtil._normalizeAndFindWinningCampaign(config, campaign, eligibleCampaigns, userId, groupName, metaData, newGoalIdentifier, decision);
+      }
+    } else {
+      // campaign is not a part of mutually exclusive group
+      // check if the user is eligible to become part of the campaign and assign variation.
+      return DecisionUtil.evaluateTrafficAndGetVariation(config, campaign, campaignKey, userId, metaData, newGoalIdentifier, decision);
+    }
   },
   // PRIVATE METHODS
   _evaluateWhitelisting: function _evaluateWhitelisting(campaign, campaignKey, userId, variationTargetingVariables) {
+    var disableLogs = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
     var whitelistedVariation;
     var status;
     variationTargetingVariables = Object.assign({}, variationTargetingVariables, {
@@ -4336,7 +4349,7 @@ var DecisionUtil = {
           userId: userId,
           file: file,
           variation: ", for ".concat(variation.name)
-        }));
+        }), disableLogs);
         return;
       }
 
@@ -4355,7 +4368,7 @@ var DecisionUtil = {
         status: status,
         segmentationType: SegmentationTypeEnum.WHITELISTING,
         variation: "for ".concat(variation.name)
-      }));
+      }), disableLogs);
     });
 
     if (targetedVariations.length > 1) {
@@ -4391,7 +4404,9 @@ var DecisionUtil = {
    * @return {Object|null} - if found then variation and goalIdentifier settings object otherwise null
    */
   _getStoredVariationAndGoalIdentifiers: function _getStoredVariationAndGoalIdentifiers(config, settingsFile, campaignKey, userId, userStorageData) {
-    var userData = DecisionUtil._getStoredUserData(config, userId, campaignKey, userStorageData);
+    var disableLogs = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : false;
+
+    var userData = DecisionUtil._getStoredUserData(config, userId, campaignKey, userStorageData, disableLogs);
 
     var variationName = userData.variationName,
         goalIdentifier = userData.goalIdentifier;
@@ -4402,7 +4417,7 @@ var DecisionUtil = {
         campaignKey: campaignKey,
         userId: userId,
         variationName: variationName
-      }));
+      }), disableLogs);
       return {
         storedVariation: CampaignUtil.getCampaignVariation(settingsFile, campaignKey, variationName),
         goalIdentifier: goalIdentifier
@@ -4414,7 +4429,7 @@ var DecisionUtil = {
       file: file,
       campaignKey: campaignKey,
       userId: userId
-    }));
+    }), disableLogs);
     return null;
   },
 
@@ -4447,7 +4462,7 @@ var DecisionUtil = {
    *
    * @return {Object} - User Campaign Mapping
    */
-  _getStoredUserData: function _getStoredUserData(config, userId, campaignKey, userStorageData) {
+  _getStoredUserData: function _getStoredUserData(config, userId, campaignKey, userStorageData, disableLogs) {
     var userStorageMap = {
       userId: userId,
       variationName: null,
@@ -4458,7 +4473,7 @@ var DecisionUtil = {
     if (!config.userStorageService) {
       logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.NO_USER_STORAGE_SERVICE_GET, {
         file: file
-      }));
+      }), disableLogs);
       return userStorageMap;
     }
 
@@ -4468,14 +4483,14 @@ var DecisionUtil = {
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GETTING_DATA_USER_STORAGE_SERVICE, {
         file: file,
         userId: userId
-      }));
+      }), disableLogs);
       return Object.assign({}, data, userStorageData);
     } catch (err) {
       // if no data found
       logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.GET_USER_STORAGE_SERVICE_FAILED, {
         file: file,
         userId: userId
-      }));
+      }), disableLogs);
     }
   },
 
@@ -4528,6 +4543,382 @@ var DecisionUtil = {
     }
 
     return isSaved;
+  },
+
+  /**
+   * Evaluate the campaign for whitelisting and store
+   * This method would be run only for MEG campaigns
+   *
+   * @param {Object} config
+   * @param {Object} settingsFile
+   * @param {Array} campaignList
+   * @param {Object} calledCampaign
+   * @param {String} userId
+   * @param {Object} userStorageData
+   * @param {Object} variationTargetingVariables
+   * @param {Boolean} isTrackUserAPI
+   *
+   * @returns {Boolean} - true, if whitelisting/storage is satisfied for any campaign
+   */
+  _checkForStorageAndWhitelisting: function _checkForStorageAndWhitelisting(config, settingsFile, groupName, campaignList, calledCampaign, userId, userStorageData, variationTargetingVariables, isTrackUserAPI) {
+    var otherCampaignWinner = false;
+    campaignList.some(function (groupCampaign) {
+      if (groupCampaign.id === calledCampaign.id) {
+        return;
+      } // create a local copy of the campaigns
+      // groupCampaign = FunctionUtil.cloneObject(groupCampaign);
+      // checking other campaigns for whitelisting or user storage.
+
+
+      var whitelistedVariation = DecisionUtil._checkForWhitelisting(groupCampaign, groupCampaign.key, userId, variationTargetingVariables);
+
+      if (whitelistedVariation) {
+        // other campaign satisfy the whitelisting
+        otherCampaignWinner = true;
+        logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE, {
+          file: file,
+          campaignKey: groupCampaign.key,
+          groupName: groupName,
+          userId: userId,
+          type: 'whitelisting'
+        }));
+        return true;
+      }
+
+      var storedVariation = DecisionUtil._checkForUserStorage(config, settingsFile, groupCampaign, groupCampaign.key, userId, userStorageData, isTrackUserAPI);
+
+      if (storedVariation && DataTypeUtil.isObject(storedVariation) && Object.keys(storedVariation).length > 0) {
+        // other campaign sastisfy the user storage
+        otherCampaignWinner = true;
+        logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE, {
+          file: file,
+          campaignKey: groupCampaign.key,
+          groupName: groupName,
+          userId: userId,
+          type: 'user storage'
+        }));
+        return true;
+      }
+    });
+    return otherCampaignWinner;
+  },
+
+  /**
+   * Evaluate a campaign for pre-segmentation.
+   *
+   * @param {Object} campaign
+   * @param {String} campaignKey
+   * @param {String} userId
+   * @param {Object} customVariables
+   * @param {Object} decision
+   *
+   * @returns {Boolean} true, if the pre-segmentation is satisfied.
+   */
+  _checkForPreSegmentation: function _checkForPreSegmentation(campaign, campaignKey, userId, customVariables, decision) {
+    var status;
+
+    if (DataTypeUtil.isObject(campaign.segments) && !Object.keys(campaign.segments).length) {
+      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.SEGMENTATION_SKIPPED, {
+        campaignKey: campaignKey,
+        userId: userId,
+        file: file
+      }), !decision);
+      return true;
+    } else {
+      var preSegmentationResult = SegmentEvaluator(campaign.segments, customVariables, campaignKey, userId, !decision);
+
+      if (!preSegmentationResult) {
+        status = StatusEnum.FAILED;
+      } else {
+        status = StatusEnum.PASSED;
+      }
+
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SEGMENTATION_STATUS, {
+        campaignKey: campaignKey,
+        userId: userId,
+        customVariables: JSON.stringify(customVariables || {}),
+        file: file,
+        status: status,
+        segmentationType: SegmentationTypeEnum.PRE_SEGMENTATION,
+        variation: ''
+      }), !decision);
+
+      if (status === StatusEnum.FAILED) {
+        return false;
+      } else {
+        return true;
+      }
+    }
+  },
+
+  /**
+   * Check if user is eligible for the camapign based on traffic percentage and assign variation.
+   * @param {Object} config
+   * @param {Object} campaign
+   * @param {String} campaignKey
+   * @param {String} userId
+   * @param {Object} metaData
+   * @param {String} newGoalIdentifier
+   * @param {Object} decision
+   * @returns {Object} variation assigned to the user
+   */
+  evaluateTrafficAndGetVariation: function evaluateTrafficAndGetVariation(config, campaign, campaignKey, userId, metaData, newGoalIdentifier, decision) {
+    var variation, variationName, variationId; // Use our core's VariationDecider utility to get the deterministic variation assigned to the userId for that campaign
+
+    var _VariationDecider$get = VariationDecider.getVariationAllotted(userId, campaign);
+
+    variation = _VariationDecider$get.variation;
+    variationName = _VariationDecider$get.variationName;
+    variationId = _VariationDecider$get.variationId;
+
+    // Check if variation-name has been assigned to the userId. If not, return no variation
+    if (variationName) {
+      // If userStorageService is provided, look into it for the saved variation for the campaign and userId
+      DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, newGoalIdentifier);
+
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.VARIATION_ALLOCATED, {
+        file: file,
+        campaignKey: campaignKey,
+        userId: userId,
+        variationName: variationName
+      }));
+    } else {
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.NO_VARIATION_ALLOCATED, {
+        file: file,
+        campaignKey: campaignKey,
+        userId: userId
+      }));
+    } // Executing the callback when SDK makes the decision
+
+
+    HooksManager.execute(Object.assign({
+      fromUserStorageService: false,
+      isUserWhitelisted: false
+    }, campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? {
+      isFeatureEnabled: !!variationName
+    } : {
+      variationName: variationName,
+      variationId: variationId
+    }, decision));
+    return {
+      variation: variation && variation.variation,
+      variationName: variationName,
+      variationId: variationId
+    };
+  },
+
+  /**
+   * Evaluate a campaign for whitelisting
+   *
+   * @param {Object} campaign
+   * @param {String} campaignKey
+   * @param {String} userId
+   * @param {Object} variationTargetingVariables
+   * @param {Object} decision
+   *
+   * @returns {Object} whitelisted variation
+   */
+  _checkForWhitelisting: function _checkForWhitelisting(campaign, campaignKey, userId, variationTargetingVariables, decision) {
+    var status;
+    var variationName, variationId;
+
+    if (campaign.isForcedVariationEnabled) {
+      var whitelistingResult = DecisionUtil._evaluateWhitelisting(campaign, campaignKey, userId, variationTargetingVariables, !decision);
+
+      var variationString;
+
+      if (whitelistingResult) {
+        status = StatusEnum.PASSED;
+        variationString = "for ".concat(whitelistingResult.variationName);
+      } else {
+        status = StatusEnum.FAILED;
+        variationString = '';
+      }
+
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SEGMENTATION_STATUS, {
+        campaignKey: campaignKey,
+        userId: userId,
+        customVariables: JSON.stringify(variationTargetingVariables),
+        file: file,
+        status: status,
+        segmentationType: SegmentationTypeEnum.WHITELISTING,
+        variation: variationString
+      }), !decision);
+
+      if (whitelistingResult) {
+        variationName = whitelistingResult.variationName;
+        variationId = whitelistingResult.variationId; // Executing the callback when SDK has made a decision in case of whitelisting
+
+        if (decision) {
+          HooksManager.execute(Object.assign({
+            fromUserStorageService: false,
+            isUserWhitelisted: false
+          }, campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? {
+            isFeatureEnabled: !!variationName
+          } : {
+            variationName: variationName,
+            variationId: variationId,
+            isUserWhitelisted: !!variationName
+          }, decision));
+        }
+
+        return whitelistingResult;
+      }
+    } else {
+      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.WHITELISTING_SKIPPED, {
+        campaignKey: campaignKey,
+        userId: userId,
+        file: file
+      }), !decision);
+    }
+  },
+
+  /**
+   * Check if the variation is present in the user storage
+   *
+   * @param {Object} config
+   * @param {Object} settingsFile
+   * @param {Object} campaign
+   * @param {String} campaignKey
+   * @param {String} userId
+   * @param {Object} userStorageData
+   * @param {Boolean} isTrackUserAPI
+   * @param {Object} decision
+   *
+   * @returns {Object} stored variaition
+   */
+  _checkForUserStorage: function _checkForUserStorage(config, settingsFile, campaign, campaignKey, userId, userStorageData, isTrackUserAPI, decision) {
+    var variationName, variationId;
+    var storedVariation, goalIdentifier; // If userStorageService is used, get the variation from the stored data
+
+    var _ref = DecisionUtil._getStoredVariationAndGoalIdentifiers(config, settingsFile, campaign.key, userId, userStorageData, !decision) || {};
+
+    storedVariation = _ref.storedVariation;
+    goalIdentifier = _ref.goalIdentifier;
+
+    // If stored variation is found, simply return the same
+    if (storedVariation) {
+      variationName = storedVariation.name;
+      variationId = storedVariation.id;
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GOT_STORED_VARIATION, {
+        file: file,
+        campaignKey: campaignKey,
+        userId: userId,
+        variationName: storedVariation.name
+      }), !decision); // Executing the callback when SDK gets the decision from user storage service
+
+      if (decision) {
+        HooksManager.execute(Object.assign({
+          fromUserStorageService: !!variationName,
+          isUserWhitelisted: false
+        }, campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? {
+          isFeatureEnabled: !!variationName
+        } : {
+          variationName: variationName,
+          variationId: variationId
+        }, decision));
+      }
+
+      return {
+        variation: storedVariation,
+        variationName: storedVariation.name,
+        variationId: storedVariation.id,
+        storedGoalIdentifier: goalIdentifier,
+        isStoredVariation: true
+      };
+    } else if (!DataTypeUtil.isUndefined(config.userStorageService) && !isTrackUserAPI && DataTypeUtil.isUndefined(storedVariation) && !CampaignUtil.isFeatureRolloutCampaign(campaign)) {
+      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.CAMPAIGN_NOT_ACTIVATED, {
+        file: file,
+        campaignKey: campaignKey,
+        userId: userId,
+        api: config.apiName
+      }), !decision);
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CAMPAIGN_NOT_ACTIVATED, {
+        file: file,
+        campaignKey: campaignKey,
+        userId: userId,
+        reason: config.apiName === ApiEnum.TRACK ? 'track it' : 'get the decision/value'
+      }), !decision);
+      return {};
+    }
+  },
+
+  /**
+   * Evaluate the list of campaigns for pre-segmentation and campaign traffic allocation and assign variation to the user.
+   * This method will be used for MEG campaigns
+   *
+   * @param {Object} config
+   * @param {Array} campaignList
+   * @param {String} userId
+   * @param {Object} customVariables
+   * @param {Object} metaData
+   * @param {String} newGoalIdentifier
+   *
+   * @returns {Array} list of campaigns which satisfies the conditions.
+   */
+  getEligbleCampaigns: function getEligbleCampaigns(campaignList, userId, customVariables) {
+    var eligibleCampaigns = [];
+    var inEligibleCampaigns = [];
+    campaignList.forEach(function (groupCampaign) {
+      var isPartOfCampaign = DecisionUtil._checkForPreSegmentation(groupCampaign, groupCampaign.key, userId, customVariables) && BucketingService.isUserPartOfCampaign(userId, groupCampaign, true);
+
+      if (isPartOfCampaign) {
+        groupCampaign = FunctionUtil.cloneObject(groupCampaign); // campaign satisfies the pre-segmentation
+
+        eligibleCampaigns.push(groupCampaign);
+      } else {
+        inEligibleCampaigns.push(groupCampaign);
+      }
+    });
+    return {
+      eligibleCampaigns: eligibleCampaigns,
+      inEligibleCampaigns: inEligibleCampaigns
+    };
+  },
+
+  /**
+   * Equally distribute the traffic of campaigns and assign a winner campaign by murmur hash.
+   *
+   * @param {Object} config
+   * @param {Object} calledCampaign
+   * @param {Array} shortlistedCampaigns
+   * @param {String} userId
+   * @param {Object} metaData
+   * @param {String} newGoalIdentifier
+   * @param {Object} decision
+   *
+   * @returns {Object} variation of the winner campaign
+   */
+  _normalizeAndFindWinningCampaign: function _normalizeAndFindWinningCampaign(config, calledCampaign, shortlistedCampaigns, userId, groupName, metaData, newGoalIdentifier, decision) {
+    // normalise the weights of all the shortlisted campaigns
+    shortlistedCampaigns.forEach(function (campaign) {
+      campaign.weight = Math.floor(100 / shortlistedCampaigns.length);
+    }); // re-distribute the traffic for each camapign
+
+    CampaignUtil.setCampaignAllocation(shortlistedCampaigns);
+
+    var winnerCampaign = BucketingService._getVariation(shortlistedCampaigns, BucketingService.calculateBucketValue(userId));
+
+    logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GOT_WINNER_CAMPAIGN, {
+      userId: userId,
+      groupName: groupName,
+      file: file,
+      campaignKey: winnerCampaign.key
+    }));
+
+    if (winnerCampaign.id === calledCampaign.id) {
+      // if called campaign is the winner campaign, get the variation for the campaign
+      return DecisionUtil.evaluateTrafficAndGetVariation(config, winnerCampaign, winnerCampaign.key, userId, metaData, newGoalIdentifier, decision);
+    } else {
+      // if winning campaign not the called camapaign, return
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CALLED_CAMPAIGN_NOT_WINNER, {
+        userId: userId,
+        groupName: groupName,
+        file: file,
+        campaignKey: calledCampaign.key
+      }));
+      return {};
+    }
   }
 };
 module.exports = DecisionUtil;
@@ -6107,16 +6498,49 @@ module.exports = XhrUtil;
 /*!**************************************************!*\
   !*** ./node_modules/superstruct/lib/index.es.js ***!
   \**************************************************/
-/*! exports provided: StructError, Types, isStruct, struct, superstruct */
+/*! exports provided: Struct, StructError, any, array, assert, boolean, coerce, coercion, date, defaulted, dynamic, empty, enums, func, instance, intersection, is, lazy, length, literal, map, masked, never, nullable, number, object, optional, partial, pattern, record, refinement, set, string, struct, tuple, type, union, validate */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Struct", function() { return Struct; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "StructError", function() { return StructError; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "Types", function() { return Types; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "isStruct", function() { return isStruct; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "any", function() { return any; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "array", function() { return array; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "assert", function() { return assert; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "boolean", function() { return boolean; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "coerce", function() { return coerce; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "coercion", function() { return coercion; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "date", function() { return date; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "defaulted", function() { return defaulted; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "dynamic", function() { return dynamic; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "empty", function() { return empty; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "enums", function() { return enums; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "func", function() { return func; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "instance", function() { return instance; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersection", function() { return intersection; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "is", function() { return is; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "lazy", function() { return lazy; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "length", function() { return length; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "literal", function() { return literal; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "map", function() { return map; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "masked", function() { return masked; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "never", function() { return never; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "nullable", function() { return nullable; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "number", function() { return number; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "object", function() { return object; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "optional", function() { return optional; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "partial", function() { return partial; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "pattern", function() { return pattern; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "record", function() { return record; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "refinement", function() { return refinement; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "set", function() { return set; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "string", function() { return string; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "struct", function() { return struct; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "superstruct", function() { return superstruct; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tuple", function() { return tuple; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "type", function() { return type; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "union", function() { return union; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "validate", function() { return validate; });
 function _defineProperty(obj, key, value) {
   if (key in obj) {
     Object.defineProperty(obj, key, {
@@ -6166,96 +6590,6 @@ function _objectSpread2(target) {
   return target;
 }
 
-function _inheritsLoose(subClass, superClass) {
-  subClass.prototype = Object.create(superClass.prototype);
-  subClass.prototype.constructor = subClass;
-  subClass.__proto__ = superClass;
-}
-
-function _getPrototypeOf(o) {
-  _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
-    return o.__proto__ || Object.getPrototypeOf(o);
-  };
-  return _getPrototypeOf(o);
-}
-
-function _setPrototypeOf(o, p) {
-  _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
-    o.__proto__ = p;
-    return o;
-  };
-
-  return _setPrototypeOf(o, p);
-}
-
-function isNativeReflectConstruct() {
-  if (typeof Reflect === "undefined" || !Reflect.construct) return false;
-  if (Reflect.construct.sham) return false;
-  if (typeof Proxy === "function") return true;
-
-  try {
-    Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-function _construct(Parent, args, Class) {
-  if (isNativeReflectConstruct()) {
-    _construct = Reflect.construct;
-  } else {
-    _construct = function _construct(Parent, args, Class) {
-      var a = [null];
-      a.push.apply(a, args);
-      var Constructor = Function.bind.apply(Parent, a);
-      var instance = new Constructor();
-      if (Class) _setPrototypeOf(instance, Class.prototype);
-      return instance;
-    };
-  }
-
-  return _construct.apply(null, arguments);
-}
-
-function _isNativeFunction(fn) {
-  return Function.toString.call(fn).indexOf("[native code]") !== -1;
-}
-
-function _wrapNativeSuper(Class) {
-  var _cache = typeof Map === "function" ? new Map() : undefined;
-
-  _wrapNativeSuper = function _wrapNativeSuper(Class) {
-    if (Class === null || !_isNativeFunction(Class)) return Class;
-
-    if (typeof Class !== "function") {
-      throw new TypeError("Super expression must either be null or a function");
-    }
-
-    if (typeof _cache !== "undefined") {
-      if (_cache.has(Class)) return _cache.get(Class);
-
-      _cache.set(Class, Wrapper);
-    }
-
-    function Wrapper() {
-      return _construct(Class, arguments, _getPrototypeOf(this).constructor);
-    }
-
-    Wrapper.prototype = Object.create(Class.prototype, {
-      constructor: {
-        value: Wrapper,
-        enumerable: false,
-        writable: true,
-        configurable: true
-      }
-    });
-    return _setPrototypeOf(Wrapper, Class);
-  };
-
-  return _wrapNativeSuper(Class);
-}
-
 function _objectWithoutPropertiesLoose(source, excluded) {
   if (source == null) return {};
   var target = {};
@@ -6271,465 +6605,73 @@ function _objectWithoutPropertiesLoose(source, excluded) {
   return target;
 }
 
-function _assertThisInitialized(self) {
-  if (self === void 0) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
+function _objectWithoutProperties(source, excluded) {
+  if (source == null) return {};
 
-  return self;
-}
+  var target = _objectWithoutPropertiesLoose(source, excluded);
 
-var toString = Object.prototype.toString;
+  var key, i;
 
-var kindOf = function kindOf(val) {
-  if (val === void 0) return 'undefined';
-  if (val === null) return 'null';
+  if (Object.getOwnPropertySymbols) {
+    var sourceSymbolKeys = Object.getOwnPropertySymbols(source);
 
-  var type = typeof val;
-  if (type === 'boolean') return 'boolean';
-  if (type === 'string') return 'string';
-  if (type === 'number') return 'number';
-  if (type === 'symbol') return 'symbol';
-  if (type === 'function') {
-    return isGeneratorFn(val) ? 'generatorfunction' : 'function';
-  }
-
-  if (isArray(val)) return 'array';
-  if (isBuffer(val)) return 'buffer';
-  if (isArguments(val)) return 'arguments';
-  if (isDate(val)) return 'date';
-  if (isError(val)) return 'error';
-  if (isRegexp(val)) return 'regexp';
-
-  switch (ctorName(val)) {
-    case 'Symbol': return 'symbol';
-    case 'Promise': return 'promise';
-
-    // Set, Map, WeakSet, WeakMap
-    case 'WeakMap': return 'weakmap';
-    case 'WeakSet': return 'weakset';
-    case 'Map': return 'map';
-    case 'Set': return 'set';
-
-    // 8-bit typed arrays
-    case 'Int8Array': return 'int8array';
-    case 'Uint8Array': return 'uint8array';
-    case 'Uint8ClampedArray': return 'uint8clampedarray';
-
-    // 16-bit typed arrays
-    case 'Int16Array': return 'int16array';
-    case 'Uint16Array': return 'uint16array';
-
-    // 32-bit typed arrays
-    case 'Int32Array': return 'int32array';
-    case 'Uint32Array': return 'uint32array';
-    case 'Float32Array': return 'float32array';
-    case 'Float64Array': return 'float64array';
-  }
-
-  if (isGeneratorObj(val)) {
-    return 'generator';
-  }
-
-  // Non-plain objects
-  type = toString.call(val);
-  switch (type) {
-    case '[object Object]': return 'object';
-    // iterators
-    case '[object Map Iterator]': return 'mapiterator';
-    case '[object Set Iterator]': return 'setiterator';
-    case '[object String Iterator]': return 'stringiterator';
-    case '[object Array Iterator]': return 'arrayiterator';
-  }
-
-  // other
-  return type.slice(8, -1).toLowerCase().replace(/\s/g, '');
-};
-
-function ctorName(val) {
-  return val.constructor ? val.constructor.name : null;
-}
-
-function isArray(val) {
-  if (Array.isArray) return Array.isArray(val);
-  return val instanceof Array;
-}
-
-function isError(val) {
-  return val instanceof Error || (typeof val.message === 'string' && val.constructor && typeof val.constructor.stackTraceLimit === 'number');
-}
-
-function isDate(val) {
-  if (val instanceof Date) return true;
-  return typeof val.toDateString === 'function'
-    && typeof val.getDate === 'function'
-    && typeof val.setDate === 'function';
-}
-
-function isRegexp(val) {
-  if (val instanceof RegExp) return true;
-  return typeof val.flags === 'string'
-    && typeof val.ignoreCase === 'boolean'
-    && typeof val.multiline === 'boolean'
-    && typeof val.global === 'boolean';
-}
-
-function isGeneratorFn(name, val) {
-  return ctorName(name) === 'GeneratorFunction';
-}
-
-function isGeneratorObj(val) {
-  return typeof val.throw === 'function'
-    && typeof val.return === 'function'
-    && typeof val.next === 'function';
-}
-
-function isArguments(val) {
-  try {
-    if (typeof val.length === 'number' && typeof val.callee === 'function') {
-      return true;
-    }
-  } catch (err) {
-    if (err.message.indexOf('callee') !== -1) {
-      return true;
+    for (i = 0; i < sourceSymbolKeys.length; i++) {
+      key = sourceSymbolKeys[i];
+      if (excluded.indexOf(key) >= 0) continue;
+      if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue;
+      target[key] = source[key];
     }
   }
-  return false;
+
+  return target;
 }
 
 /**
- * If you need to support Safari 5-7 (8-10 yr-old browser),
- * take a look at https://github.com/feross/is-buffer
+ * Convert a validation result to an iterable of failures.
  */
-
-function isBuffer(val) {
-  if (val.constructor && typeof val.constructor.isBuffer === 'function') {
-    return val.constructor.isBuffer(val);
-  }
-  return false;
-}
-
-/**
- * Superstruct ships by default with an unopinionated set of scalar types that
- * express all of the data types that are built-in to JavaScript.
- */
-
-var Types = {
-  /**
-   * Matches any value other than `undefined`.
-   *
-   * ```js
-   * 'anything'
-   * true
-   * ```
-   */
-  any: function any(value) {
-    return value !== undefined;
-  },
-
-  /**
-   * Matches an `arguments` object.
-   *
-   * ```js
-   * arguments
-   * ```
-   */
-  arguments: function _arguments(value) {
-    return kindOf(value) === 'arguments';
-  },
-
-  /**
-   * Matches an `Array`.
-   *
-   * ```js
-   * [1, 2, 3]
-   * ```
-   */
-  array: function array(value) {
-    return kindOf(value) === 'array';
-  },
-
-  /**
-   * Matches a boolean.
-   *
-   * ```js
-   * true
-   * false
-   * ```
-   */
-  boolean: function boolean(value) {
-    return kindOf(value) === 'boolean';
-  },
-
-  /**
-   * Matches a Node.js `Buffer`.
-   *
-   * ```js
-   * Buffer.from('string')
-   * ```
-   */
-  buffer: function buffer(value) {
-    return kindOf(value) === 'buffer';
-  },
-
-  /**
-   * Matches a **valid** `Date` object.
-   *
-   * ```js
-   * new Date()
-   * ```
-   *
-   * Note: Invalid `Date` objects that equal `NaN` are not matched.
-   */
-  date: function date(value) {
-    return kindOf(value) === 'date' && !isNaN(value);
-  },
-
-  /**
-   * Matches an error object.
-   *
-   * ```js
-   * new Error()
-   * ```
-   */
-  error: function error(value) {
-    return kindOf(value) === 'error';
-  },
-
-  /**
-   * Matches a `Float32Array` object.
-   */
-  float32array: function float32array(value) {
-    return kindOf(value) === 'float32array';
-  },
-
-  /**
-   * Matches a `Float64Array` object.
-   */
-  float64array: function float64array(value) {
-    return kindOf(value) === 'float64array';
-  },
-
-  /**
-   * Matches a function.
-   *
-   * ```js
-   * () => {}
-   * function () {}
-   * ```
-   */
-  function: function _function(value) {
-    return kindOf(value) === 'function';
-  },
-
-  /**
-   * Matches a generator function.
-   *
-   * ```js
-   * function* () {}
-   * ```
-   */
-  generatorfunction: function generatorfunction(value) {
-    return kindOf(value) === 'generatorfunction';
-  },
-
-  /**
-   * Matches a `Int16Array` object.
-   */
-  int16array: function int16array(value) {
-    return kindOf(value) === 'int16array';
-  },
-
-  /**
-   * Matches a `Int32Array` object.
-   */
-  int32array: function int32array(value) {
-    return kindOf(value) === 'int32array';
-  },
-
-  /**
-   * Matches a `Int8Array` object.
-   */
-  int8array: function int8array(value) {
-    return kindOf(value) === 'int8array';
-  },
-
-  /**
-   * Matches a `Map` object.
-   *
-   * ```js
-   * new Map()
-   * ```
-   */
-  map: function map(value) {
-    return kindOf(value) === 'map';
-  },
-
-  /**
-   * Matches the `null` literal value.
-   *
-   * ```js
-   * null
-   * ```
-   */
-  null: function _null(value) {
-    return kindOf(value) === 'null';
-  },
-
-  /**
-   * Matches a number.
-   *
-   * ```js
-   * 42
-   * ```
-   */
-  number: function number(value) {
-    return kindOf(value) === 'number';
-  },
-
-  /**
-   * Matches a plain object.
-   *
-   * ```js
-   * { key: 'value' }
-   * { something: true }
-   * ```
-   */
-  object: function object(value) {
-    return kindOf(value) === 'object';
-  },
-
-  /**
-   * Matches a `Promise` object.
-   *
-   * ```js
-   * Promise.resolve()
-   * ```
-   */
-  promise: function promise(value) {
-    return kindOf(value) === 'promise';
-  },
-
-  /**
-   * Matches a regular expression object.
-   *
-   * ```js
-   * /a-z/g
-   * ```
-   */
-  regexp: function regexp(value) {
-    return kindOf(value) === 'regexp';
-  },
-
-  /**
-   * Matches a `Set` object.
-   *
-   * ```js
-   * new Set()
-   * ```
-   */
-  set: function set(value) {
-    return kindOf(value) === 'set';
-  },
-
-  /**
-   * Matches a string.
-   *
-   * ```js
-   * 'text'
-   * ```
-   */
-  string: function string(value) {
-    return kindOf(value) === 'string';
-  },
-
-  /**
-   * Matches a `Symbol`.
-   *
-   * ```js
-   * Symbol()
-   * ```
-   */
-  symbol: function symbol(value) {
-    return kindOf(value) === 'symbol';
-  },
-
-  /**
-   * Matches a `Uint16Array` object.
-   */
-  uint16array: function uint16array(value) {
-    return kindOf(value) === 'uint16array';
-  },
-
-  /**
-   * Matches a `Uint32Array` object.
-   */
-  uint32array: function uint32array(value) {
-    return kindOf(value) === 'uint32array';
-  },
-
-  /**
-   * Matches a `Uint8Array` object.
-   */
-  uint8array: function uint8array(value) {
-    return kindOf(value) === 'uint8array';
-  },
-
-  /**
-   * Matches a `Uint8ClampedArray` object.
-   */
-  uint8clampedarray: function uint8clampedarray(value) {
-    return kindOf(value) === 'uint8clampedarray';
-  },
-
-  /**
-   * Matches the `undefined` literal value.
-   *
-   * ```js
-   * undefined
-   * ```
-   */
-  undefined: function undefined$1(value) {
-    return kindOf(value) === 'undefined';
-  },
-
-  /**
-   * Matches a `WeakMap` object.
-   *
-   * ```js
-   * new WeakMap()
-   * ```
-   */
-  weakmap: function weakmap(value) {
-    return kindOf(value) === 'weakmap';
-  },
-
-  /**
-   * Matches a `WeakSet` object.
-   *
-   * ```js
-   * new WeakSet()
-   * ```
-   */
-  weakset: function weakset(value) {
-    return kindOf(value) === 'weakset';
-  }
-};
-
-var isProduction = "development" === 'production';
-var prefix = 'Invariant failed';
-function invariant(condition, message) {
-  if (condition) {
-    return;
-  }
-
-  if (isProduction) {
-    throw new Error(prefix);
+function* toFailures(result, context) {
+  if (result === true) ; else if (result === false) {
+    yield context.fail();
   } else {
-    throw new Error(prefix + ": " + (message || ''));
+    yield* result;
   }
 }
+/**
+ * Shifts (removes and returns) the first value from the `input` iterator.
+ * Like `Array.prototype.shift()` but for an `Iterator`.
+ */
 
+function iteratorShift(input) {
+  const {
+    done,
+    value
+  } = input.next();
+  return done ? undefined : value;
+}
+
+/**
+ * `Struct` objects encapsulate the schema for a specific data type (with
+ * optional coercion). You can then use the `assert`, `is` or `validate` helpers
+ * to validate unknown data against a struct.
+ */
+
+class Struct {
+  constructor(props) {
+    const {
+      type,
+      schema,
+      coercer = value => value,
+      validator = () => [],
+      refiner = () => []
+    } = props;
+    this.type = type;
+    this.schema = schema;
+    this.coercer = coercer;
+    this.validator = validator;
+    this.refiner = refiner;
+  }
+
+}
 /**
  * `StructError` objects are thrown (or returned) by Superstruct when its
  * validation fails. The error represents the first error encountered during
@@ -6737,1013 +6679,647 @@ function invariant(condition, message) {
  * information for all of the failures encountered.
  */
 
-var StructError =
-/*#__PURE__*/
-function (_TypeError) {
-  _inheritsLoose(StructError, _TypeError);
+class StructError extends TypeError {
+  constructor(failure, moreFailures) {
+    const {
+      path,
+      value,
+      type,
+      branch
+    } = failure,
+          rest = _objectWithoutProperties(failure, ["path", "value", "type", "branch"]);
 
-  function StructError(failures) {
-    var _this;
+    const message = `Expected a value of type \`${type}\`${path.length ? ` for \`${path.join('.')}\`` : ''} but received \`${JSON.stringify(value)}\`.`;
+    let failuresResult;
 
-    invariant(failures.length > 0, "StructError requires being passed a failure, but received: " + failures);
-    var first = failures[0];
+    function failures() {
+      if (!failuresResult) {
+        failuresResult = [failure, ...moreFailures];
+      }
 
-    var path = first.path,
-        value = first.value,
-        type = first.type,
-        branch = first.branch,
-        rest = _objectWithoutPropertiesLoose(first, ["path", "value", "type", "branch"]);
+      return failuresResult;
+    }
 
-    var message = "Expected a value of type `" + type + "`" + (path.length ? " for `" + path.join('.') + "`" : '') + " but received `" + JSON.stringify(value) + "`.";
-    _this = _TypeError.call(this, message) || this;
-    _this.type = type;
-    _this.value = value;
-    Object.assign(_assertThisInitialized(_this), rest);
-    _this.path = path;
-    _this.branch = branch;
-    _this.failures = failures;
-    _this.stack = new Error().stack;
-    _this.__proto__ = StructError.prototype;
-    return _this;
+    super(message);
+    this.value = value;
+    Object.assign(this, rest);
+    this.type = type;
+    this.path = path;
+    this.branch = branch;
+    this.failures = failures;
+    this.stack = new Error().stack;
+    this.__proto__ = StructError.prototype;
   }
 
-  return StructError;
-}(_wrapNativeSuper(TypeError));
-
+}
 /**
- * A symbol to set on `Struct` objects to test them against later.
- */
-var STRUCT = Symbol('STRUCT');
-/**
- * Check if a value is a `Struct` object.
+ * Assert that a value passes a `Struct`, throwing if it doesn't.
  */
 
-var isStruct = function isStruct(value) {
-  return typeof value === 'function' && value[STRUCT];
-};
+function assert(value, struct) {
+  const result = validate(value, struct);
+
+  if (result[0]) {
+    throw result[0];
+  }
+}
 /**
- * This abstract `Struct` factory creates a generic struct that validates values
- * against a `Validator` function.
+ * Coerce a value with the coercion logic of `Struct` and validate it.
  */
 
-var createStruct = function createStruct(props) {
-  var struct = props.struct;
-  var Error = struct.Error;
-
-  var Struct = function Struct(value) {
-    return Struct.assert(value);
-  }; // Set a hidden symbol property so that we can check it later to see if an
-  // object is a struct object.
-
-
-  Object.defineProperty(Struct, STRUCT, {
-    value: true
-  });
-  Struct.kind = props.kind;
-  Struct.type = props.type;
-
-  Struct.default = function () {
-    return typeof props.defaults === 'function' ? props.defaults() : props.defaults;
-  };
-
-  Struct.test = function (value) {
-    var _Struct$check = Struct.check(value, [value], []),
-        failures = _Struct$check[0];
-
-    return !failures;
-  };
-
-  Struct.assert = function (value) {
-    var _Struct$check2 = Struct.check(value, [value], []),
-        failures = _Struct$check2[0],
-        result = _Struct$check2[1];
-
-    if (failures) {
-      throw new Error(failures);
-    } else {
-      return result;
-    }
-  };
-
-  Struct.validate = function (value) {
-    var _Struct$check3 = Struct.check(value, [value], []),
-        failures = _Struct$check3[0],
-        result = _Struct$check3[1];
-
-    if (failures) {
-      return [new Error(failures)];
-    } else {
-      return [undefined, result];
-    }
-  };
-
-  Struct.check = function (value, branch, path) {
-    if (value === void 0) {
-      value = Struct.default();
-    }
-
-    var failures = [Struct.fail({
-      value: value,
-      branch: branch,
-      path: path
-    })];
-    return [failures];
-  };
-
-  Struct.fail = function (obj) {
-    return _objectSpread2({}, obj, {
-      type: 'type' in obj ? obj.type : Struct.type
-    });
-  };
-
-  return Struct;
-};
-
-var createArray = function createArray(schema, defaults, struct) {
-  invariant(Array.isArray(schema) && schema.length === 1, "Array structs must be defined as an array with one element, but you passed: " + schema);
-  var Element = struct(schema[0], undefined);
-  var Struct = createStruct({
-    kind: 'array',
-    type: Element.type + "[]",
-    defaults: defaults,
-    struct: struct
-  });
-
-  Struct.check = function (value, branch, path) {
-    if (value === void 0) {
-      value = Struct.default();
-    }
-
-    if (!Array.isArray(value)) {
-      return [[Struct.fail({
-        value: value,
-        branch: branch,
-        path: path
-      })]];
-    }
-
-    var result = [];
-    var failures = [];
-
-    for (var i = 0; i < value.length; i++) {
-      var v = value[i];
-
-      var _Element$check = Element.check(v, branch.concat(v), path.concat(i)),
-          efs = _Element$check[0],
-          er = _Element$check[1];
-
-      if (efs) {
-        failures.push.apply(failures, efs);
-        continue;
-      }
-
-      result[i] = er;
-    }
-
-    return failures.length ? [failures] : [undefined, result];
-  };
-
-  return Struct;
-};
-
-var createDynamic = function createDynamic(schema, defaults, struct) {
-  invariant(typeof schema === 'function', "Dynamic structs must be defined as a function, but you passed: " + schema);
-  var Dynamic = createStruct({
-    kind: 'dynamic',
-    type: "dynamic<\u2026>",
-    defaults: defaults,
-    struct: struct
-  });
-
-  Dynamic.check = function (value, branch, path) {
-    if (value === void 0) {
-      value = Dynamic.default();
-    }
-
-    var Struct = schema(value, branch, path);
-    return Struct.check(value, branch, path);
-  };
-
-  return Dynamic;
-};
-
-var createEnum = function createEnum(schema, defaults, struct) {
-  invariant(Array.isArray(schema), "Enum structs must be defined as an array, but you passed: " + schema);
-
-  var validator = function validator(value) {
-    return schema.includes(value);
-  };
-
-  var Struct = struct(validator, defaults);
-  Struct.kind = 'enum';
-  Struct.type = schema.map(function (s) {
-    return typeof s === 'string' ? "\"" + s + "\"" : "" + s;
-  }).join(' | ');
-  return Struct;
-};
-
-var createFunction = function createFunction(schema, defaults, struct) {
-  var Struct = createStruct({
-    kind: 'function',
-    type: "function<\u2026>",
-    defaults: defaults,
-    struct: struct
-  });
-
-  Struct.check = function (value, branch, path) {
-    if (value === void 0) {
-      value = Struct.default();
-    }
-
-    var result = schema(value, branch, path);
-
-    if (result === true) {
-      return [undefined, value];
-    }
-
-    var failures = [];
-
-    if (result === false) {
-      failures.push(Struct.fail({
-        value: value,
-        branch: branch,
-        path: path
-      }));
-    } else if (Array.isArray(result) && result.length > 0) {
-      for (var _iterator = result, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-        var _ref;
-
-        if (_isArray) {
-          if (_i >= _iterator.length) break;
-          _ref = _iterator[_i++];
-        } else {
-          _i = _iterator.next();
-          if (_i.done) break;
-          _ref = _i.value;
-        }
-
-        var r = _ref;
-        failures.push(Struct.fail(_objectSpread2({
-          value: value,
-          branch: branch,
-          path: path
-        }, r)));
-      }
-    } else if (typeof result === 'object') {
-      failures.push(Struct.fail(_objectSpread2({
-        value: value,
-        branch: branch,
-        path: path
-      }, result)));
-    } else {
-      invariant(false, "Validator functions must return a boolean, a failure object, or an array of failure objects, but you passed: " + result);
-    }
-
-    return [failures];
-  };
-
-  return Struct;
-};
-
-var createInstance = function createInstance(schema, defaults, struct) {
-  invariant(typeof schema === 'function', "Instance structs must be defined as a function, but you passed: " + schema);
-
-  var validator = function validator(value) {
-    return value instanceof schema;
-  };
-
-  var Struct = struct(validator, defaults);
-  Struct.kind = 'instance';
-  Struct.type = "instance<" + schema.name + ">";
-  return Struct;
-};
-
-var createInterface = function createInterface(schema, defaults, struct) {
-  invariant(typeof schema === 'object', "Interface structs must be defined as an object, but you passed: " + schema);
-  var Props = {};
-
-  for (var key in schema) {
-    Props[key] = struct(schema[key]);
-  }
-
-  var Struct = createStruct({
-    kind: 'interface',
-    type: "interface<{" + Object.keys(schema).join() + "}>",
-    defaults: defaults,
-    struct: struct
-  });
-
-  Struct.check = function (value, branch, path) {
-    if (value === void 0) {
-      value = Struct.default();
-    }
-
-    if (typeof value !== 'object' && typeof value !== 'function') {
-      return [[Struct.fail({
-        value: value,
-        branch: branch,
-        path: path
-      })]];
-    }
-
-    var failures = [];
-
-    for (var k in Props) {
-      var Prop = Props[k];
-      var v = value[k];
-
-      var _Prop$check = Prop.check(v, branch.concat(v), path.concat(k)),
-          pfs = _Prop$check[0];
-
-      if (pfs) {
-        failures.push.apply(failures, pfs);
-      }
-    }
-
-    return failures.length ? [failures] : [undefined, value];
-  };
-
-  return Struct;
-};
-
-var createIntersection = function createIntersection(schema, defaults, struct) {
-  invariant(Array.isArray(schema) && schema.length !== 0, "Intersection structs must be defined as a non-empty array, but you passed: " + schema);
-  var Structs = schema.map(function (sch) {
-    return struct(sch);
-  });
-  var type = Structs.map(function (s) {
-    return s.type;
-  }).join(' & ');
-  var Struct = createStruct({
-    kind: 'intersection',
-    type: type,
-    defaults: defaults,
-    struct: struct
-  });
-
-  Struct.check = function (value, branch, path) {
-    if (value === void 0) {
-      value = Struct.default();
-    }
-
-    var result = value;
-
-    for (var _iterator = Structs, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-      var _ref;
-
-      if (_isArray) {
-        if (_i >= _iterator.length) break;
-        _ref = _iterator[_i++];
-      } else {
-        _i = _iterator.next();
-        if (_i.done) break;
-        _ref = _i.value;
-      }
-
-      var _struct = _ref;
-
-      var _struct$check = _struct.check(value, branch, path),
-          fs = _struct$check[0],
-          v = _struct$check[1];
-
-      if (fs) {
-        return [[Struct.fail({
-          value: value,
-          branch: branch,
-          path: path
-        })]];
-      } else {
-        result = v;
-      }
-    }
-
-    return [undefined, result];
-  };
-
-  return Struct;
-};
-
-var createLazy = function createLazy(schema, defaults, struct) {
-  invariant(typeof schema === 'function', "Lazy structs must be defined as a function, but you passed: " + schema);
-  var Lazy = createStruct({
-    kind: 'lazy',
-    type: "lazy<\u2026>",
-    defaults: defaults,
-    struct: struct
-  });
-
-  Lazy.check = function () {
-    Object.assign(Lazy, schema());
-    return Lazy.check.apply(Lazy, arguments);
-  };
-
-  return Lazy;
-};
-
-var createSize = function createSize(schema, defaults, struct) {
-  invariant(Array.isArray(schema) && schema.length === 2 && schema.every(function (n) {
-    return typeof n === 'number';
-  }), "Size structs must be defined as an array with two number elements, but you passed: " + schema);
-  var min = schema[0],
-      max = schema[1];
-
-  var validator = function validator(value) {
-    return value != null && typeof value.length === 'number' && value.length >= min && value.length <= max;
-  };
-
-  var Struct = struct(validator, defaults);
-  Struct.kind = 'size';
-  Struct.type = "size<" + min + "," + max + ">";
-  return Struct;
-};
-
-var createLiteral = function createLiteral(schema, defaults, struct) {
-  var validator = function validator(value) {
-    return value === schema;
-  };
-
-  var Struct = struct(validator, defaults);
-  Struct.kind = 'literal';
-  Struct.type = typeof schema === 'string' ? "\"" + schema + "\"" : "" + schema;
-  return Struct;
-};
-
-var createObject = function createObject(schema, defaults, struct) {
-  invariant(typeof schema === 'object', "Object structs must be defined as an object, but you passed: " + schema);
-  var Props = {};
-
-  for (var key in schema) {
-    Props[key] = struct(schema[key]);
-  }
-
-  var Struct = createStruct({
-    kind: 'object',
-    type: "{" + Object.keys(schema).join() + "}",
-    defaults: defaults,
-    struct: struct
-  });
-
-  Struct.check = function (value, branch, path) {
-    if (value === void 0) {
-      value = Struct.default();
-    }
-
-    var d = Struct.default();
-
-    if (value === undefined) {
-      value = d;
-    }
-
-    if (kindOf(value) !== 'object') {
-      return [[Struct.fail({
-        value: value,
-        branch: branch,
-        path: path
-      })]];
-    }
-
-    var result = {};
-    var failures = [];
-    var keys = new Set(Object.keys(Props).concat(Object.keys(value)));
-
-    for (var _iterator = keys, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-      var _ref;
-
-      if (_isArray) {
-        if (_i >= _iterator.length) break;
-        _ref = _iterator[_i++];
-      } else {
-        _i = _iterator.next();
-        if (_i.done) break;
-        _ref = _i.value;
-      }
-
-      var k = _ref;
-      var v = value[k];
-      var p = path.concat(k);
-      var b = branch.concat(v);
-      var Prop = Props[k];
-
-      if (v === undefined && d != null && k in d) {
-        v = typeof d[k] === 'function' ? d[k](value, branch, path) : d[k];
-      }
-
-      if (!(k in Props)) {
-        failures.push(Struct.fail({
-          type: undefined,
-          value: v,
-          path: p,
-          branch: value
-        }));
-        continue;
-      }
-
-      var _Prop$check = Prop.check(v, b, p),
-          pfs = _Prop$check[0],
-          pr = _Prop$check[1];
-
-      if (pfs) {
-        failures.push.apply(failures, pfs);
-      } else if (pr !== undefined && k in Props) {
-        result[k] = pr;
-      }
-    }
-
-    return failures.length ? [failures] : [undefined, result];
-  };
-
-  return Struct;
-};
-
-var createPartial = function createPartial(schema, defaults, struct) {
-  invariant(typeof schema === 'object', "Partial structs must be defined as an object, but you passed: " + schema);
-  var Props = {};
-
-  for (var key in schema) {
-    Props[key] = struct.union([schema[key], 'undefined']);
-  }
-
-  var Struct = createStruct({
-    kind: 'object',
-    type: "{" + Object.keys(schema).join() + "}",
-    defaults: defaults,
-    struct: struct
-  });
-
-  Struct.check = function (value, branch, path) {
-    if (value === void 0) {
-      value = Struct.default();
-    }
-
-    var d = Struct.default();
-
-    if (value === undefined) {
-      value = d;
-    }
-
-    if (kindOf(value) !== 'object') {
-      return [[Struct.fail({
-        value: value,
-        branch: branch,
-        path: path
-      })]];
-    }
-
-    var result = {};
-    var failures = [];
-
-    for (var _iterator = value, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-      var _ref;
-
-      if (_isArray) {
-        if (_i >= _iterator.length) break;
-        _ref = _iterator[_i++];
-      } else {
-        _i = _iterator.next();
-        if (_i.done) break;
-        _ref = _i.value;
-      }
-
-      var k = _ref;
-      var v = value[k];
-      var p = path.concat(k);
-      var b = branch.concat(v);
-      var Prop = Props[k];
-
-      if (v === undefined && d != null && k in d) {
-        v = typeof d[k] === 'function' ? d[k](value, branch, path) : d[k];
-      }
-
-      if (!(k in Props)) {
-        failures.push(Struct.fail({
-          type: undefined,
-          value: v,
-          path: p,
-          branch: value
-        }));
-        continue;
-      }
-
-      var _Prop$check = Prop.check(v, b, p),
-          pfs = _Prop$check[0],
-          pr = _Prop$check[1];
-
-      if (pfs) {
-        failures.push.apply(failures, pfs);
-      } else if (pr !== undefined && k in Props) {
-        result[k] = pr;
-      }
-    }
-
-    return failures.length ? [failures] : [undefined, result];
-  };
-
-  return Struct;
-};
-
-var createPick = function createPick(schema, defaults, struct) {
-  invariant(typeof schema === 'object', "Pick structs must be defined as an object, but you passed: " + schema);
-  var Props = {};
-
-  for (var key in schema) {
-    Props[key] = struct(schema[key]);
-  }
-
-  var Struct = createStruct({
-    kind: 'pick',
-    type: "pick<{" + Object.keys(schema).join() + "}>",
-    defaults: defaults,
-    struct: struct
-  });
-
-  Struct.check = function (value, branch, path) {
-    if (value === void 0) {
-      value = Struct.default();
-    }
-
-    var d = Struct.default();
-
-    if (value === undefined) {
-      value = d;
-    }
-
-    if (kindOf(value) !== 'object') {
-      return [[Struct.fail({
-        value: value,
-        branch: branch,
-        path: path
-      })]];
-    }
-
-    var result = {};
-    var failures = [];
-
-    for (var k in Props) {
-      var v = value[k];
-      var p = path.concat(k);
-      var b = branch.concat(v);
-      var Prop = Props[k];
-
-      if (v === undefined && d != null && k in d) {
-        v = typeof d[k] === 'function' ? d[k](value, branch, path) : d[k];
-      }
-
-      var _Prop$check = Prop.check(v, b, p),
-          pfs = _Prop$check[0],
-          pr = _Prop$check[1];
-
-      if (pfs) {
-        failures.push.apply(failures, pfs);
-      } else if (pr !== undefined && k in Props) {
-        result[k] = pr;
-      }
-    }
-
-    return failures.length ? [failures] : [undefined, result];
-  };
-
-  return Struct;
-};
-
-var createRecord = function createRecord(schema, defaults, struct) {
-  invariant(Array.isArray(schema) && schema.length === 2, "Record structs must be defined as an array with two elements, but you passed: " + schema);
-  var Key = struct(schema[0]);
-  var Value = struct(schema[1]);
-  var Struct = createStruct({
-    kind: 'record',
-    type: "record<" + Key.type + "," + Value.type + ">",
-    defaults: defaults,
-    struct: struct
-  });
-
-  Struct.check = function (value, branch, path) {
-    // Record structs have a special default handling behavior, where the defaults
-    // are for the entries themselves, not for the entire value. So we can't use
-    // JavaScript's built-in default handling here.
-    var defs = Struct.default();
-    value = defs ? _objectSpread2({}, defs, {}, value) : value;
-
-    if (kindOf(value) !== 'object') {
-      return [[Struct.fail({
-        value: value,
-        branch: branch,
-        path: path
-      })]];
-    }
-
-    var result = {};
-    var failures = [];
-
-    for (var k in value) {
-      var v = value[k];
-      var p = path.concat(k);
-      var b = branch.concat(v);
-
-      var _Key$check = Key.check(k, b, p),
-          kfs = _Key$check[0],
-          kr = _Key$check[1];
-
-      if (kfs) {
-        failures.push.apply(failures, kfs);
-      } else {
-        var _Value$check = Value.check(v, b, p),
-            vfs = _Value$check[0],
-            vr = _Value$check[1];
-
-        if (vfs) {
-          failures.push.apply(failures, vfs);
-        } else {
-          result[kr] = vr;
-        }
-      }
-    }
-
-    return failures.length ? [failures] : [undefined, result];
-  };
-
-  return Struct;
-};
-
-var createScalar = function createScalar(schema, defaults, struct) {
-  invariant(typeof schema === 'string', "Scalar structs must be defined as a string, but you passed: " + schema);
-  var Types = struct.Types;
-  invariant(schema in Types, "No struct validator function found for type \"" + schema + "\".");
-  var Struct = struct(Types[schema], defaults);
-  Struct.kind = 'scalar';
-  Struct.type = schema;
-  return Struct;
-};
-
-var createShorthand = function createShorthand(schema, defaults, struct) {
-  if (isStruct(schema)) {
-    return schema;
-  }
-
-  if (Array.isArray(schema)) {
-    if (schema.length === 1) {
-      var _schema = schema,
-          first = _schema[0];
-      return struct.array([first], defaults);
-    } else if (schema.length > 1) {
-      return struct.tuple(schema, defaults);
-    }
-  }
-
-  if (typeof schema === 'function') {
-    return struct.function(schema, defaults);
-  }
-
-  if (typeof schema === 'object') {
-    return struct.object(schema, defaults);
-  }
-
-  if (typeof schema === 'string') {
-    var optional = false;
-    var Struct;
-
-    if (schema.endsWith('?')) {
-      optional = true;
-      schema = schema.slice(0, -1);
-    }
-
-    if (schema.includes('|')) {
-      var scalars = schema.split(/\s*\|\s*/g);
-      Struct = struct.union(scalars, defaults);
-    } else if (schema.includes('&')) {
-      var _scalars = schema.split(/\s*&\s*/g);
-
-      Struct = struct.intersection(_scalars, defaults);
-    } else {
-      Struct = struct.scalar(schema, defaults);
-    }
-
-    if (optional) {
-      Struct = struct.union([Struct, 'undefined'], undefined);
-    }
-
-    return Struct;
-  }
-
-  throw new Error("A schema definition must be an object, array, string or function, but you passed: " + schema);
-};
-
-var createTuple = function createTuple(schema, defaults, struct) {
-  invariant(Array.isArray(schema), "Tuple structs must be defined as an array, but you passed: " + schema);
-  var Elements = schema.map(function (s) {
-    return struct(s);
-  });
-  var Struct = createStruct({
-    kind: 'tuple',
-    type: "[" + Elements.map(function (S) {
-      return S.type;
-    }).join() + "]",
-    defaults: defaults,
-    struct: struct
-  });
-
-  Struct.check = function (value, branch, path) {
-    if (value === void 0) {
-      value = Struct.default();
-    }
-
-    if (!Array.isArray(value)) {
-      return [[Struct.fail({
-        value: value,
-        branch: branch,
-        path: path
-      })]];
-    }
-
-    var result = [];
-    var failures = [];
-    var length = Math.max(value.length, Elements.length);
-
-    for (var i = 0; i < length; i++) {
-      var Element = Elements[i];
-      var v = value[i];
-      var p = path.concat(i);
-      var b = branch.concat(v);
-
-      if (!Element) {
-        failures.push(Struct.fail({
-          type: undefined,
-          value: v,
-          path: p,
-          branch: b
-        }));
-      } else {
-        var _Element$check = Element.check(v, b, p),
-            efs = _Element$check[0],
-            er = _Element$check[1];
-
-        if (efs) {
-          failures.push.apply(failures, efs);
-        } else {
-          result[i] = er;
-        }
-      }
-    }
-
-    return failures.length ? [failures] : [undefined, result];
-  };
-
-  return Struct;
-};
-
-var createUnion = function createUnion(schema, defaults, struct) {
-  invariant(Array.isArray(schema) && schema.length !== 0, "Union structs must be defined as a non-empty array, but you passed: " + schema);
-  var Structs = schema.map(function (sch) {
-    return struct(sch);
-  });
-  var type = Structs.map(function (s) {
-    return s.type;
-  }).join(' | ');
-  var Struct = createStruct({
-    kind: 'union',
-    type: type,
-    defaults: defaults,
-    struct: struct
-  });
-
-  Struct.check = function (value, branch, path) {
-    if (value === void 0) {
-      value = Struct.default();
-    }
-
-    for (var _iterator = Structs, _isArray = Array.isArray(_iterator), _i = 0, _iterator = _isArray ? _iterator : _iterator[Symbol.iterator]();;) {
-      var _ref;
-
-      if (_isArray) {
-        if (_i >= _iterator.length) break;
-        _ref = _iterator[_i++];
-      } else {
-        _i = _iterator.next();
-        if (_i.done) break;
-        _ref = _i.value;
-      }
-
-      var _struct = _ref;
-
-      var _struct$check = _struct.check(value, branch, path),
-          fs = _struct$check[0],
-          v = _struct$check[1];
-
-      if (!fs) {
-        return [undefined, v];
-      }
-    }
-
-    return [[Struct.fail({
-      value: value,
-      branch: branch,
-      path: path
-    })]];
-  };
-
-  return Struct;
-};
-
+function coerce(value, struct) {
+  const ret = struct.coercer(value);
+  assert(ret, struct);
+  return ret;
+}
 /**
- * Create a struct singleton with settings that include your own domain-specific
- * data `types`, and an optional custom `Error` class.
+ * Check if a value passes a `Struct`.
  */
 
-var superstruct = function superstruct(settings) {
-  if (settings === void 0) {
-    settings = {};
+function is(value, struct) {
+  const result = validate(value, struct);
+  return !result[0];
+}
+/**
+ * Validate a value against a `Struct`, returning an error if invalid.
+ */
+
+function validate(value, struct, coercing = false) {
+  if (coercing) {
+    value = struct.coercer(value);
   }
 
-  var struct = function struct(schema, defaults) {
-    return createShorthand(schema, defaults, struct);
-  };
+  const failures = check(value, struct);
+  const failure = iteratorShift(failures);
 
-  struct.array = function (schema, defaults) {
-    return createArray(schema, defaults, struct);
-  };
+  if (failure) {
+    const error = new StructError(failure, failures);
+    return [error, undefined];
+  } else {
+    return [undefined, value];
+  }
+}
+/**
+ * Check a value against a `Struct`, returning an iterable of failures.
+ */
 
-  struct.dynamic = function (schema, defaults) {
-    return createDynamic(schema, defaults, struct);
-  };
+function* check(value, struct, path = [], branch = []) {
+  const {
+    type
+  } = struct;
+  const ctx = {
+    value,
+    type,
+    branch,
+    path,
 
-  struct.enum = function (schema, defaults) {
-    return createEnum(schema, defaults, struct);
-  };
+    fail(props = {}) {
+      return _objectSpread2({
+        value,
+        type,
+        path,
+        branch: [...branch, value]
+      }, props);
+    },
 
-  struct.function = function (schema, defaults) {
-    return createFunction(schema, defaults, struct);
-  };
+    check(v, s, parent, key) {
+      const p = parent !== undefined ? [...path, key] : path;
+      const b = parent !== undefined ? [...branch, parent] : branch;
+      return check(v, s, p, b);
+    }
 
-  struct.instance = function (schema, defaults) {
-    return createInstance(schema, defaults, struct);
   };
+  const failures = toFailures(struct.validator(value, ctx), ctx);
+  const failure = iteratorShift(failures);
 
-  struct.interface = function (schema, defaults) {
-    return createInterface(schema, defaults, struct);
-  };
-
-  struct.intersection = function (schema, defaults) {
-    return createIntersection(schema, defaults, struct);
-  };
-
-  struct.lazy = function (schema, defaults) {
-    return createLazy(schema, defaults, struct);
-  };
-
-  struct.literal = function (schema, defaults) {
-    return createLiteral(schema, defaults, struct);
-  };
-
-  struct.object = function (schema, defaults) {
-    return createObject(schema, defaults, struct);
-  };
-
-  struct.optional = function (schema, defaults) {
-    return createUnion([schema, 'undefined'], defaults, struct);
-  };
-
-  struct.partial = function (schema, defaults) {
-    return createPartial(schema, defaults, struct);
-  };
-
-  struct.pick = function (schema, defaults) {
-    return createPick(schema, defaults, struct);
-  };
-
-  struct.record = function (schema, defaults) {
-    return createRecord(schema, defaults, struct);
-  };
-
-  struct.scalar = function (schema, defaults) {
-    return createScalar(schema, defaults, struct);
-  };
-
-  struct.size = function (schema, defaults) {
-    return createSize(schema, defaults, struct);
-  };
-
-  struct.tuple = function (schema, defaults) {
-    return createTuple(schema, defaults, struct);
-  };
-
-  struct.union = function (schema, defaults) {
-    return createUnion(schema, defaults, struct);
-  };
-
-  struct.Error = settings.error || StructError;
-  struct.Types = _objectSpread2({}, Types, {}, settings.types);
-  return struct;
-};
+  if (failure) {
+    yield failure;
+    yield* failures;
+  } else {
+    yield* toFailures(struct.refiner(value, ctx), ctx);
+  }
+}
 
 /**
- * The singleton instance of Superstruct that is exported by default, configured
- * with types for all of the JavaScript built-in data types.
+ * Augment a `Struct` to add an additional coercion step to its input.
+ */
+
+function coercion(struct, coercer) {
+  const fn = struct.coercer;
+  return new Struct(_objectSpread2(_objectSpread2({}, struct), {}, {
+    coercer: value => {
+      return fn(coercer(value));
+    }
+  }));
+}
+/**
+ * Augment a struct to coerce a default value for missing values.
  *
- * You can use it if you don't need any custom types. However, if you do want to
- * define custom types, use the [[superstruct]] factory to configure your own
- * [[Superstruct]] instance.
+ * Note: You must use `coerce(value, Struct)` on the value before validating it
+ * to have the value defaulted!
  */
 
-var struct = superstruct();
+function defaulted(S, fallback, strict) {
+  return coercion(S, x => {
+    const f = typeof fallback === 'function' ? fallback() : fallback;
+
+    if (x === undefined) {
+      return f;
+    }
+
+    if (strict !== true && isPlainObject(x) && isPlainObject(f)) {
+      const ret = _objectSpread2({}, x);
+
+      let changed = false;
+
+      for (const key in f) {
+        if (ret[key] === undefined) {
+          ret[key] = f[key];
+          changed = true;
+        }
+      }
+
+      if (changed) {
+        return ret;
+      }
+    }
+
+    return x;
+  });
+}
+/**
+ * Coerce a value to mask its properties to only that defined in the struct.
+ */
+
+function masked(S) {
+  return coercion(S, x => {
+    if (!isPlainObject(x)) {
+      return x;
+    }
+
+    const ret = {};
+
+    for (const key in S.schema) {
+      ret[key] = x[key];
+    }
+
+    return ret;
+  });
+}
+/**
+ * Check if a value is a plain object.
+ */
+
+function isPlainObject(value) {
+  if (Object.prototype.toString.call(value) !== '[object Object]') {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === null || prototype === Object.prototype;
+}
+
+/**
+ * Augment a string or array struct to constrain its length to zero.
+ */
+
+function empty(S) {
+  return refinement(S, `${S.type} & Empty`, value => {
+    return value.length === 0;
+  });
+}
+/**
+ * Augment a string or array struct to constrain its length to being between a
+ * minimum and maximum size.
+ */
+
+function length(S, min, max) {
+  return refinement(S, `${S.type} & Length<${min},${max}>`, value => {
+    return min < value.length && value.length < max;
+  });
+}
+/**
+ * Refine a string struct to match a specific regexp pattern.
+ */
+
+function pattern(S, regexp) {
+  return refinement(S, `${S.type} & Pattern<${regexp.source}>`, value => {
+    return regexp.test(value);
+  });
+}
+/**
+ * Augment a `Struct` to add an additional refinement to the validation.
+ */
+
+function refinement(struct, type, refiner) {
+  const fn = struct.refiner;
+  return new Struct(_objectSpread2(_objectSpread2({}, struct), {}, {
+    type,
+
+    *refiner(value, fail) {
+      yield* toFailures(fn(value, fail), fail);
+      yield* toFailures(refiner(value, fail), fail);
+    }
+
+  }));
+}
+
+/**
+ * Validate any value.
+ */
+
+function any() {
+  return struct('any', () => true);
+}
+function array(Element) {
+  return new Struct({
+    type: `Array<${Element ? Element.type : 'unknown'}>`,
+    schema: Element,
+    coercer: value => {
+      return Element && Array.isArray(value) ? value.map(v => coerce(v, Element)) : value;
+    },
+
+    *validator(value, ctx) {
+      if (!Array.isArray(value)) {
+        yield ctx.fail();
+        return;
+      }
+
+      if (Element) {
+        for (const [i, v] of value.entries()) {
+          yield* ctx.check(v, Element, value, i);
+        }
+      }
+    }
+
+  });
+}
+/**
+ * Validate that boolean values.
+ */
+
+function boolean() {
+  return struct('boolean', value => {
+    return typeof value === 'boolean';
+  });
+}
+/**
+ * Validate that `Date` values.
+ *
+ * Note: this also ensures that the value is *not* an invalid `Date` object,
+ * which can occur when parsing a date fails but still returns a `Date`.
+ */
+
+function date() {
+  return struct('Date', value => {
+    return value instanceof Date && !isNaN(value.getTime());
+  });
+}
+/**
+ * Validate that a value dynamically, determing which struct to use at runtime.
+ */
+
+function dynamic(fn) {
+  return struct('Dynamic<...>', (value, ctx) => {
+    return ctx.check(value, fn(value, ctx));
+  });
+}
+function enums(values) {
+  return struct(`Enum<${values.map(toLiteralString)}>`, value => {
+    return values.includes(value);
+  });
+}
+/**
+ * Validate that a value is a function.
+ */
+
+function func() {
+  return struct('Function', value => {
+    return typeof value === 'function';
+  });
+}
+/**
+ * Validate that a value is an instance of a class.
+ */
+
+function instance(Class) {
+  return struct(`InstanceOf<${Class.name}>`, value => {
+    return value instanceof Class;
+  });
+}
+function intersection(Structs) {
+  return struct(Structs.map(s => s.type).join(' & '), function* (value, ctx) {
+    for (const S of Structs) {
+      yield* ctx.check(value, S);
+    }
+  });
+}
+/**
+ * Validate a value lazily, by constructing the struct right before the first
+ * validation. This is useful for cases where you want to have self-referential
+ * structs for nested data structures.
+ */
+
+function lazy(fn) {
+  let S;
+  return struct('Lazy<...>', (value, ctx) => {
+    if (!S) {
+      S = fn();
+    }
+
+    return ctx.check(value, S);
+  });
+}
+function literal(constant) {
+  return struct(`Literal<${toLiteralString(constant)}>`, value => {
+    return value === constant;
+  });
+}
+/**
+ * Validate that a value is a map with specific key and value entries.
+ */
+
+function map(Key, Value) {
+  return struct(`Map<${Key.type},${Value.type}>`, function* (value, ctx) {
+    if (!(value instanceof Map)) {
+      yield ctx.fail();
+      return;
+    }
+
+    for (const [k, v] of value.entries()) {
+      yield* ctx.check(k, Key, value, k);
+      yield* ctx.check(v, Value, value, k);
+    }
+  });
+}
+/**
+ * Validate that a value always fails.
+ */
+
+function never() {
+  return struct('never', () => false);
+}
+/**
+ * Augment a struct to make it accept `null` values.
+ */
+
+function nullable(S) {
+  return new Struct({
+    type: `${S.type} | null`,
+    schema: S.schema,
+    validator: (value, ctx) => {
+      return value === null || ctx.check(value, S);
+    }
+  });
+}
+/**
+ * Validate that a value is a number.
+ */
+
+function number() {
+  return struct(`number`, value => {
+    return typeof value === 'number' && !isNaN(value);
+  });
+}
+function object(Structs) {
+  const knowns = Structs ? Object.keys(Structs) : [];
+  const Never = never();
+  return new Struct({
+    type: Structs ? `Object<{${knowns.join(',')}}>` : 'Object',
+    schema: Structs ? Structs : null,
+    coercer: Structs ? createObjectCoercer(Structs) : x => x,
+
+    *validator(value, ctx) {
+      if (typeof value !== 'object' || value == null) {
+        yield ctx.fail();
+        return;
+      }
+
+      if (Structs) {
+        const unknowns = new Set(Object.keys(value));
+
+        for (const key of knowns) {
+          unknowns.delete(key);
+          const Value = Structs[key];
+          const v = value[key];
+          yield* ctx.check(v, Value, value, key);
+        }
+
+        for (const key of unknowns) {
+          const v = value[key];
+          yield* ctx.check(v, Never, value, key);
+        }
+      }
+    }
+
+  });
+}
+/**
+ * Augment a struct to make it optionally accept `undefined` values.
+ */
+
+function optional(S) {
+  return new Struct({
+    type: `${S.type}?`,
+    schema: S.schema,
+    validator: (value, ctx) => {
+      return value === undefined || ctx.check(value, S);
+    }
+  });
+}
+/**
+ * Validate that a partial object with specific entry values.
+ */
+
+function partial(Structs) {
+  if (Structs instanceof Struct) {
+    Structs = Structs.schema;
+  }
+
+  const knowns = Object.keys(Structs);
+  const Never = never();
+  return new Struct({
+    type: `Partial<{${knowns.join(',')}}>`,
+    schema: Structs,
+    coercer: createObjectCoercer(Structs),
+
+    *validator(value, ctx) {
+      if (typeof value !== 'object' || value == null) {
+        yield ctx.fail();
+        return;
+      }
+
+      const unknowns = new Set(Object.keys(value));
+
+      for (const key of knowns) {
+        unknowns.delete(key);
+
+        if (!(key in value)) {
+          continue;
+        }
+
+        const Value = Structs[key];
+        const v = value[key];
+        yield* ctx.check(v, Value, value, key);
+      }
+
+      for (const key of unknowns) {
+        const v = value[key];
+        yield* ctx.check(v, Never, value, key);
+      }
+    }
+
+  });
+}
+/**
+ * Validate that a value is a record with specific key and
+ * value entries.
+ */
+
+function record(Key, Value) {
+  return struct(`Record<${Key.type},${Value.type}>`, function* (value, ctx) {
+    if (typeof value !== 'object' || value == null) {
+      yield ctx.fail();
+      return;
+    }
+
+    for (const k in value) {
+      const v = value[k];
+      yield* ctx.check(k, Key, value, k);
+      yield* ctx.check(v, Value, value, k);
+    }
+  });
+}
+/**
+ * Validate that a set of values matches a specific type.
+ */
+
+function set(Element) {
+  return struct(`Set<${Element.type}>`, (value, ctx) => {
+    if (!(value instanceof Set)) {
+      return false;
+    }
+
+    for (const val of value) {
+      const [failure] = ctx.check(val, Element);
+
+      if (failure) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+}
+/**
+ * Validate that a value is a string.
+ */
+
+function string() {
+  return struct('string', value => {
+    return typeof value === 'string';
+  });
+}
+/**
+ * Define a `Struct` instance with a type and validation function.
+ */
+
+function struct(name, validator) {
+  return new Struct({
+    type: name,
+    validator,
+    schema: null
+  });
+}
+function tuple(Elements) {
+  const Never = never();
+  return struct(`[${Elements.map(s => s.type).join(',')}]`, function* (value, ctx) {
+    if (!Array.isArray(value)) {
+      yield ctx.fail();
+      return;
+    }
+
+    for (const [index, Element] of Elements.entries()) {
+      const v = value[index];
+      yield* ctx.check(v, Element, value, index);
+    }
+
+    if (value.length > Elements.length) {
+      const index = Elements.length;
+      const v = value[index];
+      yield* ctx.check(v, Never, value, index);
+    }
+  });
+}
+/**
+ * Validate that a value matches a specific strutural interface, like the
+ * structural typing that TypeScript uses.
+ */
+
+function type(Structs) {
+  const keys = Object.keys(Structs);
+  return struct(`Type<{${keys.join(',')}}>`, function* (value, ctx) {
+    if (typeof value !== 'object' || value == null) {
+      yield ctx.fail();
+      return;
+    }
+
+    for (const key of keys) {
+      const Value = Structs[key];
+      const v = value[key];
+      yield* ctx.check(v, Value, value, key);
+    }
+  });
+}
+function union(Structs) {
+  return struct(`${Structs.map(s => s.type).join(' | ')}`, function* (value, ctx) {
+    for (const S of Structs) {
+      const [...failures] = ctx.check(value, S);
+
+      if (failures.length === 0) {
+        return;
+      }
+    }
+
+    yield ctx.fail();
+  });
+}
+/**
+ * Convert a value to a literal string.
+ */
+
+function toLiteralString(value) {
+  return typeof value === 'string' ? `"${value.replace(/"/g, '"')}"` : `${value}`;
+}
+/**
+ * Coerce the values of an object-like struct.
+ */
+
+
+function createObjectCoercer(Structs) {
+  const knowns = Object.keys(Structs);
+  return value => {
+    if (typeof value !== 'object' || value == null) {
+      return value;
+    }
+
+    const ret = {};
+    const unknowns = new Set(Object.keys(value));
+
+    for (const key of knowns) {
+      unknowns.delete(key);
+      const Value = Structs[key];
+      const v = value[key];
+      ret[key] = coerce(v, Value);
+    }
+
+    for (const key of unknowns) {
+      ret[key] = value[key];
+    }
+
+    return ret;
+  };
+}
 
 
 //# sourceMappingURL=index.es.js.map

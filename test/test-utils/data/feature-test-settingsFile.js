@@ -1,5 +1,7 @@
 const FEATURE_TEST_TRAFFIC_0 = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       segments: {},
@@ -106,6 +108,8 @@ const FEATURE_TEST_TRAFFIC_0 = {
 
 const FEATURE_TEST_TRAFFIC_25 = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       segments: {},
@@ -212,6 +216,8 @@ const FEATURE_TEST_TRAFFIC_25 = {
 
 const FEATURE_TEST_TRAFFIC_50 = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       segments: {},
@@ -318,6 +324,8 @@ const FEATURE_TEST_TRAFFIC_50 = {
 
 const FEATURE_TEST_TRAFFIC_75 = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       segments: {},
@@ -424,6 +432,8 @@ const FEATURE_TEST_TRAFFIC_75 = {
 
 const FEATURE_TEST_TRAFFIC_100 = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       segments: {},
@@ -648,6 +658,8 @@ const FEATURE_TEST_TRAFFIC_JSON_100 = {
 
 const FEATURE_TEST_TRAFFIC_100_WHITELISTING = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       goals: [
@@ -920,6 +932,8 @@ const FEATURE_TEST_TRAFFIC_100_WHITELISTING = {
 
 const FEATURE_TEST_TRAFFIC_100_DISABLED = {
   sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
   campaigns: [
     {
       segments: {},

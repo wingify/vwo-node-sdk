@@ -37,12 +37,14 @@ beforeEach(() => {
         {
           id: '1',
           name: 'Control',
-          weight: 40
+          weight: 40,
+          value: 20
         },
         {
           id: '2',
           name: 'Variation-1',
-          weight: 60
+          weight: 60,
+          value: 40
         }
       ],
       id: 22,

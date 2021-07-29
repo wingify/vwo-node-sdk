@@ -7,6 +7,7 @@ const settingsFile6 = require('./settingsFile-6');
 const settingsFile7 = require('./settingsFile-7');
 const settingsFile8 = require('./settingsFile-8');
 const settingsFile9 = require('./settingsFile-9');
+const settingsFileMeg = require('./settingsFile-meg');
 
 module.exports = {
   settingsFile1,
@@ -17,5 +18,6 @@ module.exports = {
   settingsFile6,
   settingsFile7,
   settingsFile8,
-  settingsFile9
+  settingsFile9,
+  settingsFileMeg
 };
