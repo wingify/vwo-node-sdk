@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.18.0
+ * vwo-javascript-sdk - v1.19.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -1495,7 +1495,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.18.0"
+    version: "1.19.0"
   };
 } else {}
 
@@ -4234,7 +4234,7 @@ var DecisionUtil = {
       // Campaign Whitelisting conditions
       variationTargetingVariables: variationTargetingVariables,
       // VWO generated UUID based on passed UserId and Account ID
-      vwoUserId: UuidUtil.generateFor(userId, config.accountId)
+      vwoUserId: UuidUtil.generateFor(userId, settingsFile.accountId)
     }; // check if the campaign is a part of group
 
     var _CampaignUtil$isPartO = CampaignUtil.isPartOfGroup(settingsFile, campaign.id),
