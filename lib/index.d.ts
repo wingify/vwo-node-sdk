@@ -22,7 +22,7 @@ declare module 'vwo-node-sdk' {
    *
    * @returns           Settings file.
    */
-  export function getSettingsFile(accountId: string, apiKey: string): Promise<object>;
+  export function getSettingsFile(accountId: string, apiKey: string, userStorageService?: VWOUserStorageConfig): Promise<object>;
 
   /**
    * Creates an instance of the VWO
@@ -294,6 +294,16 @@ declare module 'vwo-node-sdk' {
      * @param userStorageData     Variation mapping.
      */
     set(userStorageData: Record<string, any>): void;
+
+    /**
+     * Get the stored VWO settings
+     */
+    getSettings?(): string;
+    /**
+     * Store the VWO settings into storage(Web)
+     * @param settings VWO settings
+     */
+    setSettings?(settings: string): void;
   }
 
   /**

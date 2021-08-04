@@ -5,6 +5,7 @@
   "scripts": {
     "build": "yarn build:dev && yarn build:prod",
     "build:dev": "webpack --mode=development",
+    "build:dev-watch": "webpack --mode=development --watch",
     "build:dev-analyze": "webpack --mode=development --analyze=1",
     "build:prod": "webpack --mode=production",
     "build:patch": "webpack --mode=development --type=patch && webpack --mode=production --type=patch",

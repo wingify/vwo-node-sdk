@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.19.0
+ * vwo-javascript-sdk - v1.19.1
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -1495,7 +1495,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.19.0"
+    version: "1.19.1"
   };
 } else {}
 
@@ -2406,8 +2406,8 @@ module.exports = {
     VARIATION_ALLOCATED: '({file}): User ID:{userId} of Campaign:{campaignKey} got variation:{variationName}',
     NO_VARIATION_ALLOCATED: '({file}): User ID:{userId} of Campaign:{campaignKey} did not get any variation',
     VARIATION_RANGE_ALLOCATION: '({file}): Campaign:{campaignKey} having variation:{variationName} with weight:{variationWeight} got range as: ( {start} - {end} ))',
-    GOAL_ALREADY_TRACKED: '({file}): "Goal:{goalIdentifier} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. Skipping now',
-    USER_ALREADY_TRACKED: '({file}): "User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for "{api}" API. Skipping now',
+    GOAL_ALREADY_TRACKED: '({file}): Goal:{goalIdentifier} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. Skipping now',
+    USER_ALREADY_TRACKED: '({file}): User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for "{api}" API. Skipping now',
     POLLING_SUCCESS: '({file}): Settings-file fetched successfully via polling for the accountId:{accountId}',
     SETTINGS_FILE_UPDATED: '({file}): vwo-sdk instance is updated with the latest settings-file for the accountId:{accountId}',
     USER_ELIGIBILITY_FOR_CAMPAIGN: '({file}): Is User ID:{userId} part of campaign? {isUserPart}',
@@ -3267,7 +3267,7 @@ function () {
       var accountId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._clonedSettingsFile.accountId;
       var sdkKey = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this._clonedSettingsFile.sdkKey;
       return new Promise(function (resolve, _reject) {
-        SettingsFileUtil.get(accountId, sdkKey, {
+        SettingsFileUtil.get(accountId, sdkKey, null, {
           isViaWebhook: true
         }).then(function (settings) {
           _this2.updateSettingsFile(settings);
@@ -5896,8 +5896,8 @@ var _require = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUt
     getCurrentTime = _require.getCurrentTime;
 
 module.exports = {
-  get: function get(accountId, sdkKey) {
-    var config = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  get: function get(accountId, sdkKey, userStorageService) {
+    var config = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
     if (!accountId || !sdkKey) {
       console.error('AccountId and sdkKey are required for fetching account settings. Aborting!');
@@ -5925,7 +5925,8 @@ module.exports = {
     if (true) {
       return __webpack_require__(/*! ./XhrUtil */ "./lib/utils/XhrUtil.js").send({
         method: 'GET',
-        url: "".concat(protocol, "://").concat(hostname).concat(path)
+        url: "".concat(protocol, "://").concat(hostname).concat(path),
+        userStorageService: userStorageService
       });
     } else { var https, http; }
   }
@@ -6323,34 +6324,86 @@ module.exports = ValidateUtil;
 var _require = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUtil.js"),
     getCurrentTime = _require.getCurrentTime;
 
+var _require2 = __webpack_require__(/*! ./DataTypeUtil */ "./lib/utils/DataTypeUtil.js"),
+    isObject = _require2.isObject,
+    isFunction = _require2.isFunction;
+
 var XhrUtil = {
+  _getStoredSettings: function _getStoredSettings(userStorageService) {
+    var isStoredData = false;
+    var parsedSettings;
+
+    if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.getSettings)) {
+      try {
+        var settings = userStorageService.getSettings();
+        parsedSettings = JSON.parse(settings);
+
+        if (parsedSettings && isObject(parsedSettings) && Object.keys(parsedSettings).length > 3) {
+          var info = "VWO-SDK - [INFO]: ".concat(getCurrentTime(), " VWO settings found in Storage Service.");
+          console.info(info);
+          isStoredData = true;
+        } else if (parsedSettings) {
+          var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " VWO settings found in Storage Service is not valid.");
+          console.error(error);
+        } else {
+          var warning = "VWO-SDK - [WARNING]: ".concat(getCurrentTime(), " VWO settings is empty in Storage Service.");
+          console.warn(warning);
+        }
+      } catch (err) {
+        var _error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " VWO settings found in Storage Service is not valid. ").concat(err);
+
+        console.error(_error);
+        isStoredData = false;
+      }
+    }
+
+    return {
+      isStoredData: isStoredData,
+      parsedSettings: parsedSettings
+    };
+  },
   send: function send() {
     var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
         method = _ref.method,
-        url = _ref.url;
+        url = _ref.url,
+        userStorageService = _ref.userStorageService;
 
     if (!url || !method) {
       return;
     }
 
     return new Promise(function (resolve, reject) {
-      var xhr = new XMLHttpRequest();
-      xhr.open(method, url);
-      xhr.send();
+      var _XhrUtil$_getStoredSe = XhrUtil._getStoredSettings(userStorageService),
+          isStoredData = _XhrUtil$_getStoredSe.isStoredData,
+          parsedSettings = _XhrUtil$_getStoredSe.parsedSettings;
 
-      xhr.onload = function () {
-        try {
-          resolve(JSON.parse(xhr.response));
-        } catch (err) {
-          console.error(err);
-        }
-      };
+      if (isStoredData) {
+        resolve(parsedSettings);
+      } else {
+        var xhr = new XMLHttpRequest();
+        xhr.open(method, url);
+        xhr.send();
 
-      xhr.onerror = function () {
-        var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(xhr.status);
-        console.error(error);
-        reject(error);
-      };
+        xhr.onload = function () {
+          try {
+            var parsedXhrResponse = JSON.parse(xhr.response);
+
+            if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.setSettings)) {
+              userStorageService.setSettings(xhr.response);
+            }
+
+            resolve(parsedXhrResponse);
+          } catch (err) {
+            console.error(err);
+          }
+        };
+
+        xhr.onerror = function () {
+          var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(xhr.status);
+          console.error(error);
+          reject(error);
+        };
+      }
     });
   }
 };

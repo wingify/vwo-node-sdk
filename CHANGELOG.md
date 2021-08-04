@@ -5,6 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.20.0] - 2021-08-04
+
+### Added
+
+- Added support for JavaScript SDK to connect User Storage Service with `getSettingsFile` API so that settings could be stored and fetched before sending a network call.
+- Added support for two new methods - `getSettings` and `setSettings` in User Storage Service. These will be called by SDK, if provided, when `getSettingsFile` API is invoked.
+
 ## [1.19.1] - 2021-08-02
 
 ### Changed
