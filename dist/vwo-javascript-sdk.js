@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.19.1
+ * vwo-javascript-sdk - v1.20.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -1065,8 +1065,8 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
 
   var isFeatureEnabled = false;
 
-  if (variationName && CampaignUtil.isFeatureTestCampaign(campaign)) {
-    isFeatureEnabled = variation.isFeatureEnabled;
+  if (variationName) {
+    isFeatureEnabled = CampaignUtil.isFeatureRolloutCampaign(campaign) || variation.isFeatureEnabled;
 
     if (isStoredVariation && !shouldTrackReturningUser) {
       vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_ALREADY_TRACKED, {
@@ -1086,8 +1086,6 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
         vwoInstance.eventQueue.process(config, _properties, vwoInstance);
       }
     }
-  } else if (variationName && CampaignUtil.isFeatureRolloutCampaign(campaign)) {
-    isFeatureEnabled = true;
   }
 
   if (isFeatureEnabled) {
@@ -1495,7 +1493,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.19.1"
+    version: "1.20.0"
   };
 } else {}
 
@@ -4826,7 +4824,7 @@ var DecisionUtil = {
         storedGoalIdentifier: goalIdentifier,
         isStoredVariation: true
       };
-    } else if (!DataTypeUtil.isUndefined(config.userStorageService) && !isTrackUserAPI && DataTypeUtil.isUndefined(storedVariation) && !CampaignUtil.isFeatureRolloutCampaign(campaign)) {
+    } else if (!DataTypeUtil.isUndefined(config.userStorageService) && !isTrackUserAPI && DataTypeUtil.isUndefined(storedVariation)) {
       logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.CAMPAIGN_NOT_ACTIVATED, {
         file: file,
         campaignKey: campaignKey,

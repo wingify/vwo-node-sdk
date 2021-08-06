@@ -1585,7 +1585,9 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[j])).toBe(!!settings[campaignKey][i].variation);
+        const isFeatureEnabled = vwoClientInstance.isFeatureEnabled(campaignKey, users[j]);
+
+        expect(isFeatureEnabled).toBe(!!settings[campaignKey][i].variation);
       }
     });
 
@@ -1600,7 +1602,9 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[j])).toBe(!!settings[campaignKey][i].variation);
+        const isFeatureEnabled = vwoClientInstance.isFeatureEnabled(campaignKey, users[j]);
+
+        expect(isFeatureEnabled).toBe(!!settings[campaignKey][i].variation);
       }
     });
 
@@ -1615,7 +1619,9 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[j])).toBe(!!settings[campaignKey][i].variation);
+        const isFeatureEnabled = vwoClientInstance.isFeatureEnabled(campaignKey, users[j]);
+
+        expect(isFeatureEnabled).toBe(!!settings[campaignKey][i].variation);
       }
     });
 
@@ -1630,7 +1636,9 @@ describe('Class VWO', () => {
       });
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[j])).toBe(settings[campaignKey][i].variation);
+        const isFeatureEnabled = vwoClientInstance.isFeatureEnabled(campaignKey, users[j]);
+
+        expect(isFeatureEnabled).toBe(!!settings[campaignKey][i].variation);
       }
     });
 
@@ -1644,8 +1652,15 @@ describe('Class VWO', () => {
         userStorageService
       });
 
+      spyImpressionEventTrackUser.mockClear();
+      spyImpressionEventTrackUser = jest.spyOn(ImpressionUtil, 'buildEventForTrackingUser');
+      expect(spyImpressionEventTrackUser.mock.calls.length).toBe(0);
+
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[j])).toBe(!!settings[campaignKey][i].variation);
+        const isFeatureEnabled = vwoClientInstance.isFeatureEnabled(campaignKey, users[j]);
+
+        expect(isFeatureEnabled).toBe(!!settings[campaignKey][i].variation);
+        expect(spyImpressionEventTrackUser.mock.calls.length).toBe(i + 1);
       }
     });
 
@@ -1659,10 +1674,15 @@ describe('Class VWO', () => {
         userStorageService
       });
 
+      spyImpressionEventTrackUser.mockClear();
+      spyImpressionEventTrackUser = jest.spyOn(ImpressionUtil, 'buildEventForTrackingUser');
+      expect(spyImpressionEventTrackUser.mock.calls.length).toBe(0);
+
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         expect(
           vwoClientInstance.isFeatureEnabled(campaignKey, users[j], { customVariables: trueCustomVariables })
         ).toBe(!!settings[campaignKey][i].variation);
+        expect(spyImpressionEventTrackUser.mock.calls.length).toBe(i + 1);
       }
     });
 
@@ -1675,10 +1695,17 @@ describe('Class VWO', () => {
         userStorageService
       });
 
+      spyImpressionEventTrackUser.mockClear();
+      spyImpressionEventTrackUser = jest.spyOn(ImpressionUtil, 'buildEventForTrackingUser');
+      expect(spyImpressionEventTrackUser.mock.calls.length).toBe(0);
+
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
-        expect(
-          vwoClientInstance.isFeatureEnabled(campaignKey, users[j], { customVariables: trueCustomVariables })
-        ).toBe(!!settings[campaignKey][i].variation);
+        const isFeatureEnabled = vwoClientInstance.isFeatureEnabled(campaignKey, users[j], {
+          customVariables: trueCustomVariables
+        });
+
+        expect(isFeatureEnabled).toBe(!!settings[campaignKey][i].variation);
+        expect(spyImpressionEventTrackUser.mock.calls.length).toBe(i + 1);
       }
     });
 
@@ -1690,11 +1717,16 @@ describe('Class VWO', () => {
         logger,
         userStorageService
       });
+
+      spyImpressionEventTrackUser.mockClear();
+      spyImpressionEventTrackUser = jest.spyOn(ImpressionUtil, 'buildEventForTrackingUser');
+      expect(spyImpressionEventTrackUser.mock.calls.length).toBe(0);
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         expect(
           vwoClientInstance.isFeatureEnabled(campaignKey, users[j], { customVariables: falseCustomVariables })
         ).toBe(false);
+        expect(spyImpressionEventTrackUser.mock.calls.length).toBe(0);
       }
     });
 
@@ -1733,6 +1765,40 @@ describe('Class VWO', () => {
             variationTargetingVariables: trueWhitelistingTags
           })
         ).toBe(!!settings[campaignKey][i].variation);
+      }
+    });
+
+    test('should not return feature variable value against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_100 when not activated', () => {
+      const campaignKey = FEATURE_ROLLOUT_TRAFFIC_100.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_ROLLOUT_TRAFFIC_100,
+        logger,
+        isDevelopmentMode: true,
+        shouldTrackReturningUser: false,
+        userStorageService
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', users[j])).toBe(null);
+      }
+    });
+
+    test('should return feature variable value against a campaign settings: FEATURE_ROLLOUT_TRAFFIC_100 when activated', () => {
+      const campaignKey = FEATURE_ROLLOUT_TRAFFIC_100.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_ROLLOUT_TRAFFIC_100,
+        logger,
+        isDevelopmentMode: true,
+        shouldTrackReturningUser: false,
+        userStorageService: userStorageService1
+      });
+
+      for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
+        vwoClientInstance.isFeatureEnabled(campaignKey, users[j]);
+
+        expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', users[j])).not.toBe(null);
       }
     });
   });
