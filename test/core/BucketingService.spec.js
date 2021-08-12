@@ -16,7 +16,7 @@
 
 const BucketingService = require('../../lib/core/BucketingService');
 const CampaignUtil = require('../../lib/utils/CampaignUtil');
-const bucketValues = require('../test-utils/data/bucketValues');
+const { bucketValues, seedBucketValue } = require('../test-utils/data/bucketValues');
 
 let userId;
 let dummyCampaign;
@@ -130,6 +130,36 @@ describe('BucketingService', () => {
     test('should generate correct bucket values', () => {
       bucketValues.forEach(value => {
         expect(BucketingService.calculateBucketValue(value.user)).toBe(value.bucketValue);
+      });
+    });
+
+    test('should generate bucket value for user_64', () => {
+      let campaign = { id: 1, isBucketingSeedEnabled: true };
+      expect(BucketingService._getBucketValueForUser(CampaignUtil.getBucketingSeed('someone@mail.com', campaign))).toBe(
+        25
+      );
+      campaign['isBucketingSeedEnabled'] = false;
+      expect(BucketingService._getBucketValueForUser(CampaignUtil.getBucketingSeed('someone@mail.com', campaign))).toBe(
+        64
+      );
+    });
+
+    test('should generate bucket value for user_50', () => {
+      let campaign = { id: 1, isBucketingSeedEnabled: true };
+      expect(BucketingService._getBucketValueForUser(CampaignUtil.getBucketingSeed('1111111111111111', campaign))).toBe(
+        82
+      );
+      campaign['isBucketingSeedEnabled'] = false;
+      expect(BucketingService._getBucketValueForUser(CampaignUtil.getBucketingSeed('1111111111111111', campaign))).toBe(
+        50
+      );
+    });
+
+    test('should generate correct bucket values with seed enabled/disabled', () => {
+      seedBucketValue.forEach(value => {
+        expect(BucketingService.calculateBucketValue(CampaignUtil.getBucketingSeed(value.user, value.campaign))).toBe(
+          value.bucketValue
+        );
       });
     });
   });

@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.20.0
+ * vwo-javascript-sdk - v1.21.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -1493,7 +1493,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.20.0"
+    version: "1.21.0"
   };
 } else {}
 
@@ -1550,6 +1550,8 @@ var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/log
 
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
 
+var CampaignUtil = __webpack_require__(/*! ../utils/CampaignUtil */ "./lib/utils/CampaignUtil.js");
+
 var LogLevelEnum = logging.LogLevelEnum,
     LogMessageEnum = logging.LogMessageEnum,
     LogMessageUtil = logging.LogMessageUtil;
@@ -1600,8 +1602,8 @@ var BucketingService = {
    *
    * @return {Number} the bucket Value allotted to User (between 1 to $this->$MAX_TRAFFIC_PERCENT)
    */
-  _getBucketValueForUser: function _getBucketValueForUser(userId, disableLog) {
-    var hashValue = Hasher.v3(userId, Constants.SEED_VALUE);
+  _getBucketValueForUser: function _getBucketValueForUser(seed, userId, disableLog) {
+    var hashValue = Hasher.v3(seed, Constants.SEED_VALUE);
 
     var bucketValue = BucketingService._generateBucketValue(hashValue, Constants.MAX_TRAFFIC_PERCENT);
 
@@ -1631,7 +1633,7 @@ var BucketingService = {
 
     var trafficAllocation = campaign.percentTraffic;
 
-    var valueAssignedToUser = BucketingService._getBucketValueForUser(userId, disableLog);
+    var valueAssignedToUser = BucketingService._getBucketValueForUser(CampaignUtil.getBucketingSeed(userId, campaign), userId, disableLog);
 
     var isUserPart = valueAssignedToUser !== 0 && valueAssignedToUser <= trafficAllocation;
     logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_ELIGIBILITY_FOR_CAMPAIGN, {
@@ -1670,7 +1672,7 @@ var BucketingService = {
       multiplier = Constants.MAX_TRAFFIC_VALUE / campaign.percentTraffic / 100;
     }
 
-    var hashValue = BucketingService._generateHashValue(userId);
+    var hashValue = BucketingService._generateHashValue(campaign.isBucketingSeedEnabled ? "".concat(campaign.id, "_").concat(userId) : userId);
 
     var bucketValue = BucketingService._generateBucketValue(hashValue, Constants.MAX_TRAFFIC_VALUE, multiplier);
 
@@ -1684,10 +1686,10 @@ var BucketingService = {
     }));
     return BucketingService._getVariation(campaign.variations, bucketValue);
   },
-  calculateBucketValue: function calculateBucketValue(userId) {
+  calculateBucketValue: function calculateBucketValue(seed) {
     var multiplier = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
 
-    var hashValue = BucketingService._generateHashValue(userId);
+    var hashValue = BucketingService._generateHashValue(seed);
 
     return BucketingService._generateBucketValue(hashValue, Constants.MAX_TRAFFIC_VALUE, multiplier);
   },
@@ -2912,6 +2914,7 @@ var campaignObjectSchema = type({
   key: string(),
   status: string(),
   name: string(),
+  isBucketingSeedEnabled: optional(_boolean()),
   percentTraffic: number(),
   goals: union([object(), array(campaignGoalSchema)]),
   variations: union([object(), array(campaignVariationSchema)]),
@@ -4059,6 +4062,26 @@ var CampaignUtil = {
     }
 
     return campaigns;
+  },
+
+  /**
+   * Decide the Seed for murmurhash to bucket user.
+   * @param {string} userId
+   * @param {object} campaign
+   * @param {number} groupId
+   *
+   * @returns {string} Seed value
+   */
+  getBucketingSeed: function getBucketingSeed(userId, campaign, groupId) {
+    if (groupId) {
+      return "".concat(groupId, "_").concat(userId);
+    }
+
+    if (campaign && campaign.isBucketingSeedEnabled) {
+      return "".concat(campaign.id, "_").concat(userId);
+    } else {
+      return userId;
+    }
   }
 };
 module.exports = CampaignUtil;
@@ -4323,7 +4346,7 @@ var DecisionUtil = {
         return DecisionUtil.evaluateTrafficAndGetVariation(config, eligibleCampaigns[0], eligibleCampaigns[0].key, userId, metaData, newGoalIdentifier, decision);
       } else {
         // normalize the eligible campaigns and decide winner
-        return DecisionUtil._normalizeAndFindWinningCampaign(config, campaign, eligibleCampaigns, userId, groupName, metaData, newGoalIdentifier, decision);
+        return DecisionUtil._normalizeAndFindWinningCampaign(config, campaign, eligibleCampaigns, userId, groupName, groupId, metaData, newGoalIdentifier, decision);
       }
     } else {
       // campaign is not a part of mutually exclusive group
@@ -4377,7 +4400,7 @@ var DecisionUtil = {
         currentAllocation += stepFactor;
       }
 
-      whitelistedVariation = BucketingService._getVariation(targetedVariations, BucketingService.calculateBucketValue(userId));
+      whitelistedVariation = BucketingService._getVariation(targetedVariations, BucketingService.calculateBucketValue(CampaignUtil.getBucketingSeed(userId, campaign)));
     } else {
       whitelistedVariation = targetedVariations[0];
     }
@@ -4887,7 +4910,7 @@ var DecisionUtil = {
    *
    * @returns {Object} variation of the winner campaign
    */
-  _normalizeAndFindWinningCampaign: function _normalizeAndFindWinningCampaign(config, calledCampaign, shortlistedCampaigns, userId, groupName, metaData, newGoalIdentifier, decision) {
+  _normalizeAndFindWinningCampaign: function _normalizeAndFindWinningCampaign(config, calledCampaign, shortlistedCampaigns, userId, groupName, groupId, metaData, newGoalIdentifier, decision) {
     // normalise the weights of all the shortlisted campaigns
     shortlistedCampaigns.forEach(function (campaign) {
       campaign.weight = Math.floor(100 / shortlistedCampaigns.length);
@@ -4895,7 +4918,7 @@ var DecisionUtil = {
 
     CampaignUtil.setCampaignAllocation(shortlistedCampaigns);
 
-    var winnerCampaign = BucketingService._getVariation(shortlistedCampaigns, BucketingService.calculateBucketValue(userId));
+    var winnerCampaign = BucketingService._getVariation(shortlistedCampaigns, BucketingService.calculateBucketValue(CampaignUtil.getBucketingSeed(userId, undefined, groupId)));
 
     logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GOT_WINNER_CAMPAIGN, {
       userId: userId,

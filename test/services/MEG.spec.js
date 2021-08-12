@@ -389,7 +389,7 @@ describe('MEG', () => {
       var variation = vwoClientInstance.isFeatureEnabled(campaignKey, 'lisa');
       expect(variation).toBe(false);
 
-      variation = vwoClientInstance.activate(settingsFileMeg.campaigns[2].key, 'lisa');
+      variation = vwoClientInstance.activate(settingsFileMeg.campaigns[2].key, 'BILL');
       expect(variation).toBe(null);
     });
 
