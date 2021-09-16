@@ -27,7 +27,8 @@ const {
   settingsFile6,
   settingsFile7,
   settingsFile8,
-  settingsFile9
+  settingsFile9,
+  settingsFile10
 } = require('./test-utils/data/settingsFiles');
 
 const {
@@ -205,6 +206,17 @@ describe('Class VWO', () => {
     test('should process settingsFile if it is provided and is valid', () => {
       expect(vwoClientInstance.SettingsFileManager).toBeDefined();
       expect(vwoClientInstance.eventQueue).toBeDefined();
+    });
+
+    test('should initialize VWO instance when the no campaigns are present in the settings file', () => {
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile10,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService
+      });
+
+      expect(vwoClientInstance.SettingsFileManager._clonedSettingsFile.campaigns.length).toBe(0);
     });
   });
 

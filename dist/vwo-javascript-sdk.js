@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.21.0
+ * vwo-javascript-sdk - v1.22.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -1493,7 +1493,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.21.0"
+    version: "1.22.0"
   };
 } else {}
 
@@ -3136,6 +3136,9 @@ var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums
 
 var validateSettingsFile = __webpack_require__(/*! ../schemas/SettingsFileSchema */ "./lib/schemas/SettingsFileSchema.js");
 
+var _require = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js"),
+    isObject = _require.isObject;
+
 var LogLevelEnum = logging.LogLevelEnum,
     LogMessageEnum = logging.LogMessageEnum,
     LogMessageUtil = logging.LogMessageUtil;
@@ -3149,7 +3152,7 @@ function () {
     _classCallCheck(this, SettingsFileManager);
 
     if (config) {
-      if (config.settingsFile && !config.settingsFile.campaigns) {
+      if (config.settingsFile && isObject(config.settingsFile.campaigns) || config.settingsFile && !config.settingsFile.campaigns) {
         config.settingsFile.campaigns = [];
       }
 
