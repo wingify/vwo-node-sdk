@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.2] - 2020-10-21
+
+### Changed
+
+- Updated whitelisting logs for Feature Rollout campaign
+- Test cases added to verify whitelisting cases in Feature Rollout campaign
+
 ## [1.22.1] - 2021-09-16
 
 ### Changed

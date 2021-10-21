@@ -469,6 +469,69 @@ const FEATURE_ROLLOUT_TRAFFIC_100 = {
   version: 2
 };
 
+const FEATURE_ROLLOUT_TRAFFIC_100_WHITELISTING = {
+  sdkKey: 'someuniquestuff1234567',
+  groups: {},
+  campaignGroups: {},
+  campaigns: [
+    {
+      goals: [],
+      variations: [
+        {
+          id: '1',
+          name: 'Control',
+          weight: 100,
+          segments: {
+            or: [
+              {
+                custom_variable: {
+                  safari: 'true'
+                }
+              }
+            ]
+          }
+        }
+      ],
+      variables: [
+        {
+          id: 1,
+          key: 'STRING_VARIABLE',
+          type: 'string',
+          value: 'this_is_a_string'
+        },
+        {
+          id: 2,
+          key: 'INTEGER_VARIABLE',
+          type: 'integer',
+          value: 123
+        },
+        {
+          id: 1,
+          key: 'FLOAT_VARIABLE',
+          type: 'double',
+          value: 123.456
+        },
+        {
+          id: 2,
+          key: 'BOOLEAN_VARIABLE',
+          type: 'boolean',
+          value: true
+        }
+      ],
+      id: 29,
+      percentTraffic: 100,
+      isForcedVariationEnabled: true,
+      key: 'FEATURE_ROLLOUT_TRAFFIC_100_WHITELISTING',
+      name: 'FEATURE_ROLLOUT_TRAFFIC_100_WHITELISTING',
+      status: 'RUNNING',
+      type: 'FEATURE_ROLLOUT',
+      segments: {}
+    }
+  ],
+  accountId: 123456,
+  version: 2
+};
+
 const FEATURE_ROLLOUT_INCORRECT_VARIABLE_TYPE = {
   sdkKey: 'someuniquestuff1234567',
   groups: {},
@@ -529,5 +592,6 @@ module.exports = {
   FEATURE_ROLLOUT_TRAFFIC_50,
   FEATURE_ROLLOUT_TRAFFIC_75,
   FEATURE_ROLLOUT_TRAFFIC_100,
-  FEATURE_ROLLOUT_INCORRECT_VARIABLE_TYPE
+  FEATURE_ROLLOUT_INCORRECT_VARIABLE_TYPE,
+  FEATURE_ROLLOUT_TRAFFIC_100_WHITELISTING
 };

@@ -37,7 +37,8 @@ const {
   FEATURE_ROLLOUT_TRAFFIC_50,
   FEATURE_ROLLOUT_TRAFFIC_75,
   FEATURE_ROLLOUT_TRAFFIC_100,
-  FEATURE_ROLLOUT_WITH_SEGMENTS_TRAFFIC_100
+  FEATURE_ROLLOUT_WITH_SEGMENTS_TRAFFIC_100,
+  FEATURE_ROLLOUT_TRAFFIC_100_WHITELISTING
 } = require('./test-utils/data/feature-rollout-settingsFile');
 
 const {
@@ -1478,6 +1479,43 @@ describe('Class VWO', () => {
 
     test('should return false if campaignKey is not found in settingsFile', () => {
       expect(vwoClientInstance.isFeatureEnabled('NO_SUCH_CAMPAIGN_KEY', userId)).toBe(false);
+    });
+
+    test('should return true/false if the whitelisting is satisfied/unsatisfied for feature-rollout campaign', () => {
+      const campaignKey = FEATURE_ROLLOUT_TRAFFIC_100_WHITELISTING.campaigns[0].key;
+      let vwoClientInstance = new VWO({
+        settingsFile: FEATURE_ROLLOUT_TRAFFIC_100_WHITELISTING,
+        logger,
+        isDevelopmentMode: true
+      });
+
+      let options = {
+        variationTargetingVariables: {
+          safari: true
+        }
+      };
+      // whitelisting is satisfied.
+      let isFeatureEnabled = vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley', options);
+      expect(isFeatureEnabled).toBe(true);
+
+      // whitelisting is not satisfied but still the user is eligible for the campaign as the
+      // traffic percentage is set to 100
+      options.variationTargetingVariables.safari = false;
+      isFeatureEnabled = vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley', options);
+      expect(isFeatureEnabled).toBe(true);
+
+      // whitelisting is not satisfied and campaign traffic is set to 10
+      vwoClientInstance.SettingsFileManager.getSettingsFile().campaigns[0].percentTraffic = 10;
+
+      isFeatureEnabled = vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley', options);
+      expect(isFeatureEnabled).toBe(false);
+
+      // whitelisting is satisfied and campaign traffic is set to 0
+      options.variationTargetingVariables.safari = true;
+      vwoClientInstance.SettingsFileManager.getSettingsFile().campaigns[0].percentTraffic = 0;
+
+      isFeatureEnabled = vwoClientInstance.isFeatureEnabled(campaignKey, 'Ashley', options);
+      expect(isFeatureEnabled).toBe(true);
     });
 
     test('should return null if shouldTrackReturningUser is not passed as boolean', () => {
