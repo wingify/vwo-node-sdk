@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [ master, github-action ]
+    branches: [ master, github-action, action-slack-notification]
   pull_request:
     branches: [ master ]
 
@@ -44,6 +44,16 @@ jobs:
         github-token: ${{ secrets.GITHUB_TOKEN }}
         flag-name: ${{matrix.os}}-node-${{ matrix.node }}
         parallel: true
+    - name: Notification
+      if: always()
+      id: slack
+      uses: wingify/slack-github-action@v1.15.1-wingify
+      with:
+        channel-id: 'fs-review-team'
+        slack-message: "<!here> Test on *Node-${{ matrix.node_version }}* and *${{ matrix.os }}* got *${{job.status}}* ${{job.status == 'success' && ':heavy_check_mark:' || ':x:'}} \nCommit: `${{github.event.head_commit.message}}`. \nCheck the latest build: https://github.com/wingify/vwo-node-sdk/actions"
+        color: "${{job.status == 'success' && '#00FF00' || '#FF0000'}}"
+      env:
+        SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
 
   finish:
     needs: build
