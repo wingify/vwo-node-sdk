@@ -1783,7 +1783,7 @@ describe('Class VWO', () => {
             customVariables: falseCustomVariables,
             variationTargetingVariables: falseWhitelistingTags
           })
-        ).toBe(false);
+        ).toBe(true);
       }
     });
 
