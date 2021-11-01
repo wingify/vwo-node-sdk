@@ -4,14 +4,56 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.24.0] - 2020-11-01
+## [1.25.0] - 2021-11-01
+
+### Added
+
+- Support for pushing multiple custom dimensions at once.
+  Earlier, you had to call `push` API multiple times for tracking multiple custom dimensions as follows:
+
+  ```java
+  vwoInstance.push('browser', 'chrome', userId);
+  vwoInstance.push('price', '20', userId);
+  ```
+
+  Now, you can pass a hash map
+
+  ```javascript
+  const customDimensionMap = {
+    browser: 'chrome',
+    price: '20'
+  };
+
+  vwoInstance.push(customDimensionMap, userId);`
+  ```
+
+  Multiple asynchronous tracking calls would be initiated in this case.
+
+### Changed
+
+- If Events Architecture is enabled for your VWO account, all the tracking calls being initiated from SDK would now be `POST` instead of `GET` and there would be single endpoint i.e. `/events/t`. This is done in order to bring events support and building advancded capabilities in future.
+
+- For events architecture accounts, tracking same goal across multiple campaigns will not send multiple tracking calls. Instead one single `POST` call would be made to track the same goal across multiple different campaigns running on the same environment.
+
+- Multiple custome dimension can be pushed via `push` API. For events architecture enabled account, only one single asynchronous call would be made to track multiple custom dimensions.
+
+  ```javascript
+  const customDimensionMap = {
+      browser: 'chrome',
+      price: '20'
+    };
+
+  vwoInstance.push(customDimensionMap, userId);
+  ```
+
+## [1.24.0] - 2021-11-01
 
 ### Changed
 
 - User IDs passed while applying whitelisting in a campaign from VWO Application will now be hashed. Inside settings-file, all User IDs will be hashed for security reasons. SDK will hash the User ID passed in the different APIs before matching it with the campaigns settings. This is feature-controlled from VWO i.e. we are only rolling this functionality gradually. Please reach out to the support team in case you want to opt-in early for this feature for your VWO account.
 
 
-## [1.22.2] - 2020-10-21
+## [1.22.2] - 2021-10-21
 
 ### Changed
 

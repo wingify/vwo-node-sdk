@@ -114,6 +114,16 @@ declare module 'vwo-node-sdk' {
      */
     push(tagKey: string, tagValue: string, userId: string): boolean;
 
+     /**
+     * This API method: Pushes the key-value tag pair for a particular user
+     *
+     * @param customDimensionMap    A Map containing multiple Sustom Dimensions
+     * @param userId                ID assigned to a user
+     *
+     * @returns                     true if request is pushed to eventQueue, false if params are invalid or settings file is unavailable
+     */
+    push(customDimensionMap: Record<string, string>, userId: string): boolean;
+
     /**
      * Manually flush impression events to VWO which are queued in batch queue as per batchEvents config
      *

@@ -1504,6 +1504,14 @@ describe('Class VWO', () => {
     test("should return false if tagValue's length is more than 255", () => {
       expect(vwoClientInstance.push('a', bigStr, 'a')).toBe(false);
     });
+    test('should return false if customDimension is not an Object', () => {
+      expect(vwoClientInstance.push('a', 'a')).toBe(false);
+      expect(vwoClientInstance.push(123, 'a')).toBe(false);
+      expect(vwoClientInstance.push(false, 'a')).toBe(false);
+    });
+    test('should return false if params length is more than 3', () => {
+      expect(vwoClientInstance.push({}, 'a', 'a', 'a')).toBe(false);
+    });
     test('should test against correct params', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile1,
@@ -1513,6 +1521,7 @@ describe('Class VWO', () => {
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
       expect(vwoClientInstance.push('1', '1', '1')).toBe(true);
+      expect(vwoClientInstance.push({ a: 'a' }, '1')).toBe(true);
       expect(spyImpressionEventPush).toHaveBeenCalled();
       expect(spyEventQueue).toHaveBeenCalled();
     });

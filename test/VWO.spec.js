@@ -28,7 +28,8 @@ const {
   settingsFile6,
   settingsFile7,
   settingsFile8,
-  settingsFile9
+  settingsFile9,
+  settingsFile11
 } = require('./test-utils/data/settingsFiles');
 
 const {
@@ -990,6 +991,17 @@ describe('Class VWO', () => {
       expect(vwoClientInstance.track(campaignKey, userId, 'NO_SUCH_GOAL_IDENTIFIER')[campaignKey]).toBe(false);
     });
 
+    test('should return true if revenue prop is passed in the goal', () => {
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile11,
+        logger,
+        isDevelopmentMode: true
+      });
+      // calling track api without activating
+      let trackResponse = vwoClientInstance.track(null, 'Ashley', 'track3', { revenueValue: 200 });
+      expect(trackResponse.track1).toBe(true);
+    });
+
     test('should return false if called before activate/isFeatureEnabled with storage service', () => {
       const campaignKey = settingsFile2.campaigns[0].key;
 
@@ -1901,6 +1913,16 @@ describe('Class VWO', () => {
     test("should return false if tagValue's length is more than 255", () => {
       expect(vwoClientInstance.push('a', bigStr, 'a')).toBe(false);
     });
+    test('should return false if customDimension is not an Object', () => {
+      expect(vwoClientInstance.push('a', 'a')).toBe(false);
+      expect(vwoClientInstance.push(123, 'a')).toBe(false);
+      expect(vwoClientInstance.push(false, 'a')).toBe(false);
+      expect(vwoClientInstance.push(undefined, 'a')).toBe(false);
+      expect(vwoClientInstance.push({}, 'a')).toBe(false);
+    });
+    test('should return false if params length is more than 3', () => {
+      expect(vwoClientInstance.push({}, 'a', 'a', 'a')).toBe(false);
+    });
     test('should test against correct params', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile1,
@@ -1910,8 +1932,85 @@ describe('Class VWO', () => {
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
       expect(vwoClientInstance.push('1', '1', '1')).toBe(true);
+      expect(vwoClientInstance.push({ a: 'a' }, 'a')).toBe(true);
       expect(spyImpressionEventPush).toHaveBeenCalled();
       expect(spyEventQueue).toHaveBeenCalled();
+    });
+
+    test('should test for multiple custom dimensions when event batching and event architecture is not enabled', () => {
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        userStorageService
+      });
+
+      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+      expect(vwoClientInstance.push('tagKey', 'tagValue', 'userId')).toBe(true);
+      expect(spyEventQueue).toHaveBeenCalledTimes(1);
+      expect(
+        vwoClientInstance.push(
+          {
+            tag_key_1: 'tag_value_1',
+            tag_key_2: 'tag_value_2',
+            tag_key_3: 'tag_value_3'
+          },
+          'userId'
+        )
+      ).toBe(true);
+      expect(spyEventQueue).toHaveBeenCalledTimes(4);
+    });
+
+    test('should test for multiple custom dimensions when event batching is not enabled and event architecture is enabled', () => {
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        userStorageService
+      });
+
+      vwoClientInstance.SettingsFileManager._clonedSettingsFile.isEventArchEnabled = true;
+
+      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+      expect(vwoClientInstance.push('tagKey', 'tagValue', 'userId')).toBe(true);
+      expect(spyEventQueue).toHaveBeenCalledTimes(1);
+      expect(
+        vwoClientInstance.push(
+          {
+            tag_key_1: 'tag_value_1',
+            tag_key_2: 'tag_value_2',
+            tag_key_3: 'tag_value_3'
+          },
+          'userId'
+        )
+      ).toBe(true);
+      expect(spyEventQueue).toHaveBeenCalledTimes(2);
+    });
+
+    test('should test for multiple custom dimensions when event batching and event architecture is enabled', () => {
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        userStorageService,
+        batchEvents: {
+          eventsPerRequest: 5,
+          flushCallback: {}
+        }
+      });
+
+      vwoClientInstance.SettingsFileManager._clonedSettingsFile.isEventArchEnabled = true;
+
+      expect(vwoClientInstance.push('tagKey', 'tagValue', 'userId')).toBe(true);
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(1);
+      expect(
+        vwoClientInstance.push(
+          {
+            tag_key_1: 'tag_value_1',
+            tag_key_2: 'tag_value_2',
+            tag_key_3: 'tag_value_3'
+          },
+          'userId'
+        )
+      ).toBe(true);
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(4);
     });
   });
 
