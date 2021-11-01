@@ -458,6 +458,47 @@ describe('Class VWO', () => {
       spyTrackUser.mockRestore();
     });
 
+    test('should return whitelisted variation as the user hash passes the whitelisting', () => {
+      const campaignKey = settingsFile1.campaigns[0].key;
+
+      // without user storage
+      let vwoInstance = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true
+      });
+
+      // when traffic percentage is zero
+      vwoInstance.SettingsFileManager._clonedSettingsFile.campaigns[0].isForcedVariationEnabled = true;
+      vwoInstance.SettingsFileManager._clonedSettingsFile.campaigns[0].percentTraffic = 0;
+      let variation = vwoInstance.activate(campaignKey, 'Ashley');
+      expect(variation).toBe(null);
+
+      // when correct hash value is passed
+      vwoInstance.SettingsFileManager._clonedSettingsFile.campaigns[0].isUserListEnabled = true;
+      vwoInstance.SettingsFileManager._clonedSettingsFile.campaigns[0].variations[1].segments = {
+        and: [
+          {
+            user: 'A46F7AA3A53150368683EE064793BAFD'
+          }
+        ]
+      };
+      variation = vwoInstance.activate(campaignKey, 'Ashley');
+      expect(variation).toBe('Variation-1');
+
+      // when incorrect hash value is passed
+      vwoInstance.SettingsFileManager._clonedSettingsFile.campaigns[0].percentTraffic = 100;
+      vwoInstance.SettingsFileManager._clonedSettingsFile.campaigns[0].variations[1].segments = {
+        and: [
+          {
+            user: 'A46F7AA3A53150368683EE064793BAFL'
+          }
+        ]
+      };
+      variation = vwoInstance.activate(campaignKey, 'Ashley');
+      expect(variation).toBe('Control');
+    });
+
     test('should test against a campaign settings: traffic:50 and split:50-50', () => {
       const campaignKey = settingsFile1.campaigns[0].key;
 

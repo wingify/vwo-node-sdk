@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.22.0
+ * vwo-javascript-sdk - v1.24.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -1493,7 +1493,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.22.0"
+    version: "1.24.0"
   };
 } else {}
 
@@ -2920,7 +2920,8 @@ var campaignObjectSchema = type({
   variations: union([object(), array(campaignVariationSchema)]),
   variables: optional(union([object(), array(variableObjectSchema)])),
   segments: object(),
-  isForcedVariationEnabled: optional(_boolean())
+  isForcedVariationEnabled: optional(_boolean()),
+  isUserListEnabled: optional(_boolean())
 });
 var groupSchema = type({
   groupName: string(),
@@ -4236,6 +4237,7 @@ var DecisionUtil = {
     var isTrackUserAPI = arguments.length > 9 ? arguments[9] : undefined;
     var newGoalIdentifier = arguments.length > 10 ? arguments[10] : undefined;
     var api = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : '';
+    var vwoUserId = UuidUtil.generateFor(userId, settingsFile.accountId);
     var decision = {
       // campaign info
       campaignId: campaign.id,
@@ -4258,7 +4260,7 @@ var DecisionUtil = {
       // Campaign Whitelisting conditions
       variationTargetingVariables: variationTargetingVariables,
       // VWO generated UUID based on passed UserId and Account ID
-      vwoUserId: UuidUtil.generateFor(userId, settingsFile.accountId)
+      vwoUserId: vwoUserId
     }; // check if the campaign is a part of group
 
     var _CampaignUtil$isPartO = CampaignUtil.isPartOfGroup(settingsFile, campaign.id),
@@ -4269,8 +4271,11 @@ var DecisionUtil = {
       // append groupId and groupName, if campaign is a part of group
       decision['groupId'] = groupId;
       decision['groupName'] = groupName;
-    } // check if tbe campaign satisfies the whitelisting before checking for the group
+    }
 
+    variationTargetingVariables = Object.assign({}, variationTargetingVariables, {
+      _vwoUserId: campaign.isUserListEnabled ? vwoUserId : userId
+    }); // check if tbe campaign satisfies the whitelisting before checking for the group
 
     var whitelistedVariation = DecisionUtil._checkForWhitelisting(campaign, campaignKey, userId, variationTargetingVariables, decision);
 
@@ -4362,9 +4367,6 @@ var DecisionUtil = {
     var disableLogs = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
     var whitelistedVariation;
     var status;
-    variationTargetingVariables = Object.assign({}, variationTargetingVariables, {
-      _vwoUserId: userId
-    });
     var targetedVariations = [];
     campaign.variations.forEach(function (variation) {
       if (DataTypeUtil.isObject(variation.segments) && !Object.keys(variation.segments).length) {
@@ -4372,7 +4374,7 @@ var DecisionUtil = {
           campaignKey: campaignKey,
           userId: userId,
           file: file,
-          variation: ", for ".concat(variation.name)
+          variation: campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? '' : ", for ".concat(variation.name)
         }), disableLogs);
         return;
       }
@@ -4391,7 +4393,7 @@ var DecisionUtil = {
         file: file,
         status: status,
         segmentationType: SegmentationTypeEnum.WHITELISTING,
-        variation: "for ".concat(variation.name)
+        variation: campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT && status === StatusEnum.PASSED ? 'and becomes part of the rollout' : "for ".concat(variation.name)
       }), disableLogs);
     });
 
@@ -4753,7 +4755,7 @@ var DecisionUtil = {
 
       if (whitelistingResult) {
         status = StatusEnum.PASSED;
-        variationString = "for ".concat(whitelistingResult.variationName);
+        variationString = whitelistingResult.variationName;
       } else {
         status = StatusEnum.FAILED;
         variationString = '';
@@ -4766,7 +4768,7 @@ var DecisionUtil = {
         file: file,
         status: status,
         segmentationType: SegmentationTypeEnum.WHITELISTING,
-        variation: variationString
+        variation: campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? '' : "for variation: ".concat(variationString)
       }), !decision);
 
       if (whitelistingResult) {
@@ -4776,13 +4778,12 @@ var DecisionUtil = {
         if (decision) {
           HooksManager.execute(Object.assign({
             fromUserStorageService: false,
-            isUserWhitelisted: false
+            isUserWhitelisted: !!variationName
           }, campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? {
             isFeatureEnabled: !!variationName
           } : {
             variationName: variationName,
-            variationId: variationId,
-            isUserWhitelisted: !!variationName
+            variationId: variationId
           }, decision));
         }
 
