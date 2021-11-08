@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.24.0
+ * vwo-javascript-sdk - v1.25.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -1105,9 +1105,7 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
       if (config.batchEvents) {
         var properties = ImpressionUtil.buildBatchEventForTrackingUser(settingsFile, campaign.id, variationId, userId);
         vwoInstance.batchEventsQueue.enqueue(properties);
-      }
-
-      if (settingsFile.isEventArchEnabled) {
+      } else if (settingsFile.isEventArchEnabled) {
         var _properties = ImpressionUtil.getEventsBaseProperties(settingsFile, EventEnum.VWO_VARIATION_SHOWN, vwoInstance.usageStats.getUsageStats());
 
         var payload = ImpressionUtil.getTrackUserPayloadData(settingsFile, userId, EventEnum.VWO_VARIATION_SHOWN, campaign.id, variationId);
@@ -1576,7 +1574,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.24.0"
+    version: "1.25.0"
   };
 } else {}
 
