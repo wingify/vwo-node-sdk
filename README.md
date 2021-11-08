@@ -3,7 +3,8 @@
 [![npm version](https://badge.fury.io/js/vwo-node-sdk.svg)](https://www.npmjs.com/package/vwo-node-sdk)
 [![CI](https://github.com/wingify/vwo-node-sdk/workflows/CI/badge.svg?branch=master)](https://github.com/wingify/vwo-node-sdk/actions?query=workflow%3ACI)
 
-[![Coverage Status](https://coveralls.io/repos/github/wingify/vwo-node-sdk/badge.svg?branch=master)](https://coveralls.io/github/wingify/vwo-node-sdk?branch=master)
+[![codecov](https://codecov.io/gh/wingify/vwo-node-sdk/branch/master/graph/badge.svg?token=813UYYMWGM)](https://codecov.io/gh/wingify/vwo-node-sdk)
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
 ![](http://img.badgesize.io/wingify/vwo-node-sdk/master/dist/vwo-javascript-sdk.min.js?compression=gzip&color=blue)
 
