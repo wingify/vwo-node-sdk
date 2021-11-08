@@ -34,16 +34,16 @@ jobs:
           */*/node_modules
         key: ${{ runner.os }}-${{ hashFiles('**/yarn.lock') }}
 
-    - name: yarn install, yarn coveralls
+    - name: yarn install, yarn coverage
       run: |
         yarn install
         yarn coverage
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2.1.0
       with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        flag-name: ${{matrix.os}}-node-${{ matrix.node }}
-        parallel: true
+        flags: ${{ runner.os }}
+
     - name: Notification
       if: always()
       id: slack
@@ -54,13 +54,3 @@ jobs:
         color: "${{job.status == 'success' && '#00FF00' || '#FF0000'}}"
       env:
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_NOTIFICATIONS_BOT_TOKEN }}
-
-  finish:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Coveralls Finished
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.github_token }}
-        parallel-finished: true
