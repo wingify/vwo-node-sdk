@@ -347,6 +347,42 @@ describe('Class VWO', () => {
       vwoClientInstance.batchEventsQueue.enqueue(2);
       expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(2);
     });
+
+    test('Event Batching: queue should be flushed if flushEvents api is called', () => {
+      vwoClientInstance = indexFile.launch({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService,
+        batchEvents: {
+          requestTimeInterval: 1000,
+          eventsPerRequest: 100,
+          flushCallback: () => {}
+        }
+      });
+      setTimeout(() => expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(0), 1000);
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(0);
+      vwoClientInstance.batchEventsQueue.enqueue(1);
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(1);
+      vwoClientInstance.batchEventsQueue.enqueue(2);
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(2);
+      vwoClientInstance.flushEvents();
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(0);
+
+      vwoClientInstance = indexFile.launch({
+        settingsFile: settingsFile1,
+        logger,
+        userStorageService,
+        batchEvents: {
+          requestTimeInterval: 1000,
+          eventsPerRequest: 1,
+          flushCallback: () => {}
+        }
+      });
+
+      vwoClientInstance.batchEventsQueue.enqueue(1);
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(0);
+    });
   });
 
   describe('method: activate', () => {
@@ -364,6 +400,17 @@ describe('Class VWO', () => {
 
     test('should return null if campaignKey is not found in settingsFile', () => {
       expect(vwoClientInstance.activate('NO_SUCH_CAMPAIGN_KEY', userId)).toBe(null);
+    });
+
+    test('should return null if catch block is executed', () => {
+      let testClient = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        shouldTrackReturningUser: true
+      });
+      testClient.SettingsFileManager._clonedSettingsFile = 'settingsFile';
+      expect(testClient.activate('campaign_key', userId)).toBe(null);
     });
 
     test('should return null if shouldTrackReturningUser is not passed as boolean', () => {
@@ -765,6 +812,17 @@ describe('Class VWO', () => {
       expect(vwoClientInstance.getVariationName('NO_SUCH_CAMPAIGN_KEY', userId)).toBe(null);
     });
 
+    test('should return null if catch block is executed', () => {
+      let testClient = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        shouldTrackReturningUser: true
+      });
+      testClient.SettingsFileManager._clonedSettingsFile = 'settingsFile';
+      expect(testClient.getVariationName('campaign_key', userId)).toBe(null);
+    });
+
     test('should return null if called before activate API with userStorage passed', () => {
       const campaignKey = settingsFile2.campaigns[0].key;
       vwoClientInstance = new VWO({
@@ -989,6 +1047,17 @@ describe('Class VWO', () => {
 
     test('should return false if goalIdentifier is not found in settingsFile', () => {
       expect(vwoClientInstance.track(campaignKey, userId, 'NO_SUCH_GOAL_IDENTIFIER')[campaignKey]).toBe(false);
+    });
+
+    test('should return null if catch block is executed', () => {
+      let testClient = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        shouldTrackReturningUser: true
+      });
+      testClient.SettingsFileManager._clonedSettingsFile = 'settingsFile';
+      expect(testClient.track('campaign_key', userId, 'goal_identifier')).toBe(null);
     });
 
     test('should return true if revenue prop is passed in the goal', () => {
@@ -1571,6 +1640,17 @@ describe('Class VWO', () => {
       expect(isFeatureEnabled).toBe(true);
     });
 
+    test('should return null if catch block is executed', () => {
+      let testClient = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        shouldTrackReturningUser: true
+      });
+      testClient.SettingsFileManager._clonedSettingsFile = 'settingsFile';
+      expect(testClient.isFeatureEnabled('campaign_key', userId)).toBe(false);
+    });
+
     test('should return null if shouldTrackReturningUser is not passed as boolean', () => {
       let options = {
         shouldTrackReturningUser: 20
@@ -1923,6 +2003,18 @@ describe('Class VWO', () => {
     test('should return false if params length is more than 3', () => {
       expect(vwoClientInstance.push({}, 'a', 'a', 'a')).toBe(false);
     });
+
+    test('should return null if catch block is executed', () => {
+      let testClient = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        shouldTrackReturningUser: true
+      });
+      testClient.SettingsFileManager._clonedSettingsFile = 'settingsFile';
+      expect(testClient.push(' ', ' ', userId)).toBe(false);
+    });
+
     test('should test against correct params', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile1,

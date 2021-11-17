@@ -14,21 +14,59 @@
  * limitations under the License.
  */
 
-require('../../lib/utils/EventDispatcherUtil');
+const EventDispatcher = require('../../lib/utils/EventDispatcherUtil');
+let getProperties = {
+  account_id: 12344,
+  tags: JSON.stringify({ u: { random: 'random' } }),
+  experiment_id: 12,
+  combination: 23
+};
 
-test('todo', () => {
-  expect(3).toBe(3);
+let postProperties = {
+  en: 'vwo_syncVisitorProp',
+  a: 123
+};
+
+let payload = {
+  d: {
+    visitor: {
+      props: {
+        vwo_fs_environment: '1234rfvcewqw'
+      }
+    }
+  }
+};
+
+describe('EventDispatcher', () => {
+  describe('test impression', () => {
+    test('handleGetResponse: when error is returned', () => {
+      let response = EventDispatcher.handleGetResponse({}, 'error is received', { endPoint: 'https://vwo.com' });
+      expect(response).toBe(false);
+    });
+
+    test('handleGetResponse: when impression is successfully sent for push api', () => {
+      let response = EventDispatcher.handleGetResponse(getProperties, null, { endPoint: 'https://vwo.com/push' });
+      expect(response).toBe(true);
+    });
+
+    test('handleGetResponse: when impression is successfully sent for other than push api', () => {
+      let response = EventDispatcher.handleGetResponse(getProperties, null, { endPoint: 'https://vwo.com/' });
+      expect(response).toBe(true);
+    });
+    test('handlePostResponse: when error is returned', () => {
+      let response = EventDispatcher.handlePostResponse({}, {}, { endPoint: 'https://vwo.com' });
+      expect(response).toBe(false);
+    });
+
+    test('handlePostResponse: when impression is successfully sent for vwo_syncVisitorProp event', () => {
+      let response = EventDispatcher.handlePostResponse(postProperties, payload);
+      expect(response).toBe(true);
+    });
+
+    test('handlePostResponse: when impression is successfully sent for vwo_variationShown event', () => {
+      postProperties.en = 'random';
+      let response = EventDispatcher.handlePostResponse(postProperties, payload);
+      expect(response).toBe(true);
+    });
+  });
 });
-// const url = require('url');
-
-// const spyOnUrlParse = jest.spyOn(url, 'parse');
-// const urlProperty = 'http://vwo.com';
-
-// describe('EventDispatcher', () => {
-//   describe('method: dispatch', () => {
-//     test('url should be parsed', () => {
-//       // EventDispatcher.dispatch({url: urlProperty}, () => {});
-//       // expect(spyOnUrlParse).toHaveBeenCalledWith(urlProperty);
-//     });
-//   });
-// });

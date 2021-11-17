@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.25.0
+ * vwo-javascript-sdk - v1.25.1
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -1574,7 +1574,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.25.0"
+    version: "1.25.1"
   };
 } else {}
 
@@ -5112,6 +5112,8 @@ var excludedProperties = ['url'];
 var file = FileNameEnum.EventDispatcherUtil;
 var EventDispatcher = {
   dispatchGetCall: function dispatchGetCall(properties) {
+    var _this = this;
+
     var parsedUrl;
     var queryParams = '?';
     queryParams += FunctionUtil.convertObjectKeysToString(properties, excludedProperties);
@@ -5134,7 +5136,42 @@ var EventDispatcher = {
 
     return false;
   },
+  handleGetResponse: function handleGetResponse(properties, error, response) {
+    if (error) {
+      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.IMPRESSION_FAILED, {
+        file: file,
+        endPoint: response.endPoint
+      }));
+      return false;
+    } else {
+      var baseParams = {
+        file: file,
+        endPoint: response.endPoint,
+        accountId: properties && properties.account_id
+      };
+      var params = {};
+
+      if (baseParams.endPoint.includes('push')) {
+        var customVariables = JSON.parse(properties.tags).u;
+        params = Object.assign({}, baseParams, {
+          customVariables: customVariables
+        });
+        params.mainKeys = "customDimension:".concat(JSON.stringify(params.customVariables));
+      } else {
+        params = Object.assign({}, baseParams, {
+          campaignId: properties && properties.experiment_id,
+          variationId: properties && properties.combination
+        });
+        params.mainKeys = "campaignId:".concat(params.campaignId, " and variationId:").concat(params.variationId);
+      }
+
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.IMPRESSION_SUCCESS, params));
+      return true;
+    }
+  },
   dispatchPostCall: function dispatchPostCall(properties, payload) {
+    var _this2 = this;
+
     var parsedUrl;
     var queryParams = '?';
     queryParams += FunctionUtil.convertObjectKeysToString(properties, excludedProperties);
@@ -5144,40 +5181,46 @@ var EventDispatcher = {
       var url = __webpack_require__(/*! url */ "./node_modules/url/url.js");
 
       parsedUrl = url.parse(properties.url);
-      var endPoint = properties.url;
 
       __webpack_require__(/*! ./HttpHandlerUtil */ "./lib/utils/HttpHandlerUtil.js").sendPostCall(parsedUrl, payload, queryParams, null, function (error) {
-        if (error) {
-          logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.IMPRESSION_FAILED, {
-            file: file,
-            endPoint: endPoint
-          }));
-        } else {
-          var event = "".concat(properties.en, " event");
-
-          if (properties.en === EventEnum.VWO_SYNC_VISITOR_PROP) {
-            delete payload.d.visitor.props.vwo_fs_environment;
-            event = "visitor property:".concat(JSON.stringify(payload.d.visitor.props));
-          }
-
-          logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.IMPRESSION_SUCCESS_FOR_EVENT_ARCH, {
-            file: file,
-            endPoint: endPoint,
-            a: properties.a,
-            event: event
-          }));
-        }
+        _this2.handlePostResponse(properties, payload, error);
       });
     } catch (err) {
-      var _endPoint = properties.url;
+      var endPoint = properties.url;
       logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.IMPRESSION_FAILED, {
         file: FileNameEnum.EventDispatcherUtil,
-        endPoint: _endPoint,
+        endPoint: endPoint,
         err: err
       }));
     }
 
     return false;
+  },
+  handlePostResponse: function handlePostResponse(properties, payload, error) {
+    var endPoint = properties.url;
+
+    if (error) {
+      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.IMPRESSION_FAILED, {
+        file: file,
+        endPoint: endPoint
+      }));
+      return false;
+    } else {
+      var event = "".concat(properties.en, " event");
+
+      if (properties.en === EventEnum.VWO_SYNC_VISITOR_PROP) {
+        delete payload.d.visitor.props.vwo_fs_environment;
+        event = "visitor property:".concat(JSON.stringify(payload.d.visitor.props));
+      }
+
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.IMPRESSION_SUCCESS_FOR_EVENT_ARCH, {
+        file: file,
+        endPoint: endPoint,
+        a: properties.a,
+        event: event
+      }));
+      return true;
+    }
   }
 };
 module.exports = EventDispatcher;
@@ -5565,6 +5608,9 @@ var HttpImageUtil = {
         errorCallback = options.errorCallback;
     var isCallbackCalled = false;
     var img = new Image();
+    this.handleGetCall(img, successCallback, errorCallback, endPoint, isCallbackCalled);
+  },
+  handleGetCall: function handleGetCall(img, successCallback, errorCallback, endPoint, isCallbackCalled) {
     successCallback = successCallback || noop;
     errorCallback = errorCallback || noop;
 
@@ -5587,6 +5633,7 @@ var HttpImageUtil = {
     };
 
     img.src = endPoint;
+    return img;
   }
 };
 module.exports = HttpImageUtil;
@@ -6361,7 +6408,7 @@ var _require = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUt
     getRandomNumber = _require.getRandomNumber,
     getCurrentTime = _require.getCurrentTime;
 
-module.exports = {
+var SettingsFileUtil = {
   get: function get(accountId, sdkKey, userStorageService) {
     var config = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
@@ -6395,8 +6442,52 @@ module.exports = {
         userStorageService: userStorageService
       });
     } else { var https, http; }
+  },
+  handleHttpRequest: function handleHttpRequest(res, resolve, reject) {
+    var statusCode = res.statusCode;
+    var contentType = res.headers['content-type'];
+    var error;
+    var rawData = '';
+
+    if (!/^application\/json/.test(contentType)) {
+      error = "Invalid content-type.\nExpected application/json but received ".concat(contentType);
+    }
+
+    if (error) {
+      console.error(error.message); // Consume response data to free up memory
+
+      res.resume();
+      reject(error);
+      return;
+    }
+
+    res.setEncoding('utf8');
+    res.on('data', function (chunk) {
+      rawData += chunk;
+    });
+    res.on('end', function () {
+      SettingsFileUtil.handleHttpResponse(statusCode, rawData, resolve, reject);
+    });
+  },
+  handleHttpResponse: function handleHttpResponse(statusCode, rawData, resolve, reject) {
+    try {
+      var parsedData = JSON.parse(rawData);
+
+      if (statusCode !== 200) {
+        var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(statusCode, " and message: ").concat(rawData);
+        console.error(error);
+        reject(error);
+        return;
+      }
+
+      resolve(parsedData);
+    } catch (err) {
+      console.error("VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings - ").concat(err.message));
+      reject(err);
+    }
   }
 };
+module.exports = SettingsFileUtil;
 
 /***/ }),
 
@@ -6834,6 +6925,8 @@ var XhrUtil = {
     };
   },
   send: function send() {
+    var _this = this;
+
     var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
         method = _ref.method,
         url = _ref.url,
@@ -6852,30 +6945,42 @@ var XhrUtil = {
         resolve(parsedSettings);
       } else {
         var xhr = new XMLHttpRequest();
-        xhr.open(method, url);
-        xhr.send();
 
-        xhr.onload = function () {
-          try {
-            var parsedXhrResponse = JSON.parse(xhr.response);
-
-            if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.setSettings)) {
-              userStorageService.setSettings(xhr.response);
-            }
-
-            resolve(parsedXhrResponse);
-          } catch (err) {
-            console.error(err);
-          }
-        };
-
-        xhr.onerror = function () {
-          var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(xhr.status);
-          console.error(error);
-          reject(error);
-        };
+        _this.xhrHandler(xhr, method, url, userStorageService, resolve, reject);
       }
     });
+  },
+  xhrHandler: function xhrHandler(xhr, method, url, userStorageService, resolve, reject) {
+    var _this2 = this;
+
+    xhr.onload = function () {
+      _this2.xhrOnLoad(xhr, userStorageService, resolve);
+    };
+
+    xhr.onerror = function () {
+      _this2.xhrOnError(xhr, reject);
+    };
+
+    xhr.open(method, url);
+    xhr.send();
+  },
+  xhrOnLoad: function xhrOnLoad(xhr, userStorageService, resolve) {
+    try {
+      var parsedXhrResponse = JSON.parse(xhr.response);
+
+      if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.setSettings)) {
+        userStorageService.setSettings(xhr.response);
+      }
+
+      resolve(parsedXhrResponse);
+    } catch (err) {
+      console.error(err);
+    }
+  },
+  xhrOnError: function xhrOnError(xhr, reject) {
+    var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(xhr.status);
+    console.error(error);
+    reject(error);
   }
 };
 module.exports = XhrUtil;

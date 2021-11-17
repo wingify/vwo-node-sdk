@@ -14,6 +14,10 @@
  * limitations under the License.
  */
 
+/**
+ * @jest-environment jsdom
+ */
+const { xhrOnLoad, xhrOnError } = require('../../lib/utils/XhrUtil');
 const XhrUtil = require('../../lib/utils/XhrUtil');
 
 describe('XhrUtil', () => {
@@ -90,6 +94,45 @@ describe('XhrUtil', () => {
 
         expect(data.isStoredData).toBe(true);
         expect(data.parsedSettings).toEqual(settings);
+      });
+
+      it('should return resolve/reject for onload/onerror', () => {
+        let open = jest.fn();
+
+        // be aware we use *function* because we need to get *this*
+        // from *new XmlHttpRequest()* call
+        let send = jest.fn().mockImplementation(function() {
+          onload = xhrOnLoad;
+          onerror = xhrOnError;
+        });
+
+        const xhrMockClass = function() {
+          return {
+            open,
+            send
+          };
+        };
+
+        global.XMLHttpRequest = jest.fn().mockImplementation(xhrMockClass);
+
+        let data = {
+          a: 'a',
+          b: 'b'
+        };
+
+        let resolve = function(response) {
+          expect(response).toStringEqual(data);
+        };
+
+        let reject = function(error) {
+          expect(typeof error).toBe('string');
+        };
+
+        global.XMLHttpRequest.response = JSON.stringify(data);
+
+        xhrOnLoad(global.XMLHttpRequest, undefined, resolve);
+
+        xhrOnError(global.XMLHttpRequest, reject);
       });
     });
   });

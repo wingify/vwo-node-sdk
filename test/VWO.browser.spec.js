@@ -1552,6 +1552,17 @@ describe('Class VWO', () => {
       expect(vwoClientInstance.getFeatureVariableValue('DEV_TEST_1', 'variable-key', userId)).toBe(null);
     });
 
+    test('should return null if catch block is executed', () => {
+      let testClient = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        shouldTrackReturningUser: true
+      });
+      testClient.SettingsFileManager._clonedSettingsFile = 'settingsFile';
+      expect(testClient.getFeatureVariableValue('DEV_TEST_1', 'variable-key', userId)).toBe(null);
+    });
+
     test('should return false if metadata is not passed as object', () => {
       let options = {
         metaData: false

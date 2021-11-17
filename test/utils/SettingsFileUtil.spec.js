@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
+import { handleHttpResponse } from '../../lib/utils/SettingsFileUtil';
 const SettingsFileUtil = require('../../lib/utils/SettingsFileUtil');
+jest.mock('https');
 
 let accountId;
 let sdkKey;
@@ -37,10 +39,64 @@ describe('SettingsFileUtil', () => {
       expect(SettingsFileUtil.get(undefined, sdkKey)).toBeUndefined();
     });
 
-    xit('should return a promise if parameters passed are correct', () => {
-      const settingsFilePromise = SettingsFileUtil.get(accountId, sdkKey).catch(() => {});
+    it('should return a promise if parameters passed are correct', () => {
+      expect(typeof SettingsFileUtil.get(accountId, sdkKey).then).toBe('function');
+    });
 
-      expect(typeof settingsFilePromise.then).toBe('function');
+    it('should test for the invalid content type', () => {
+      let reject = function(error) {
+        expect(typeof error).toBe('string');
+      };
+      SettingsFileUtil.handleHttpRequest(
+        { statusCode: 200, headers: { 'content-type': 'text' }, resume: () => {} },
+        undefined,
+        reject
+      );
+    });
+
+    it('should return error if invalid statuscode is passed', () => {
+      let res = {
+        statusCode: 400,
+        headers: { 'content-type': 'application/json' },
+        on: (event, chunk) => {
+          if (event === 'end') {
+            handleHttpResponse(400, JSON.stringify({ a: 'a', b: 'b' }), undefined, error => {
+              expect(typeof error).toBe('string');
+            });
+          }
+        },
+        setEncoding: encoding => {}
+      };
+      SettingsFileUtil.handleHttpRequest(res);
+    });
+
+    it('should return error if correct statusCode is passed', () => {
+      let data = { a: 'a', b: 'b' };
+      let res = {
+        statusCode: 200,
+        headers: { 'content-type': 'application/json' },
+        on: (event, chunk) => {
+          if (event === 'end') {
+            handleHttpResponse(200, JSON.stringify(data), response => {
+              expect(response).toStrictEqual(data);
+            });
+          }
+        },
+        setEncoding: encoding => {}
+      };
+      SettingsFileUtil.handleHttpRequest(res);
+    });
+
+    it('should return a promise if the the config params are passed', () => {
+      process.env = undefined;
+      expect(
+        typeof SettingsFileUtil.get(accountId, sdkKey, undefined, {
+          isViaWebhook: true,
+          hostname: 'sample.com',
+          path: 'path',
+          port: 8000
+        }).then
+      ).toBe('function');
     });
   });
 });
