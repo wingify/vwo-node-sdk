@@ -121,7 +121,7 @@ describe('XhrUtil', () => {
         };
 
         let resolve = function(response) {
-          expect(response).toStringEqual(data);
+          expect(response).toStrictEqual(data);
         };
 
         let reject = function(error) {

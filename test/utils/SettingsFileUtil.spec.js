@@ -87,16 +87,15 @@ describe('SettingsFileUtil', () => {
       SettingsFileUtil.handleHttpRequest(res);
     });
 
-    it('should return a promise if the the config params are passed', () => {
+    it('should return a promise if the config params are passed', () => {
       process.env = undefined;
-      expect(
-        typeof SettingsFileUtil.get(accountId, sdkKey, undefined, {
-          isViaWebhook: true,
-          hostname: 'sample.com',
-          path: 'path',
-          port: 8000
-        }).then
-      ).toBe('function');
+      let setttingsFile = SettingsFileUtil.get(accountId, sdkKey, undefined, {
+        isViaWebhook: true,
+        hostname: 'sample.com',
+        path: 'path',
+        port: 8000
+      }).catch(() => {});
+      expect(typeof setttingsFile.then).toBe('function');
     });
   });
 });
