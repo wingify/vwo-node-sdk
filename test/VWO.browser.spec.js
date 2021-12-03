@@ -1520,8 +1520,8 @@ describe('Class VWO', () => {
       });
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
-      expect(vwoClientInstance.push('1', '1', '1')).toBe(true);
-      expect(vwoClientInstance.push({ a: 'a' }, '1')).toBe(true);
+      expect(vwoClientInstance.push('1', '1', '1')).toEqual({ '1': true });
+      expect(vwoClientInstance.push({ a: 'a' }, '1')).toEqual({ a: true });
       expect(spyImpressionEventPush).toHaveBeenCalled();
       expect(spyEventQueue).toHaveBeenCalled();
     });

@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.25.2
+ * vwo-javascript-sdk - v1.26.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -157,11 +157,15 @@ var EventQueue = __webpack_require__(/*! ./services/EventQueue */ "./lib/service
 
 var SettingsFileService = __webpack_require__(/*! ./services/SettingsFileManager */ "./lib/services/SettingsFileManager.js");
 
+var FunctionUtil = __webpack_require__(/*! ./utils/FunctionUtil */ "./lib/utils/FunctionUtil.js");
+
 var BatchEventsDispatcher;
 var customEventUtil;
 var BatchEventsQueue;
 
 if (false) {}
+
+var DataTypeUtil = __webpack_require__(/*! ./utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
 
 var logging = __webpack_require__(/*! ./services/logging */ "./lib/services/logging/index.js");
 
@@ -192,7 +196,8 @@ function () {
     this.getVariation = this.getVariationName; // to be backward compatible
 
     this.userStorageService = config.userStorageService;
-    this.logger = config.logger; // Initialize Hooks manager so that callbacks can be invoked
+    this.logger = config.logger;
+    this.returnPromiseFor = config.returnPromiseFor; // Initialize Hooks manager so that callbacks can be invoked
 
     HooksManager.init(config);
     var settingsFileManager = new SettingsFileService(config); // Validate the config file i.e. check if required fields contain appropriate data
@@ -240,10 +245,39 @@ function () {
 
   _createClass(VWO, [{
     key: "activate",
-    value: function activate(campaignKey, userId, options) {
+    value: function activate(campaignKey, userId) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
       try {
-        var self = this;
-        return api.activate(self, campaignKey, userId, options);
+        var self = this; // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        // i.e. wait till the network call is not successful
+
+        if (self.returnPromiseFor && (self.returnPromiseFor.activate || self.returnPromiseFor.all)) {
+          return new Promise(function (resolve) {
+            var variationName;
+
+            options.responseCallback = function (_error, _response) {
+              resolve(variationName);
+            };
+
+            variationName = api.activate(self, campaignKey, userId, options); // If we get null from the API i.e. no tracking call was sent
+            // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
+
+            if (!variationName) {
+              resolve(variationName);
+            } else if (DataTypeUtil.isObject(variationName)) {
+              resolve(variationName.variationName);
+            }
+          });
+        }
+
+        var apiResponse = api.activate(self, campaignKey, userId, options);
+
+        if (DataTypeUtil.isObject(apiResponse)) {
+          return apiResponse.variationName;
+        }
+
+        return apiResponse;
       } catch (err) {
         this.logger.log(LogLevelEnum.ERROR, err.message);
         return null;
@@ -261,9 +295,19 @@ function () {
 
   }, {
     key: "getVariationName",
-    value: function getVariationName(campaignKey, userId, options) {
+    value: function getVariationName(campaignKey, userId) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
       try {
-        var self = this;
+        var self = this; // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+
+        if (self.returnPromiseFor && (self.returnPromiseFor.getVariationName || self.returnPromiseFor.all)) {
+          return new Promise(function (resolve) {
+            // since this API does not send any async call, we can simply resolve the returned value
+            resolve(api.getVariation(self, campaignKey, userId, options));
+          });
+        }
+
         return api.getVariation(self, campaignKey, userId, options);
       } catch (err) {
         this.logger.log(LogLevelEnum.ERROR, err.message);
@@ -281,9 +325,36 @@ function () {
 
   }, {
     key: "track",
-    value: function track(campaignSpecifier, userId, goalIdentifier, options) {
+    value: function track(campaignSpecifier, userId, goalIdentifier) {
+      var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
       try {
-        var self = this;
+        var self = this; // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        // i.e. wait till the network call is not successful
+
+        if (self.returnPromiseFor && (self.returnPromiseFor.track || self.returnPromiseFor.all)) {
+          return new Promise(function (resolve) {
+            var trackResponse;
+            var counter = 0;
+
+            options.responseCallback = function (_error, _response) {
+              counter += 1; // In case of global goals, when all campaigns are tracked, then only resolve
+
+              if (counter === FunctionUtil.objectValues(trackResponse).filter(Boolean).length) {
+                resolve(trackResponse);
+              }
+            };
+
+            trackResponse = api.track(self, campaignSpecifier, userId, goalIdentifier, options); // If we get null/false from the API i.e. no tracking call was sent
+            // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
+            // Or, in case of global goals, if none campaign got success, manually resolve
+
+            if (!trackResponse || !FunctionUtil.objectValues(trackResponse).some(Boolean)) {
+              resolve(trackResponse);
+            }
+          });
+        }
+
         return api.track(self, campaignSpecifier, userId, goalIdentifier, options);
       } catch (err) {
         this.logger.log(LogLevelEnum.ERROR, err.message);
@@ -302,10 +373,39 @@ function () {
 
   }, {
     key: "isFeatureEnabled",
-    value: function isFeatureEnabled(campaignKey, userId, options) {
+    value: function isFeatureEnabled(campaignKey, userId) {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
       try {
-        var self = this;
-        return api.isFeatureEnabled(self, campaignKey, userId, options);
+        var self = this; // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        // i.e. wait till the network call is not successful
+
+        if (self.returnPromiseFor && (self.returnPromiseFor.isFeatureEnabled || self.returnPromiseFor.all)) {
+          return new Promise(function (resolve) {
+            var isFeatureEnabledApiResponse;
+
+            options.responseCallback = function (_error, _response) {
+              resolve(!!isFeatureEnabledApiResponse);
+            };
+
+            isFeatureEnabledApiResponse = api.isFeatureEnabled(self, campaignKey, userId, options); // If we get null from the API i.e. no tracking call was sent
+            // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
+
+            if (DataTypeUtil.isNull(isFeatureEnabledApiResponse)) {
+              resolve(false);
+            } else if (DataTypeUtil.isObject(isFeatureEnabledApiResponse)) {
+              resolve(!!isFeatureEnabledApiResponse.isFeatureEnabled);
+            }
+          });
+        }
+
+        var apiResponse = api.isFeatureEnabled(self, campaignKey, userId, options);
+
+        if (DataTypeUtil.isObject(apiResponse)) {
+          return !!apiResponse.isFeatureEnabled;
+        }
+
+        return !!apiResponse;
       } catch (err) {
         this.logger.log(LogLevelEnum.ERROR, err.message);
         return false;
@@ -327,9 +427,19 @@ function () {
 
   }, {
     key: "getFeatureVariableValue",
-    value: function getFeatureVariableValue(campaignKey, variableKey, userId, options) {
+    value: function getFeatureVariableValue(campaignKey, variableKey, userId) {
+      var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
       try {
-        var self = this;
+        var self = this; // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+
+        if (self.returnPromiseFor && (self.returnPromiseFor.getFeatureVariableValue || self.returnPromiseFor.all)) {
+          return new Promise(function (resolve) {
+            // since this API does not send any async call, we can simply resolve the returned value
+            resolve(api.getFeatureVariableValue(self, campaignKey, variableKey, userId, options));
+          });
+        }
+
         return api.getFeatureVariableValue(self, campaignKey, variableKey, userId, options);
       } catch (err) {
         this.logger.log(LogLevelEnum.ERROR, err.message);
@@ -351,21 +461,49 @@ function () {
     value: function push(tagKey, tagValue, userId) {
       try {
         var self = this;
+        var customDimensionMap;
 
         if (arguments.length === 2) {
           // Argument reshuffling.
-          var customDimensionMap = tagKey;
-          var _userId = tagValue;
-          return api.push(self, ' ', ' ', _userId, customDimensionMap);
+          customDimensionMap = tagKey;
+          userId = tagValue;
+          tagKey = ' ';
+          tagValue = ' ';
         } else if (arguments.length === 3) {
-          return api.push(self, tagKey, tagValue, userId, {});
+          customDimensionMap = {};
         } else {
           this.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.PUSH_INVALID_PARAMS, {
             file: file,
             method: ApiEnum.PUSH
           }));
           return false;
+        } // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        // i.e. wait till the network call is not successful
+
+
+        if (self.returnPromiseFor && (self.returnPromiseFor.push || self.returnPromiseFor.all)) {
+          return new Promise(function (resolve) {
+            var apiResponse;
+            var counter = 0;
+            var options = {
+              responseCallback: function responseCallback(_error, _response) {
+                counter += 1; // In case of multiple custom dimensions, when all are tracked, then only resolve
+
+                if (counter === FunctionUtil.objectValues(apiResponse).filter(Boolean).length) {
+                  resolve(apiResponse);
+                }
+              }
+            };
+            apiResponse = api.push(self, tagKey, tagValue, userId, customDimensionMap, options); // If we get false from the API i.e. no tracking call was sent
+            // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
+
+            if (!apiResponse) {
+              resolve(false);
+            }
+          });
         }
+
+        return api.push(self, tagKey, tagValue, userId, customDimensionMap);
       } catch (err) {
         this.logger.log(LogLevelEnum.ERROR, err.message);
         return false;
@@ -479,7 +617,8 @@ function activate(vwoInstance, campaignKey, userId) {
         variationTargetingVariables = options.variationTargetingVariables,
         userStorageData = options.userStorageData,
         shouldTrackReturningUser = options.shouldTrackReturningUser,
-        metaData = options.metaData; // Check if arguments have valid data-type
+        metaData = options.metaData,
+        responseCallback = options.responseCallback; // Check if arguments have valid data-type
 
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.ACTIVATE,
@@ -489,7 +628,8 @@ function activate(vwoInstance, campaignKey, userId) {
       variationTargetingVariables: variationTargetingVariables,
       userStorageData: userStorageData,
       shouldTrackReturningUser: shouldTrackReturningUser,
-      metaData: metaData
+      metaData: metaData,
+      responseCallback: responseCallback
     })) {
       areParamsValid = true;
     }
@@ -558,7 +698,9 @@ function activate(vwoInstance, campaignKey, userId) {
       campaignKey: campaignKey,
       api: api
     }));
-    return variationName;
+    return {
+      variationName: variationName
+    };
   } // Variation found...let VWO server knows about it to show report stats
 
 
@@ -569,11 +711,16 @@ function activate(vwoInstance, campaignKey, userId) {
     var _properties = ImpressionUtil.getEventsBaseProperties(settingsFile, EventEnum.VWO_VARIATION_SHOWN, vwoInstance.usageStats.getUsageStats());
 
     var payload = ImpressionUtil.getTrackUserPayloadData(settingsFile, userId, EventEnum.VWO_VARIATION_SHOWN, campaign.id, variationId);
-    vwoInstance.eventQueue.process(config, _properties, vwoInstance, payload);
+    vwoInstance.eventQueue.process(config, _properties, vwoInstance, {
+      payload: payload,
+      responseCallback: responseCallback
+    });
   } else {
     var _properties2 = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId, vwoInstance.usageStats.getUsageStats());
 
-    vwoInstance.eventQueue.process(config, _properties2, vwoInstance);
+    vwoInstance.eventQueue.process(config, _properties2, vwoInstance, {
+      responseCallback: responseCallback
+    });
   }
 
   return variationName;
@@ -1026,7 +1173,8 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
         variationTargetingVariables = options.variationTargetingVariables,
         userStorageData = options.userStorageData,
         shouldTrackReturningUser = options.shouldTrackReturningUser,
-        metaData = options.metaData; // Check if arguments have valid data-type
+        metaData = options.metaData,
+        responseCallback = options.responseCallback; // Check if arguments have valid data-type
 
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.IS_FEATURE_ENABLED,
@@ -1036,7 +1184,8 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
       variationTargetingVariables: variationTargetingVariables,
       userStorageData: userStorageData,
       shouldTrackReturningUser: shouldTrackReturningUser,
-      metaData: metaData
+      metaData: metaData,
+      responseCallback: responseCallback
     })) {
       areParamsValid = true;
     }
@@ -1046,7 +1195,7 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.IS_FEATURE_ENABLED_API_MISSING_PARAMS, {
       file: file
     }));
-    return false;
+    return null;
   } // Get the cached configuration
 
 
@@ -1054,7 +1203,7 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
   var settingsFile = vwoInstance.SettingsFileManager.getSettingsFile(api); // If no settings are found, simply log and return false
 
   if (!settingsFile) {
-    return false;
+    return null;
   }
 
   shouldTrackReturningUser = shouldTrackReturningUser || config.shouldTrackReturningUser || false; // Get the campaign settings based on campaignKey from the settings
@@ -1067,7 +1216,7 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
       campaignKey: campaignKey,
       api: api
     }));
-    return false;
+    return null;
   }
 
   if (CampaignUtil.isAbCampaign(campaign)) {
@@ -1079,7 +1228,7 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
       userId: userId,
       api: api
     }));
-    return false;
+    return null;
   }
 
   var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, true, undefined, api),
@@ -1109,11 +1258,16 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
         var _properties = ImpressionUtil.getEventsBaseProperties(settingsFile, EventEnum.VWO_VARIATION_SHOWN, vwoInstance.usageStats.getUsageStats());
 
         var payload = ImpressionUtil.getTrackUserPayloadData(settingsFile, userId, EventEnum.VWO_VARIATION_SHOWN, campaign.id, variationId);
-        vwoInstance.eventQueue.process(config, _properties, vwoInstance, payload);
+        vwoInstance.eventQueue.process(config, _properties, vwoInstance, {
+          payload: payload,
+          responseCallback: responseCallback
+        });
       } else {
         var _properties2 = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId, vwoInstance.usageStats.getUsageStats());
 
-        vwoInstance.eventQueue.process(config, _properties2, vwoInstance);
+        vwoInstance.eventQueue.process(config, _properties2, vwoInstance, {
+          responseCallback: responseCallback
+        });
       }
     }
   }
@@ -1130,6 +1284,12 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
       campaignKey: campaignKey,
       userId: userId
     }));
+  }
+
+  if (isStoredVariation) {
+    return {
+      isFeatureEnabled: isFeatureEnabled
+    };
   }
 
   return isFeatureEnabled;
@@ -1194,6 +1354,9 @@ var file = FileNameEnum.Push;
  */
 
 function push(vwoInstance, tagKey, tagValue, userId, customDimensionMap) {
+  var _ref = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {},
+      responseCallback = _ref.responseCallback;
+
   var api = ApiEnum.PUSH;
 
   if (!ValidateUtil.areValidParamsForAPIMethod({
@@ -1201,7 +1364,8 @@ function push(vwoInstance, tagKey, tagValue, userId, customDimensionMap) {
     tagKey: tagKey,
     tagValue: tagValue,
     userId: userId,
-    customDimensionMap: customDimensionMap
+    customDimensionMap: customDimensionMap,
+    responseCallback: responseCallback
   })) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.PUSH_INVALID_PARAMS, {
       file: file,
@@ -1258,13 +1422,21 @@ function push(vwoInstance, tagKey, tagValue, userId, customDimensionMap) {
   } else if (settingsFile.isEventArchEnabled) {
     var properties = ImpressionUtil.getEventsBaseProperties(settingsFile, EventEnum.VWO_SYNC_VISITOR_PROP);
     var payload = ImpressionUtil.getPushPayloadData(settingsFile, userId, EventEnum.VWO_SYNC_VISITOR_PROP, customDimensionMap);
-    vwoInstance.eventQueue.process(config, properties, vwoInstance, payload);
+    vwoInstance.eventQueue.process(config, properties, vwoInstance, {
+      payload: payload,
+      responseCallback: responseCallback
+    });
   } else {
+    var result = {};
     Object.keys(customDimensionMap).forEach(function (key) {
       var tagValue = DataTypeUtil.isString(customDimensionMap[key]) ? customDimensionMap[key] : JSON.stringify(customDimensionMap[key]);
       var properties = ImpressionUtil.buildEventForPushing(settingsFile, key, tagValue, userId);
-      vwoInstance.eventQueue.process(config, properties, vwoInstance);
+      vwoInstance.eventQueue.process(config, properties, vwoInstance, {
+        responseCallback: responseCallback
+      });
+      result[key] = true;
     });
+    return result;
   }
 
   return true;
@@ -1352,7 +1524,8 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
         userStorageData = options.userStorageData,
         goalTypeToTrack = options.goalTypeToTrack,
         shouldTrackReturningUser = options.shouldTrackReturningUser,
-        metaData = options.metaData; // Check if arguments have valid data-type
+        metaData = options.metaData,
+        responseCallback = options.responseCallback; // Check if arguments have valid data-type
 
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.TRACK,
@@ -1364,7 +1537,8 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
       userStorageData: userStorageData,
       goalTypeToTrack: goalTypeToTrack,
       shouldTrackReturningUser: shouldTrackReturningUser,
-      metaData: metaData
+      metaData: metaData,
+      responseCallback: responseCallback
     }) && (!goalTypeToTrack || goalTypeToTrack && objectValues(GoalTypeEnum).includes(goalTypeToTrack))) {
       areParamsValid = true;
     }
@@ -1417,7 +1591,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   var result = {};
   var metricMap = {};
   campaigns.forEach(function (campaign) {
-    return result[campaign.key] = trackCampaignGoal(vwoInstance, campaign, campaign.key, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList);
+    return result[campaign.key] = trackCampaignGoal(vwoInstance, campaign, campaign.key, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, responseCallback);
   });
 
   if (!Object.keys(result).length) {
@@ -1427,7 +1601,10 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   if (settingsFile.isEventArchEnabled && Object.keys(metricMap).length > 0) {
     var properties = ImpressionUtil.getEventsBaseProperties(settingsFile, goalIdentifier);
     var payload = ImpressionUtil.getTrackGoalPayloadData(settingsFile, userId, goalIdentifier, metricMap, revenueValue, revenuePropList);
-    vwoInstance.eventQueue.process(config, properties, vwoInstance, payload);
+    vwoInstance.eventQueue.process(config, properties, vwoInstance, {
+      payload: payload,
+      responseCallback: responseCallback
+    });
     Object.keys(metricMap).forEach(function (key) {
       DecisionUtil._saveUserData(config, metricMap[key].campaign, metricMap[key].variationName, metricMap[key].userId, metricMap[key].metaData, goalIdentifier);
     });
@@ -1436,7 +1613,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   return result;
 }
 
-function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList) {
+function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, responseCallback) {
   // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CAMPAIGN_NOT_RUNNING, {
@@ -1529,7 +1706,9 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
     } else {
       var _properties = ImpressionUtil.buildEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue);
 
-      vwoInstance.eventQueue.process(config, _properties, vwoInstance);
+      vwoInstance.eventQueue.process(config, _properties, vwoInstance, {
+        responseCallback: responseCallback
+      });
     }
 
     DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, goalIdentifier);
@@ -1574,7 +1753,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.25.2"
+    version: "1.26.0"
   };
 } else {}
 
@@ -2293,6 +2472,7 @@ module.exports = {
   ValidateUtil: "".concat(UTIL_PATH, "/ValidateUtil"),
   DecisionUtil: "".concat(UTIL_PATH, "/DecisionUtils"),
   HttpHandlerUtil: "".concat(UTIL_PATH, "/HttpHandlerUtil"),
+  HttpImageUtil: "".concat(UTIL_PATH, "/HttpImageUtil"),
   UsageStatsUtil: "".concat(SERVICES_PATH, "/UsageStats")
 };
 
@@ -3111,24 +3291,37 @@ function () {
 
   _createClass(EventQueue, [{
     key: "process",
-    value: function process(config, properties, vwoInstance, payload) {
+    value: function process(config, properties, vwoInstance) {
+      var _ref = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {},
+          payload = _ref.payload,
+          responseCallback = _ref.responseCallback;
+
       if (config && config.isDevelopmentMode) {
         return;
       }
 
-      this.enqueue(properties, vwoInstance, payload);
+      this.enqueue(properties, vwoInstance, {
+        payload: payload,
+        responseCallback: responseCallback
+      });
     }
   }, {
     key: "enqueue",
-    value: function enqueue(properties, vwoInstance, payload) {
+    value: function enqueue(properties, vwoInstance, _ref2) {
+      var payload = _ref2.payload,
+          responseCallback = _ref2.responseCallback;
       this.queue.push({
         eventName: properties.eventName,
         properties: properties,
         callback: function callback() {
           if (payload) {
-            EventDispatcher.dispatchPostCall(properties, payload);
+            EventDispatcher.dispatchPostCall(properties, payload, {
+              responseCallback: responseCallback
+            });
           } else {
-            EventDispatcher.dispatchGetCall(properties);
+            EventDispatcher.dispatchGetCall(properties, {
+              responseCallback: responseCallback
+            });
           }
         }
       });
@@ -5111,9 +5304,10 @@ var EventEnum = __webpack_require__(/*! ../enums/EventEnum */ "./lib/enums/Event
 var excludedProperties = ['url'];
 var file = FileNameEnum.EventDispatcherUtil;
 var EventDispatcher = {
-  dispatchGetCall: function dispatchGetCall(properties) {
+  dispatchGetCall: function dispatchGetCall(properties, _ref) {
     var _this = this;
 
+    var responseCallback = _ref.responseCallback;
     var parsedUrl;
     var queryParams = '?';
     queryParams += FunctionUtil.convertObjectKeysToString(properties, excludedProperties);
@@ -5123,7 +5317,9 @@ var EventDispatcher = {
       if (true) {
         parsedUrl = new URL(properties.url);
 
-        __webpack_require__(/*! ./HttpImageUtil */ "./lib/utils/HttpImageUtil.js").sendCall(parsedUrl, queryParams);
+        __webpack_require__(/*! ./HttpImageUtil */ "./lib/utils/HttpImageUtil.js").sendCall(parsedUrl, queryParams, {
+          successCallback: responseCallback
+        });
       } else { var url; }
     } catch (err) {
       var endPoint = properties.url;
@@ -5170,9 +5366,10 @@ var EventDispatcher = {
       return true;
     }
   },
-  dispatchPostCall: function dispatchPostCall(properties, payload) {
+  dispatchPostCall: function dispatchPostCall(properties, payload, _ref2) {
     var _this2 = this;
 
+    var responseCallback = _ref2.responseCallback;
     var parsedUrl;
     var queryParams = '?';
     queryParams += FunctionUtil.convertObjectKeysToString(properties, excludedProperties);
@@ -5186,8 +5383,18 @@ var EventDispatcher = {
           payload: payload
         }).then(function () {
           _this2.handlePostResponse(properties, payload);
+
+          if (responseCallback) {
+            responseCallback(null, {
+              status: 'success'
+            });
+          }
         })["catch"](function (error) {
           _this2.handlePostResponse(properties, payload, error);
+
+          responseCallback(error, {
+            status: 'failure'
+          });
         });
       } else { var url; }
     } catch (err) {
@@ -5460,6 +5667,15 @@ var FunctionUtil = {
     }
 
     return queryParams;
+  },
+  objectValues: function objectValues(obj) {
+    var values = [];
+
+    for (var prop in obj) {
+      values.push(obj[prop]);
+    }
+
+    return values;
   }
 };
 module.exports = FunctionUtil;
@@ -5471,7 +5687,7 @@ module.exports = FunctionUtil;
   !*** ./lib/utils/HttpImageUtil.js ***!
   \************************************/
 /*! no static exports found */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 /**
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -5488,7 +5704,43 @@ module.exports = FunctionUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
+
+var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
+
+var LogLevelEnum = logging.LogLevelEnum,
+    LogMessageEnum = logging.LogMessageEnum,
+    LogMessageUtil = logging.LogMessageUtil;
+var logger = logging.getLogger();
+var file = FileNameEnum.HttpImageUtil;
+
 var noop = function noop() {};
+
+var printLog = function printLog(url, queryParams) {
+  var properties = new URLSearchParams(queryParams);
+  var baseParams = {
+    file: file,
+    endPoint: "https://".concat(url.host).concat(url.pathname),
+    accountId: properties && properties.get('account_id')
+  };
+  var params = {};
+
+  if (baseParams.endPoint.includes('push')) {
+    var customVariables = JSON.parse(properties.get('tags')).u;
+    params = Object.assign({}, baseParams, {
+      customVariables: customVariables
+    });
+    params.mainKeys = "customDimension:".concat(JSON.stringify(params.customVariables));
+  } else {
+    params = Object.assign({}, baseParams, {
+      campaignId: properties && properties.get('experiment_id'),
+      variationId: properties && properties.get('combination')
+    });
+    params.mainKeys = "campaignId:".concat(params.campaignId, " and variationId:").concat(params.variationId);
+  }
+
+  logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.IMPRESSION_SUCCESS, params));
+};
 
 var HttpImageUtil = {
   sendCall: function sendCall(url, queryParams) {
@@ -5496,11 +5748,12 @@ var HttpImageUtil = {
     var endPoint = "https://".concat(url.host).concat(url.pathname).concat(queryParams);
     var successCallback = options.successCallback,
         errorCallback = options.errorCallback;
+    errorCallback = errorCallback || successCallback;
     var isCallbackCalled = false;
     var img = new Image();
-    this.handleGetCall(img, successCallback, errorCallback, endPoint, isCallbackCalled);
+    this.handleGetCall(url, queryParams, img, successCallback, errorCallback, endPoint, isCallbackCalled);
   },
-  handleGetCall: function handleGetCall(img, successCallback, errorCallback, endPoint, isCallbackCalled) {
+  handleGetCall: function handleGetCall(url, queryParams, img, successCallback, errorCallback, endPoint, isCallbackCalled) {
     successCallback = successCallback || noop;
     errorCallback = errorCallback || noop;
 
@@ -5510,7 +5763,10 @@ var HttpImageUtil = {
       }
 
       isCallbackCalled = true;
-      successCallback();
+      successCallback(null, {
+        status: 'success'
+      });
+      printLog(url, queryParams);
     };
 
     img.onerror = function () {
@@ -5519,7 +5775,10 @@ var HttpImageUtil = {
       }
 
       isCallbackCalled = true;
-      errorCallback();
+      errorCallback(null, {
+        status: 'success'
+      });
+      printLog(url, queryParams);
     };
 
     img.src = endPoint;
@@ -6856,8 +7115,6 @@ var XhrUtil = {
       xhr.open(method, url);
       xhr.send();
     } else if (method === 'POST') {
-      debugger;
-
       xhr.onload = function () {
         resolve();
       };

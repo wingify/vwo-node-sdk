@@ -18,6 +18,7 @@ const VWO = require('../lib/VWO');
 const ImpressionUtil = require('../lib/utils/ImpressionUtil');
 const logging = require('../lib/services/logging');
 const indexFile = require('../lib/index');
+require('regenerator-runtime/runtime');
 
 const {
   settingsFile1,
@@ -793,6 +794,21 @@ describe('Class VWO', () => {
         }
       }
     });
+
+    test('should test with returnPromiseFor against a campaign settings: traffic:100 and split:50-50', async () => {
+      const campaignKey = settingsFile2.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile2,
+        logger,
+        returnPromiseFor: {
+          activate: true
+        }
+      });
+
+      await expect(vwoClientInstance.activate('wrong-key', users[0])).resolves.toBe(null);
+      await expect(vwoClientInstance.activate(campaignKey, users[0])).resolves.toBe(settings[campaignKey][0].variation);
+    });
   });
 
   describe('method: getVariation', () => {
@@ -1021,6 +1037,23 @@ describe('Class VWO', () => {
           })
         ).toBe(settings[campaignKey][i].variation);
       }
+    });
+
+    test('should test with returnPromiseFor against a campaign settings: traffic:100 and split:50-50', async () => {
+      const campaignKey = settingsFile2.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile2,
+        logger,
+        returnPromiseFor: {
+          getVariationName: true
+        }
+      });
+
+      await expect(vwoClientInstance.getVariationName('wrong-key', users[0])).resolves.toBe(null);
+      await expect(vwoClientInstance.getVariationName(campaignKey, users[0])).resolves.toBe(
+        settings[campaignKey][0].variation
+      );
     });
   });
 
@@ -1584,6 +1617,36 @@ describe('Class VWO', () => {
         expect(isTracked[campaignKey]).toBe(true);
       }
     });
+
+    test('should test with returnPromiseFor against a wrong campaign', async () => {
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile2,
+        logger,
+        returnPromiseFor: {
+          track: true
+        }
+      });
+
+      await expect(vwoClientInstance.track('wrong-key', users[0], goalIdentifier)).resolves.toEqual({
+        'wrong-key': false
+      });
+    });
+
+    test('should test with returnPromiseFor against a campaign settings: traffic:100 and split:50-50', async () => {
+      const campaignKey = settingsFile2.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile2,
+        logger,
+        returnPromiseFor: {
+          track: true
+        }
+      });
+
+      await expect(vwoClientInstance.track(campaignKey, users[0], goalIdentifier)).resolves.toEqual({
+        [campaignKey]: true
+      });
+    });
   });
 
   describe('method: isFeatureEnabled', () => {
@@ -1972,6 +2035,21 @@ describe('Class VWO', () => {
         expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', users[j])).not.toBe(null);
       }
     });
+
+    test('should test with returnPromiseFor against a campaign settings: traffic:100 and split:50-50', async () => {
+      const campaignKey = FEATURE_ROLLOUT_TRAFFIC_100.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile2,
+        logger,
+        returnPromiseFor: {
+          isFeatureEnabled: true
+        }
+      });
+
+      await expect(vwoClientInstance.isFeatureEnabled('wrong-key', users[0])).resolves.toBe(false);
+      await expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[0])).resolves.toBe(false);
+    });
   });
 
   describe('method: push', () => {
@@ -2023,8 +2101,8 @@ describe('Class VWO', () => {
       });
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
-      expect(vwoClientInstance.push('1', '1', '1')).toBe(true);
-      expect(vwoClientInstance.push({ a: 'a' }, 'a')).toBe(true);
+      expect(vwoClientInstance.push('1', '1', '1')).toEqual({ '1': true });
+      expect(vwoClientInstance.push({ a: 'a' }, 'userId')).toEqual({ a: true });
       expect(spyImpressionEventPush).toHaveBeenCalled();
       expect(spyEventQueue).toHaveBeenCalled();
     });
@@ -2037,7 +2115,7 @@ describe('Class VWO', () => {
       });
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
-      expect(vwoClientInstance.push('tagKey', 'tagValue', 'userId')).toBe(true);
+      expect(vwoClientInstance.push('tagKey', 'tagValue', 'userId')).toEqual({ tagKey: true });
       expect(spyEventQueue).toHaveBeenCalledTimes(1);
       expect(
         vwoClientInstance.push(
@@ -2048,7 +2126,7 @@ describe('Class VWO', () => {
           },
           'userId'
         )
-      ).toBe(true);
+      ).toEqual({ tag_key_1: true, tag_key_2: true, tag_key_3: true });
       expect(spyEventQueue).toHaveBeenCalledTimes(4);
     });
 
@@ -2073,7 +2151,7 @@ describe('Class VWO', () => {
           },
           'userId'
         )
-      ).toBe(true);
+      ).toEqual(true);
       expect(spyEventQueue).toHaveBeenCalledTimes(2);
     });
 
@@ -2101,8 +2179,20 @@ describe('Class VWO', () => {
           },
           'userId'
         )
-      ).toBe(true);
+      ).toEqual(true);
       expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(4);
+    });
+
+    test('should test with returnPromiseFor', async () => {
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFile2,
+        logger,
+        returnPromiseFor: {
+          push: true
+        }
+      });
+
+      await expect(vwoClientInstance.push({ a: 'a' }, 'a')).resolves.toEqual({ a: true });
     });
   });
 
@@ -2376,5 +2466,22 @@ describe('Class VWO', () => {
         })
       ).toBe(789);
     });
+  });
+
+  test('should test with returnPromiseFor against a campaign settings: traffic:100 and split:50-50', async () => {
+    const campaignKey = FEATURE_ROLLOUT_TRAFFIC_100.campaigns[0].key;
+
+    vwoClientInstance = new VWO({
+      settingsFile: FEATURE_ROLLOUT_TRAFFIC_100,
+      logger,
+      returnPromiseFor: {
+        getFeatureVariableValue: true
+      }
+    });
+
+    await expect(vwoClientInstance.getFeatureVariableValue('wrong-kwy', 'STRING_VARIABLE', userId)).resolves.toBe(null);
+    await expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', userId)).resolves.toBe(
+      'this_is_a_string'
+    );
   });
 });

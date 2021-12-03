@@ -5,7 +5,55 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [1.27.0] - 2021-12-03
+
+### Added
+
+- All APIs are capable of returning promise i.e. once the decision is made and tracking call to VWO is completed then only API will return. This will increase the overall response time of API as it will include tracking call time.
+
+  By default, all APIs are asynchronous i.e. they do not wait for the asynchronous tracking calls to get completed. You get the response
+
+  To return a promise, you have to configure the SDK at the time of instantiating i.e. while calling `launch` API.
+
+  We have provided a way to select which APIs you want to promisify. Rest will continue working normally
+
+  To return promise from all the APIs, configure the SDK like:
+
+  ```javascript
+  const vwoInstance = vwoSdk.launch({
+    settingsFile,
+    returnPromiseFor: {
+      all: true
+    }
+  });
+  ```
+
+  To return a promise from a particular API, for example, `activate` API, configure the SDK like:
+
+  ```javascript
+  const vwoInstance = vwoSdk.launch({
+    settingsFile,
+    returnPromiseFor: {
+      activate: true
+    }
+  });
+  ```
+
+  To return promise from different APIs, for example, `isFeatureEnabled` and `track` APIs, configure the SDK like:
+
+  ```javascript
+  const vwoInstance = vwoSdk.launch({
+    settingsFile,
+    returnPromiseFor: {
+      isFeatureEnabled: true,
+      track: true
+    }
+  });
+  ```
+
 ## [1.26.0] - 2021-11-18
+
+### Changed
 
 - Optimized build for JavaScript SDK by removing unwanted modules like `url` and `https`(used for Node.js SDK) for sending events tracking calls. Specifically for JavaScript SDK, `XMLHttpRequest` is used for which a utility already existed. The gzip minified JavaScript SDK size has been reduced to `24.4 kB` from `53.2 kB`.
 
