@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.27.1] - 2021-12-07
+
+### Changed
+
+- Updated `index.d.ts` file with typings related to asynchronous behavior of different APIs when `returnPromiseFor` is passed in `launch` API config.
+- When `isDevelopmentMode` is set to `true`, a log will be shown stating no tracking call will be made corresponding to the APIs.
+- Added tests to verify APIs are working properly when `returnPromiseFor` and `isDevelopmentMode` both are used.
 
 ## [1.27.0] - 2021-12-03
 

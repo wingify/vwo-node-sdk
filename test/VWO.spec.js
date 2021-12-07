@@ -809,6 +809,22 @@ describe('Class VWO', () => {
       await expect(vwoClientInstance.activate('wrong-key', users[0])).resolves.toBe(null);
       await expect(vwoClientInstance.activate(campaignKey, users[0])).resolves.toBe(settings[campaignKey][0].variation);
     });
+
+    test('should test with returnPromiseFor and isDevelopmentMode set to true against a campaign settings: traffic:100 and split:50-50', async () => {
+      const campaignKey = settingsFile2.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        isDevelopmentMode: true,
+        settingsFile: settingsFile2,
+        logger,
+        returnPromiseFor: {
+          activate: true
+        }
+      });
+
+      await expect(vwoClientInstance.activate('wrong-key', users[0])).resolves.toBe(null);
+      await expect(vwoClientInstance.activate(campaignKey, users[0])).resolves.toBe(settings[campaignKey][0].variation);
+    });
   });
 
   describe('method: getVariation', () => {
@@ -1043,6 +1059,24 @@ describe('Class VWO', () => {
       const campaignKey = settingsFile2.campaigns[0].key;
 
       vwoClientInstance = new VWO({
+        settingsFile: settingsFile2,
+        logger,
+        returnPromiseFor: {
+          getVariationName: true
+        }
+      });
+
+      await expect(vwoClientInstance.getVariationName('wrong-key', users[0])).resolves.toBe(null);
+      await expect(vwoClientInstance.getVariationName(campaignKey, users[0])).resolves.toBe(
+        settings[campaignKey][0].variation
+      );
+    });
+
+    test('should test with returnPromiseFor and isDevelopment set to true against a campaign settings: traffic:100 and split:50-50', async () => {
+      const campaignKey = settingsFile2.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        isDevelopmentMode: true,
         settingsFile: settingsFile2,
         logger,
         returnPromiseFor: {
@@ -1647,6 +1681,23 @@ describe('Class VWO', () => {
         [campaignKey]: true
       });
     });
+
+    test('should test with returnPromiseFor and isDevelopmentMode set to true against a campaign settings: traffic:100 and split:50-50', async () => {
+      const campaignKey = settingsFile2.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        isDevelopmentMode: true,
+        settingsFile: settingsFile2,
+        logger,
+        returnPromiseFor: {
+          track: true
+        }
+      });
+
+      await expect(vwoClientInstance.track(campaignKey, users[0], goalIdentifier)).resolves.toEqual({
+        [campaignKey]: true
+      });
+    });
   });
 
   describe('method: isFeatureEnabled', () => {
@@ -2050,6 +2101,22 @@ describe('Class VWO', () => {
       await expect(vwoClientInstance.isFeatureEnabled('wrong-key', users[0])).resolves.toBe(false);
       await expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[0])).resolves.toBe(false);
     });
+
+    test('should test with returnPromiseFor and isDevelopmentMode set to true against a campaign settings: traffic:100 and split:50-50', async () => {
+      const campaignKey = FEATURE_ROLLOUT_TRAFFIC_100.campaigns[0].key;
+
+      vwoClientInstance = new VWO({
+        isDevelopmentMode: true,
+        settingsFile: settingsFile2,
+        logger,
+        returnPromiseFor: {
+          isFeatureEnabled: true
+        }
+      });
+
+      await expect(vwoClientInstance.isFeatureEnabled('wrong-key', users[0])).resolves.toBe(false);
+      await expect(vwoClientInstance.isFeatureEnabled(campaignKey, users[0])).resolves.toBe(false);
+    });
   });
 
   describe('method: push', () => {
@@ -2140,7 +2207,7 @@ describe('Class VWO', () => {
       vwoClientInstance.SettingsFileManager._clonedSettingsFile.isEventArchEnabled = true;
 
       spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
-      expect(vwoClientInstance.push('tagKey', 'tagValue', 'userId')).toBe(true);
+      expect(vwoClientInstance.push('tagKey', 'tagValue', 'userId')).toEqual({ success: true });
       expect(spyEventQueue).toHaveBeenCalledTimes(1);
       expect(
         vwoClientInstance.push(
@@ -2151,7 +2218,7 @@ describe('Class VWO', () => {
           },
           'userId'
         )
-      ).toEqual(true);
+      ).toEqual({ success: true });
       expect(spyEventQueue).toHaveBeenCalledTimes(2);
     });
 
@@ -2168,7 +2235,7 @@ describe('Class VWO', () => {
 
       vwoClientInstance.SettingsFileManager._clonedSettingsFile.isEventArchEnabled = true;
 
-      expect(vwoClientInstance.push('tagKey', 'tagValue', 'userId')).toBe(true);
+      expect(vwoClientInstance.push('tagKey', 'tagValue', 'userId')).toEqual({ tagKey: true });
       expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(1);
       expect(
         vwoClientInstance.push(
@@ -2179,12 +2246,25 @@ describe('Class VWO', () => {
           },
           'userId'
         )
-      ).toEqual(true);
+      ).toEqual({ tag_key_1: true, tag_key_2: true, tag_key_3: true });
       expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(4);
     });
 
     test('should test with returnPromiseFor', async () => {
       vwoClientInstance = new VWO({
+        settingsFile: settingsFile2,
+        logger,
+        returnPromiseFor: {
+          push: true
+        }
+      });
+
+      await expect(vwoClientInstance.push({ a: 'a' }, 'a')).resolves.toEqual({ a: true });
+    });
+
+    test('should test with returnPromiseFor and isDevelopmentMode set to true', async () => {
+      vwoClientInstance = new VWO({
+        isDevelopmentMode: true,
         settingsFile: settingsFile2,
         logger,
         returnPromiseFor: {
@@ -2472,6 +2552,24 @@ describe('Class VWO', () => {
     const campaignKey = FEATURE_ROLLOUT_TRAFFIC_100.campaigns[0].key;
 
     vwoClientInstance = new VWO({
+      settingsFile: FEATURE_ROLLOUT_TRAFFIC_100,
+      logger,
+      returnPromiseFor: {
+        getFeatureVariableValue: true
+      }
+    });
+
+    await expect(vwoClientInstance.getFeatureVariableValue('wrong-kwy', 'STRING_VARIABLE', userId)).resolves.toBe(null);
+    await expect(vwoClientInstance.getFeatureVariableValue(campaignKey, 'STRING_VARIABLE', userId)).resolves.toBe(
+      'this_is_a_string'
+    );
+  });
+
+  test('should test with returnPromiseFor and isDevelopmentMode set to true against a campaign settings: traffic:100 and split:50-50', async () => {
+    const campaignKey = FEATURE_ROLLOUT_TRAFFIC_100.campaigns[0].key;
+
+    vwoClientInstance = new VWO({
+      isDevelopmentMode: true,
       settingsFile: FEATURE_ROLLOUT_TRAFFIC_100,
       logger,
       returnPromiseFor: {

@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.26.0
+ * vwo-javascript-sdk - v1.27.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -253,6 +253,10 @@ function () {
         // i.e. wait till the network call is not successful
 
         if (self.returnPromiseFor && (self.returnPromiseFor.activate || self.returnPromiseFor.all)) {
+          self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
+            file: file,
+            method: ApiEnum.ACTIVATE
+          }));
           return new Promise(function (resolve) {
             var variationName;
 
@@ -302,6 +306,10 @@ function () {
         var self = this; // Check if returnPromiseFor is provided. If yes, return a promise instead of value
 
         if (self.returnPromiseFor && (self.returnPromiseFor.getVariationName || self.returnPromiseFor.all)) {
+          self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
+            file: file,
+            method: ApiEnum.GET_VARIATION_NAME
+          }));
           return new Promise(function (resolve) {
             // since this API does not send any async call, we can simply resolve the returned value
             resolve(api.getVariation(self, campaignKey, userId, options));
@@ -333,6 +341,10 @@ function () {
         // i.e. wait till the network call is not successful
 
         if (self.returnPromiseFor && (self.returnPromiseFor.track || self.returnPromiseFor.all)) {
+          self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
+            file: file,
+            method: ApiEnum.TRACK
+          }));
           return new Promise(function (resolve) {
             var trackResponse;
             var counter = 0;
@@ -350,6 +362,9 @@ function () {
             // Or, in case of global goals, if none campaign got success, manually resolve
 
             if (!trackResponse || !FunctionUtil.objectValues(trackResponse).some(Boolean)) {
+              resolve(trackResponse);
+            } else if (trackResponse && trackResponse.isDevelopmentMode) {
+              delete trackResponse.isDevelopmentMode;
               resolve(trackResponse);
             }
           });
@@ -381,6 +396,10 @@ function () {
         // i.e. wait till the network call is not successful
 
         if (self.returnPromiseFor && (self.returnPromiseFor.isFeatureEnabled || self.returnPromiseFor.all)) {
+          self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
+            file: file,
+            method: ApiEnum.IS_FEATURE_ENABLED
+          }));
           return new Promise(function (resolve) {
             var isFeatureEnabledApiResponse;
 
@@ -434,6 +453,10 @@ function () {
         var self = this; // Check if returnPromiseFor is provided. If yes, return a promise instead of value
 
         if (self.returnPromiseFor && (self.returnPromiseFor.getFeatureVariableValue || self.returnPromiseFor.all)) {
+          self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
+            file: file,
+            method: ApiEnum.GET_FEATURE_VARIABLE_VALUE
+          }));
           return new Promise(function (resolve) {
             // since this API does not send any async call, we can simply resolve the returned value
             resolve(api.getFeatureVariableValue(self, campaignKey, variableKey, userId, options));
@@ -482,6 +505,10 @@ function () {
 
 
         if (self.returnPromiseFor && (self.returnPromiseFor.push || self.returnPromiseFor.all)) {
+          self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
+            file: file,
+            method: ApiEnum.PUSH
+          }));
           return new Promise(function (resolve) {
             var apiResponse;
             var counter = 0;
@@ -499,6 +526,9 @@ function () {
 
             if (!apiResponse) {
               resolve(false);
+            } else if (apiResponse && apiResponse.isDevelopmentMode) {
+              delete apiResponse.isDevelopmentMode;
+              resolve(apiResponse);
             }
           });
         }
@@ -721,6 +751,12 @@ function activate(vwoInstance, campaignKey, userId) {
     vwoInstance.eventQueue.process(config, _properties2, vwoInstance, {
       responseCallback: responseCallback
     });
+  }
+
+  if (config.isDevelopmentMode) {
+    return {
+      variationName: variationName
+    };
   }
 
   return variationName;
@@ -1286,7 +1322,7 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
     }));
   }
 
-  if (isStoredVariation) {
+  if (isStoredVariation || config.isDevelopmentMode) {
     return {
       isFeatureEnabled: isFeatureEnabled
     };
@@ -1413,11 +1449,14 @@ function push(vwoInstance, tagKey, tagValue, userId, customDimensionMap) {
     return false;
   }
 
+  var result = {};
+
   if (config.batchEvents) {
     Object.keys(customDimensionMap).forEach(function (key) {
       var tagValue = DataTypeUtil.isString(customDimensionMap[key]) ? customDimensionMap[key] : JSON.stringify(customDimensionMap[key]);
       var properties = ImpressionUtil.buildBatchEventForPushing(settingsFile, key, tagValue, userId);
       vwoInstance.batchEventsQueue.enqueue(properties);
+      result[key] = true;
     });
   } else if (settingsFile.isEventArchEnabled) {
     var properties = ImpressionUtil.getEventsBaseProperties(settingsFile, EventEnum.VWO_SYNC_VISITOR_PROP);
@@ -1426,8 +1465,8 @@ function push(vwoInstance, tagKey, tagValue, userId, customDimensionMap) {
       payload: payload,
       responseCallback: responseCallback
     });
+    result.success = true;
   } else {
-    var result = {};
     Object.keys(customDimensionMap).forEach(function (key) {
       var tagValue = DataTypeUtil.isString(customDimensionMap[key]) ? customDimensionMap[key] : JSON.stringify(customDimensionMap[key]);
       var properties = ImpressionUtil.buildEventForPushing(settingsFile, key, tagValue, userId);
@@ -1436,10 +1475,15 @@ function push(vwoInstance, tagKey, tagValue, userId, customDimensionMap) {
       });
       result[key] = true;
     });
-    return result;
   }
 
-  return true;
+  if (config.isDevelopmentMode) {
+    return Object.assign({}, result, {
+      isDevelopmentMode: config.isDevelopmentMode
+    });
+  }
+
+  return result;
 }
 
 module.exports = push;
@@ -1610,6 +1654,12 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
     });
   }
 
+  if (config.isDevelopmentMode) {
+    return Object.assign({}, result, {
+      isDevelopmentMode: config.isDevelopmentMode
+    });
+  }
+
   return result;
 }
 
@@ -1753,7 +1803,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.26.0"
+    version: "1.27.0"
   };
 } else {}
 
@@ -2716,7 +2766,9 @@ module.exports = {
     GOT_WINNER_CAMPAIGN: '({file}): Campaign:{campaignKey} is selected from the mutually exclusive group:{groupName} for the User ID:{userId}.',
     GOT_ELIGIBLE_CAMPAIGNS: '({file}): Got {noOfEligibleCampaigns} eligible winners out of {noOfGroupCampaigns} campaigns from the Group:{groupName} and for User ID:{userId}',
     CALLED_CAMPAIGN_NOT_WINNER: '({file}): Campaign:{campaignKey} does not qualify from the mutually exclusive group:{groupName} for User ID:{userId}',
-    OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE: '({file}): Campaign:{campaignKey} of Group:{groupName} satisfies {type} for User ID:{userId}'
+    OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE: '({file}): Campaign:{campaignKey} of Group:{groupName} satisfies {type} for User ID:{userId}',
+    DEV_MODE_ON: '({file}): isDevelopmentMode is set to true. No tracking call is made to VWO server.',
+    CONFIG_RETURN_PROMISE: '({file}): {method} API returns a promise as returnPromiseFor is set to true for this API'
   },
   WARNING_MESSAGES: {}
 };
@@ -3279,6 +3331,16 @@ var DataTypeUtil = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils
 
 var EventDispatcher = __webpack_require__(/*! ../utils/EventDispatcherUtil */ "./lib/utils/EventDispatcherUtil.js");
 
+var logging = __webpack_require__(/*! ./logging */ "./lib/services/logging/index.js");
+
+var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
+
+var LogLevelEnum = logging.LogLevelEnum,
+    LogMessageEnum = logging.LogMessageEnum,
+    LogMessageUtil = logging.LogMessageUtil;
+var logger = logging.getLogger();
+var file = FileNameEnum.EventQueue;
+
 var EventQueue =
 /*#__PURE__*/
 function () {
@@ -3297,6 +3359,9 @@ function () {
           responseCallback = _ref.responseCallback;
 
       if (config && config.isDevelopmentMode) {
+        logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.DEV_MODE_ON, {
+          file: file
+        }));
         return;
       }
 

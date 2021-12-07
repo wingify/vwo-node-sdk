@@ -33,6 +33,7 @@ declare module 'vwo-node-sdk' {
    * @returns               The VWO instance.
    */
   export function launch(launchConfig: VWOLaunchConfig): vwoInstance;
+  export function launch(launchConfig: VWOAsyncLaunchConfig): vwoAsyncInstance;
 
   /**
    * APIs offered by the VWO fullstack which can be accessed using the VWO instance.
@@ -141,6 +142,110 @@ declare module 'vwo-node-sdk' {
     getAndUpdateSettingsFile(accountId?: string, apiKey?: string): Promise<object>;
   }
 
+  export interface vwoAsyncInstance {
+    /**
+     * This API method: Gets the variation assigned for the user for the campaign and send the metrics to VWO server
+     *
+     * @param campaignKey       unique campaign key specified in VWO app
+     * @param userId            ID assigned to a user
+     * @param options           VWOApiOptions optional params - customVariables, variationTargetingVariables, metaData, shouldTrackReturningUser, userStorageData
+     *
+     * @returns                 If variation is assigned then variation-name otherwise null in case of user not becoming part
+     */
+    activate(campaignKey: string, userId: string, options?: VWOApiOptions): Promise<string | null> | string | null;
+
+    /**
+     * This API method: Gets the variation assigned for the user for the campaign.
+     *
+     * @param campaignKey       unique campaign key specified in VWO app
+     * @param userId            ID assigned to a user
+     * @param options           VWOApiOptions optional params - customVariables, variationTargetingVariables, metaData, userStorageData
+     *
+     * @returns                 If variation is assigned then variation-name otherwise null in case of user not becoming part
+     */
+    getVariationName(campaignKey: string, userId: string, options?: VWOApiOptions): Promise<string | null> | string | null;
+
+    /**
+     * This API method: Marks the conversion of the campaign for a particular goal.
+     *
+     * @param campaignSpecifier       campaign keys to track/unique campaignSpecifier. It could be null also.
+     * @param userId                  ID assigned to a user
+     * @param goalIdentifier          unique campaign's goal identifier which needs to be tracked.
+     * @param options                 VWOApiOptions optional params - customVariables, variationTargetingVariables, revenueValue, metaData, shouldTrackReturningUser, userStorageData, goalTypeToTrack
+     *
+     * @returns                       A dictionary with campaignKey as key and value as true if the goal is tracked, else false.
+     */
+    track(
+      campaignSpecifier: string | Array<String> | null | undefined,
+      userId: string,
+      goalIdentifier: string,
+      options?: VWOTrackGoalOptions
+    ): Promise<Record<string, boolean>> | Record<string, boolean>;
+
+    /**
+     * This API method checks: Whether a feature is enabled or not for the given user
+     *
+     * @param campaignKey          Unique key for a campaign
+     * @param userId               Unique identifier for the user
+     * @param options              VWOApiOptions optional params - customVariables, variationTargetingVariables, metaData, userStorageData, shouldTrackReturningUser
+     *
+     * @returns                    true if feature enabled, false otherwise
+     */
+    isFeatureEnabled(campaignKey: string, userId: string, options?: VWOApiOptions): Promise<boolean> | boolean;
+
+    /**
+     * This API method: Return the variable for that variation(if Feature Test), otherwise the default values being set in Feature
+     *
+     * @param campaignKey           Unique key for a campaign
+     * @param variableKey           Unique key for a feature's variable
+     * @param userId                Unique identifier for the user
+     * @param options               VWOApiOptions optional params - customVariables, variationTargetingVariables, metaData, userStorageData
+     */
+    getFeatureVariableValue(
+      campaignKey: string,
+      variableKey: string,
+      userId: string,
+      options?: VWOApiOptions
+    ): Promise<string | number | boolean | null> | string | number | boolean | null;
+
+    /**
+     * This API method: Pushes the key-value tag pair for a particular user
+     *
+     * @param tagKey                tag key
+     * @param tagValue              tag Value
+     * @param userId                ID assigned to a user
+     *
+     * @returns                     true if request is pushed to eventQueue, false if params are invalid or settings file is unavailable
+     */
+    push(tagKey: string, tagValue: string, userId: string): Promise<boolean> | boolean;
+
+     /**
+     * This API method: Pushes the key-value tag pair for a particular user
+     *
+     * @param customDimensionMap    A Map containing multiple Sustom Dimensions
+     * @param userId                ID assigned to a user
+     *
+     * @returns                     true if request is pushed to eventQueue, false if params are invalid or settings file is unavailable
+     */
+    push(customDimensionMap: Record<string, string>, userId: string): Promise<boolean> | boolean;
+
+    /**
+     * Manually flush impression events to VWO which are queued in batch queue as per batchEvents config
+     *
+     * @returns                     A dictionary with message and status.
+     */
+    flushEvents(): Promise<Record<string, any>>;
+
+    /**
+     * Fetch latest settings-file and update so that vwoClientInstance could use latest settings
+     * Helpful especially when using webhooks
+     *
+     * @param accountId             AccountId associated with the VWO account.
+     * @param apiKey                apiKey of the project whose settings needs to be fetched.
+     */
+    getAndUpdateSettingsFile(accountId?: string, apiKey?: string): Promise<object>;
+  }
+
   /**
    * An object that containing the function which can be implemented to display custom logs.
    */
@@ -217,7 +322,7 @@ declare module 'vwo-node-sdk' {
   /**
    * VWO initialization configurations.
    */
-  export interface VWOLaunchConfig {
+  interface VWOBaseLaunchConfig {
     /**
      * settings file obtained from the getSettingsFile Function.
      */
@@ -265,6 +370,20 @@ declare module 'vwo-node-sdk' {
      */
     sdkKey?: string;
   }
+
+  // For synchronous code
+  export interface VWOLaunchConfig extends VWOBaseLaunchConfig {}
+
+  // For asynchronous code
+  export interface VWOAsyncLaunchConfig extends VWOBaseLaunchConfig {
+    /**
+     * If APIs need to return promise instead of value
+     * Refer the section "Promises and async" in the docs
+     * For example: https://developers.vwo.com/docs/nodejs-activate#promises-and-async
+     */
+    returnPromiseFor: VWOAsyncConfig;
+  }
+
 
   /**
    * Event batching configuration to be passed at the time of VWO instantiation.
@@ -329,6 +448,20 @@ declare module 'vwo-node-sdk' {
      * Type of the goal to be tracked.
      */
     goalTypeToTrack?: GoalTypeEnum;
+  }
+
+  export interface VWOAsyncConfig {
+    // If you want only specific APIs to return the promise, configure only them
+    activate?: boolean,
+    getVariationName?: boolean,
+    track?: boolean,
+    isFeatureEnabled?: boolean,
+    getFeatureVariableValue?: boolean,
+    push?: boolean,
+
+    // If you want all the above APIs to return promise or not, only configure the below key
+    // By default, all APIs simply return a value without waiting for any asycnhornous call originating from specific APIs
+    all?: boolean
   }
 
   /**
