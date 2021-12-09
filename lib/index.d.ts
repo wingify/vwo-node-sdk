@@ -116,6 +116,11 @@ declare module 'vwo-node-sdk' {
     push(tagKey: string, tagValue: string, userId: string): boolean;
 
      /**
+     * This API method: Opt-out the user from VWO i.e APIs exposed on vwoInstance will not work anymore
+     */
+    setOptOut(): boolean;
+
+    /**
      * This API method: Pushes the key-value tag pair for a particular user
      *
      * @param customDimensionMap    A Map containing multiple Sustom Dimensions
@@ -228,6 +233,12 @@ declare module 'vwo-node-sdk' {
      * @returns                     true if request is pushed to eventQueue, false if params are invalid or settings file is unavailable
      */
     push(customDimensionMap: Record<string, string>, userId: string): Promise<boolean> | boolean;
+
+
+    /**
+     * This API method: Opt-out the user from VWO i.e APIs exposed on vwoInstance will not work anymore
+     */
+    setOptOut(): Promise<boolean> | boolean;
 
     /**
      * Manually flush impression events to VWO which are queued in batch queue as per batchEvents config

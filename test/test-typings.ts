@@ -88,6 +88,8 @@ let isGoalTracked: Record<string, boolean> = vwoInstance.track(
   Object.assign({}, trackOptions, apiOptions)
 );
 
+let optOut = vwoInstance.setOptOut();
+
 let isPostDimensionPushed = vwoInstance.push('tagKey', 'tagValue', 'userId');
 vwoInstance.push({'a': 'a'}, 'userId');
 

@@ -2582,4 +2582,171 @@ describe('Class VWO', () => {
       'this_is_a_string'
     );
   });
+
+  describe('opt-out', () => {
+    test('opt-out is enabled for non-promisified VISUAL_AB APIs', () => {
+      let campaignKey = settingsFile1.campaigns[0].key;
+      let goalIdentifier = settingsFile1.campaigns[0].goals[0].identifier;
+
+      let vwoClientInstance = new VWO({
+        settingsFile: settingsFile1,
+        logger,
+        isDevelopmentMode: true,
+        batchEvents: {
+          eventsPerRequest: 1000
+        }
+      });
+      let variationName = vwoClientInstance.activate(campaignKey, 'Ashley');
+      expect(variationName).toBe('Variation-1');
+
+      let getVariationName = vwoClientInstance.getVariationName(campaignKey, 'Ashley');
+      expect(getVariationName).toBe('Variation-1');
+
+      let trackResponse = vwoClientInstance.track(campaignKey, 'Ashley', goalIdentifier);
+      expect(trackResponse[campaignKey]).toBe(true);
+
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(2);
+      // enable the opt-out
+      expect(vwoClientInstance.setOptOut()).toBe(true);
+
+      expect(vwoClientInstance.batchEventsQueue.queue.length).toBe(0);
+      expect(vwoClientInstance.SettingsFileManager).toStrictEqual(undefined);
+      expect(vwoClientInstance.usageStats).toStrictEqual(undefined);
+      expect(vwoClientInstance.eventQueue).toStrictEqual(undefined);
+      expect(vwoClientInstance.userStorageService).toStrictEqual(undefined);
+      expect(vwoClientInstance.optOut).toStrictEqual(true);
+
+      variationName = vwoClientInstance.activate(campaignKey, 'Ashley');
+      expect(variationName).toBe(null);
+
+      getVariationName = vwoClientInstance.getVariationName(campaignKey, 'Ashley');
+      expect(getVariationName).toBe(null);
+
+      trackResponse = vwoClientInstance.track(campaignKey, 'Ashley', goalIdentifier);
+      expect(trackResponse).toBe(null);
+    });
+
+    test('opt-out is enabled for promisified VISUAL_AB APIs', async () => {
+      let campaignKey = settingsFile1.campaigns[0].key;
+      let goalIdentifier = settingsFile1.campaigns[0].goals[0].identifier;
+
+      let vwoClientInstance = new VWO({
+        settingsFile: settingsFile1,
+        returnPromiseFor: {
+          activate: true,
+          getVariationName: true,
+          track: true,
+          optOut: true
+        },
+        logger
+      });
+      await expect(vwoClientInstance.activate(campaignKey, 'Ashley')).resolves.toBe('Variation-1');
+      await expect(vwoClientInstance.getVariationName(campaignKey, 'Ashley')).resolves.toBe('Variation-1');
+      let trackResponse = await vwoClientInstance.track(campaignKey, 'Ashley', goalIdentifier);
+      expect(trackResponse[campaignKey]).toBe(true);
+
+      // enable the opt-out
+      await expect(vwoClientInstance.setOptOut()).resolves.toBe(true);
+      expect(vwoClientInstance.SettingsFileManager).toStrictEqual(undefined);
+      expect(vwoClientInstance.usageStats).toStrictEqual(undefined);
+      expect(vwoClientInstance.eventQueue).toStrictEqual(undefined);
+      expect(vwoClientInstance.userStorageService).toStrictEqual(undefined);
+      expect(vwoClientInstance.optOut).toStrictEqual(true);
+
+      await expect(vwoClientInstance.activate(campaignKey, 'Ashley')).resolves.toBe(null);
+      await expect(vwoClientInstance.getVariationName(campaignKey, 'Ashley')).resolves.toBe(null);
+      trackResponse = await vwoClientInstance.track(campaignKey, 'Ashley', goalIdentifier);
+      expect(trackResponse).toBe(null);
+    });
+
+    test('opt-out is enabled for non-promisified FEATURE Rollout/Test APIs', () => {
+      let featureCampaignKey = FEATURE_TEST_TRAFFIC_100.campaigns[0].key;
+      let variableKey = FEATURE_TEST_TRAFFIC_100.campaigns[0].variations[0].variables[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_100,
+        logger,
+        isDevelopmentMode: true
+      });
+
+      let isFeatureEnabled = vwoClientInstance.isFeatureEnabled(featureCampaignKey, 'Ashley');
+      expect(isFeatureEnabled).toBe(true);
+
+      let variableValue = vwoClientInstance.getFeatureVariableValue(featureCampaignKey, variableKey, 'Ashley');
+      expect(variableValue).toBe('Variation-2 string');
+
+      let push = vwoClientInstance.push('tagKey', 'tagValue', 'Ashley');
+      expect(push.tagKey).toBe(true);
+
+      // enable the opt-out
+      expect(vwoClientInstance.setOptOut()).toBe(true);
+
+      isFeatureEnabled = vwoClientInstance.isFeatureEnabled(featureCampaignKey, 'Ashley');
+      expect(isFeatureEnabled).toBe(false);
+
+      variableValue = vwoClientInstance.getFeatureVariableValue(featureCampaignKey, variableKey, 'Ashley');
+      expect(variableValue).toBe(null);
+
+      push = vwoClientInstance.push('tagKey', 'tagValue', 'Ashley');
+      expect(push).toBe(null);
+    });
+
+    test('opt-out is enabled for promisified FEATURE Rollout/Test APIs', async () => {
+      let featureCampaignKey = FEATURE_TEST_TRAFFIC_100.campaigns[0].key;
+      let variableKey = FEATURE_TEST_TRAFFIC_100.campaigns[0].variations[0].variables[0].key;
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_100,
+        logger,
+        returnPromiseFor: {
+          isFeatureEnabled: true,
+          getFeatureVariableValue: true,
+          push: true,
+          optOut: true
+        }
+      });
+
+      await expect(vwoClientInstance.isFeatureEnabled(featureCampaignKey, 'Ashley')).resolves.toBe(true);
+      await expect(vwoClientInstance.getFeatureVariableValue(featureCampaignKey, variableKey, 'Ashley')).resolves.toBe(
+        'Variation-2 string'
+      );
+      let pushResponse = await vwoClientInstance.push('tagKey', 'tagValue', 'Ashley');
+      expect(pushResponse.tagKey).toBe(true);
+
+      // enable the opt-out
+      await expect(vwoClientInstance.setOptOut()).resolves.toBe(true);
+
+      expect(vwoClientInstance.SettingsFileManager).toStrictEqual(undefined);
+      expect(vwoClientInstance.usageStats).toStrictEqual(undefined);
+      expect(vwoClientInstance.eventQueue).toStrictEqual(undefined);
+      expect(vwoClientInstance.userStorageService).toStrictEqual(undefined);
+      expect(vwoClientInstance.optOut).toStrictEqual(true);
+
+      await expect(vwoClientInstance.isFeatureEnabled(featureCampaignKey, 'Ashley')).resolves.toBe(false);
+      await expect(vwoClientInstance.getFeatureVariableValue(featureCampaignKey, variableKey, 'Ashley')).resolves.toBe(
+        null
+      );
+      pushResponse = await vwoClientInstance.push('tagKey', 'tagValue', 'Ashley');
+      expect(pushResponse).toBe(null);
+
+      // new initializing the instance should return expected results for APIs
+
+      vwoClientInstance = new VWO({
+        settingsFile: FEATURE_TEST_TRAFFIC_100,
+        logger,
+        returnPromiseFor: {
+          isFeatureEnabled: true,
+          getFeatureVariableValue: true,
+          push: true
+        }
+      });
+
+      await expect(vwoClientInstance.isFeatureEnabled(featureCampaignKey, 'Ashley')).resolves.toBe(true);
+      await expect(vwoClientInstance.getFeatureVariableValue(featureCampaignKey, variableKey, 'Ashley')).resolves.toBe(
+        'Variation-2 string'
+      );
+      pushResponse = await vwoClientInstance.push('tagKey', 'tagValue', 'Ashley');
+      expect(pushResponse.tagKey).toBe(true);
+    });
+  });
 });

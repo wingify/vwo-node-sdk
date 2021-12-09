@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.27.0
+ * vwo-javascript-sdk - v1.27.1
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -197,7 +197,8 @@ function () {
 
     this.userStorageService = config.userStorageService;
     this.logger = config.logger;
-    this.returnPromiseFor = config.returnPromiseFor; // Initialize Hooks manager so that callbacks can be invoked
+    this.returnPromiseFor = config.returnPromiseFor;
+    this.optOut = false; // Initialize Hooks manager so that callbacks can be invoked
 
     HooksManager.init(config);
     var settingsFileManager = new SettingsFileService(config); // Validate the config file i.e. check if required fields contain appropriate data
@@ -246,6 +247,8 @@ function () {
   _createClass(VWO, [{
     key: "activate",
     value: function activate(campaignKey, userId) {
+      var _this2 = this;
+
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
       try {
@@ -258,21 +261,38 @@ function () {
             method: ApiEnum.ACTIVATE
           }));
           return new Promise(function (resolve) {
-            var variationName;
+            if (_this2.optOut) {
+              _this2.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+                file: file,
+                api: ApiEnum.ACTIVATE
+              }));
 
-            options.responseCallback = function (_error, _response) {
-              resolve(variationName);
-            };
+              resolve(null);
+            } else {
+              var variationName;
 
-            variationName = api.activate(self, campaignKey, userId, options); // If we get null from the API i.e. no tracking call was sent
-            // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
+              options.responseCallback = function (_error, _response) {
+                resolve(variationName);
+              };
 
-            if (!variationName) {
-              resolve(variationName);
-            } else if (DataTypeUtil.isObject(variationName)) {
-              resolve(variationName.variationName);
+              variationName = api.activate(self, campaignKey, userId, options); // If we get null from the API i.e. no tracking call was sent
+              // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
+
+              if (!variationName) {
+                resolve(variationName);
+              } else if (DataTypeUtil.isObject(variationName)) {
+                resolve(variationName.variationName);
+              }
             }
           });
+        }
+
+        if (this.optOut) {
+          this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+            file: file,
+            api: ApiEnum.ACTIVATE
+          }));
+          return null;
         }
 
         var apiResponse = api.activate(self, campaignKey, userId, options);
@@ -300,6 +320,8 @@ function () {
   }, {
     key: "getVariationName",
     value: function getVariationName(campaignKey, userId) {
+      var _this3 = this;
+
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
       try {
@@ -311,9 +333,26 @@ function () {
             method: ApiEnum.GET_VARIATION_NAME
           }));
           return new Promise(function (resolve) {
-            // since this API does not send any async call, we can simply resolve the returned value
-            resolve(api.getVariation(self, campaignKey, userId, options));
+            if (_this3.optOut) {
+              _this3.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+                file: file,
+                api: ApiEnum.GET_VARIATION_NAME
+              }));
+
+              resolve(null);
+            } else {
+              // since this API does not send any async call, we can simply resolve the returned value
+              resolve(api.getVariation(self, campaignKey, userId, options));
+            }
           });
+        }
+
+        if (this.optOut) {
+          this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+            file: file,
+            api: ApiEnum.GET_VARIATION_NAME
+          }));
+          return null;
         }
 
         return api.getVariation(self, campaignKey, userId, options);
@@ -334,6 +373,8 @@ function () {
   }, {
     key: "track",
     value: function track(campaignSpecifier, userId, goalIdentifier) {
+      var _this4 = this;
+
       var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
       try {
@@ -346,28 +387,45 @@ function () {
             method: ApiEnum.TRACK
           }));
           return new Promise(function (resolve) {
-            var trackResponse;
-            var counter = 0;
+            if (_this4.optOut) {
+              _this4.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+                file: file,
+                api: ApiEnum.TRACK
+              }));
 
-            options.responseCallback = function (_error, _response) {
-              counter += 1; // In case of global goals, when all campaigns are tracked, then only resolve
+              resolve(null);
+            } else {
+              var trackResponse;
+              var counter = 0;
 
-              if (counter === FunctionUtil.objectValues(trackResponse).filter(Boolean).length) {
+              options.responseCallback = function (_error, _response) {
+                counter += 1; // In case of global goals, when all campaigns are tracked, then only resolve
+
+                if (counter === FunctionUtil.objectValues(trackResponse).filter(Boolean).length) {
+                  resolve(trackResponse);
+                }
+              };
+
+              trackResponse = api.track(self, campaignSpecifier, userId, goalIdentifier, options); // If we get null/false from the API i.e. no tracking call was sent
+              // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
+              // Or, in case of global goals, if none campaign got success, manually resolve
+
+              if (!trackResponse || !FunctionUtil.objectValues(trackResponse).some(Boolean)) {
+                resolve(trackResponse);
+              } else if (trackResponse && trackResponse.isDevelopmentMode) {
+                delete trackResponse.isDevelopmentMode;
                 resolve(trackResponse);
               }
-            };
-
-            trackResponse = api.track(self, campaignSpecifier, userId, goalIdentifier, options); // If we get null/false from the API i.e. no tracking call was sent
-            // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
-            // Or, in case of global goals, if none campaign got success, manually resolve
-
-            if (!trackResponse || !FunctionUtil.objectValues(trackResponse).some(Boolean)) {
-              resolve(trackResponse);
-            } else if (trackResponse && trackResponse.isDevelopmentMode) {
-              delete trackResponse.isDevelopmentMode;
-              resolve(trackResponse);
             }
           });
+        }
+
+        if (this.optOut) {
+          this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+            file: file,
+            api: ApiEnum.TRACK
+          }));
+          return null;
         }
 
         return api.track(self, campaignSpecifier, userId, goalIdentifier, options);
@@ -389,6 +447,8 @@ function () {
   }, {
     key: "isFeatureEnabled",
     value: function isFeatureEnabled(campaignKey, userId) {
+      var _this5 = this;
+
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
       try {
@@ -401,21 +461,38 @@ function () {
             method: ApiEnum.IS_FEATURE_ENABLED
           }));
           return new Promise(function (resolve) {
-            var isFeatureEnabledApiResponse;
+            if (_this5.optOut) {
+              _this5.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+                file: file,
+                api: ApiEnum.IS_FEATURE_ENABLED
+              }));
 
-            options.responseCallback = function (_error, _response) {
-              resolve(!!isFeatureEnabledApiResponse);
-            };
-
-            isFeatureEnabledApiResponse = api.isFeatureEnabled(self, campaignKey, userId, options); // If we get null from the API i.e. no tracking call was sent
-            // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
-
-            if (DataTypeUtil.isNull(isFeatureEnabledApiResponse)) {
               resolve(false);
-            } else if (DataTypeUtil.isObject(isFeatureEnabledApiResponse)) {
-              resolve(!!isFeatureEnabledApiResponse.isFeatureEnabled);
+            } else {
+              var isFeatureEnabledApiResponse;
+
+              options.responseCallback = function (_error, _response) {
+                resolve(!!isFeatureEnabledApiResponse);
+              };
+
+              isFeatureEnabledApiResponse = api.isFeatureEnabled(self, campaignKey, userId, options); // If we get null from the API i.e. no tracking call was sent
+              // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
+
+              if (DataTypeUtil.isNull(isFeatureEnabledApiResponse)) {
+                resolve(false);
+              } else if (DataTypeUtil.isObject(isFeatureEnabledApiResponse)) {
+                resolve(!!isFeatureEnabledApiResponse.isFeatureEnabled);
+              }
             }
           });
+        }
+
+        if (this.optOut) {
+          this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+            file: file,
+            api: ApiEnum.IS_FEATURE_ENABLED
+          }));
+          return false;
         }
 
         var apiResponse = api.isFeatureEnabled(self, campaignKey, userId, options);
@@ -447,6 +524,8 @@ function () {
   }, {
     key: "getFeatureVariableValue",
     value: function getFeatureVariableValue(campaignKey, variableKey, userId) {
+      var _this6 = this;
+
       var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
       try {
@@ -458,9 +537,26 @@ function () {
             method: ApiEnum.GET_FEATURE_VARIABLE_VALUE
           }));
           return new Promise(function (resolve) {
-            // since this API does not send any async call, we can simply resolve the returned value
-            resolve(api.getFeatureVariableValue(self, campaignKey, variableKey, userId, options));
+            if (_this6.optOut) {
+              _this6.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+                file: file,
+                api: ApiEnum.GET_FEATURE_VARIABLE_VALUE
+              }));
+
+              resolve(null);
+            } else {
+              // since this API does not send any async call, we can simply resolve the returned value
+              resolve(api.getFeatureVariableValue(self, campaignKey, variableKey, userId, options));
+            }
           });
+        }
+
+        if (this.optOut) {
+          this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+            file: file,
+            api: ApiEnum.GET_FEATURE_VARIABLE_VALUE
+          }));
+          return null;
         }
 
         return api.getFeatureVariableValue(self, campaignKey, variableKey, userId, options);
@@ -482,6 +578,8 @@ function () {
   }, {
     key: "push",
     value: function push(tagKey, tagValue, userId) {
+      var _this7 = this;
+
       try {
         var self = this;
         var customDimensionMap;
@@ -510,27 +608,44 @@ function () {
             method: ApiEnum.PUSH
           }));
           return new Promise(function (resolve) {
-            var apiResponse;
-            var counter = 0;
-            var options = {
-              responseCallback: function responseCallback(_error, _response) {
-                counter += 1; // In case of multiple custom dimensions, when all are tracked, then only resolve
+            if (_this7.optOut) {
+              _this7.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+                file: file,
+                api: ApiEnum.PUSH
+              }));
 
-                if (counter === FunctionUtil.objectValues(apiResponse).filter(Boolean).length) {
-                  resolve(apiResponse);
+              resolve(null);
+            } else {
+              var apiResponse;
+              var counter = 0;
+              var options = {
+                responseCallback: function responseCallback(_error, _response) {
+                  counter += 1; // In case of multiple custom dimensions, when all are tracked, then only resolve
+
+                  if (counter === FunctionUtil.objectValues(apiResponse).filter(Boolean).length) {
+                    resolve(apiResponse);
+                  }
                 }
-              }
-            };
-            apiResponse = api.push(self, tagKey, tagValue, userId, customDimensionMap, options); // If we get false from the API i.e. no tracking call was sent
-            // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
+              };
+              apiResponse = api.push(self, tagKey, tagValue, userId, customDimensionMap, options); // If we get false from the API i.e. no tracking call was sent
+              // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
 
-            if (!apiResponse) {
-              resolve(false);
-            } else if (apiResponse && apiResponse.isDevelopmentMode) {
-              delete apiResponse.isDevelopmentMode;
-              resolve(apiResponse);
+              if (!apiResponse) {
+                resolve(false);
+              } else if (apiResponse && apiResponse.isDevelopmentMode) {
+                delete apiResponse.isDevelopmentMode;
+                resolve(apiResponse);
+              }
             }
           });
+        }
+
+        if (this.optOut) {
+          this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+            file: file,
+            api: ApiEnum.PUSH
+          }));
+          return null;
         }
 
         return api.push(self, tagKey, tagValue, userId, customDimensionMap);
@@ -539,6 +654,49 @@ function () {
         return false;
       }
     }
+  }, {
+    key: "setOptOut",
+    value: function setOptOut() {
+      var _this8 = this;
+
+      this.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.OPT_OUT_API_CALLED, {
+        file: file
+      }));
+
+      if (this.returnPromiseFor && (this.returnPromiseFor.optOut || this.returnPromiseFor.all)) {
+        return new Promise(function (resolve) {
+          _this8.userStorageService = undefined;
+          _this8.SettingsFileManager._configObj = null;
+          _this8.SettingsFileManager = undefined;
+          _this8.usageStats = undefined;
+          _this8.eventQueue = undefined;
+          _this8.optOut = true;
+
+          if (_this8.batchEventsQueue) {
+            _this8.flushEvents().then(function () {
+              _this8.batchEventsQueue = undefined;
+              resolve(true);
+            });
+          } else {
+            resolve(true);
+          }
+        });
+      }
+
+      if (this.batchEventsQueue) {
+        this.flushEvents().then(function () {
+          _this8.batchEventsQueue = undefined;
+        });
+      }
+
+      this.userStorageService = undefined;
+      this.SettingsFileManager._configObj = null;
+      this.SettingsFileManager = undefined;
+      this.usageStats = undefined;
+      this.eventQueue = undefined;
+      this.optOut = true;
+      return true;
+    }
     /**
      * Manually flush impression events to VWO which are queued in batch queue as per batchEvents config
      */
@@ -546,7 +704,7 @@ function () {
   }, {
     key: "flushEvents",
     value: function flushEvents() {
-      var _this2 = this;
+      var _this9 = this;
 
       if (false) {}
     }
@@ -563,6 +721,16 @@ function () {
   }, {
     key: "getAndUpdateSettingsFile",
     value: function getAndUpdateSettingsFile(accountId, sdkKey) {
+      if (this.optOut) {
+        this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+          file: file,
+          api: 'getAndUpdateSettingsFile'
+        }));
+        return new Promise(function (resolve) {
+          resolve(null);
+        });
+      }
+
       return this.SettingsFileManager.getAndUpdateSettingsFile(accountId, sdkKey);
     }
   }]);
@@ -1803,7 +1971,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.27.0"
+    version: "1.27.1"
   };
 } else {}
 
@@ -2767,6 +2935,8 @@ module.exports = {
     GOT_ELIGIBLE_CAMPAIGNS: '({file}): Got {noOfEligibleCampaigns} eligible winners out of {noOfGroupCampaigns} campaigns from the Group:{groupName} and for User ID:{userId}',
     CALLED_CAMPAIGN_NOT_WINNER: '({file}): Campaign:{campaignKey} does not qualify from the mutually exclusive group:{groupName} for User ID:{userId}',
     OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE: '({file}): Campaign:{campaignKey} of Group:{groupName} satisfies {type} for User ID:{userId}',
+    OPT_OUT_API_CALLED: '({file}): You have opted out for not tracking i.e. all API calls will stop functioning and will simply early return',
+    API_NOT_ENABLED: '({file}): {api} API is disabled as you opted out for tracking. Reinitialize the SDK to enable the normal functioning of all APIs.',
     DEV_MODE_ON: '({file}): isDevelopmentMode is set to true. No tracking call is made to VWO server.',
     CONFIG_RETURN_PROMISE: '({file}): {method} API returns a promise as returnPromiseFor is set to true for this API'
   },
