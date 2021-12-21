@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.27.1
+ * vwo-javascript-sdk - v1.28.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2021 Wingify Software Pvt. Ltd.
@@ -34,7 +34,7 @@
 	// Root
 	else
 		root["vwoSdk"] = factory();
-})(window, function() {
+})(this, function() {
 return /******/ (function(modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
@@ -262,7 +262,7 @@ function () {
           }));
           return new Promise(function (resolve) {
             if (_this2.optOut) {
-              _this2.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+              _this2.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
                 file: file,
                 api: ApiEnum.ACTIVATE
               }));
@@ -288,7 +288,7 @@ function () {
         }
 
         if (this.optOut) {
-          this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+          this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
             file: file,
             api: ApiEnum.ACTIVATE
           }));
@@ -334,7 +334,7 @@ function () {
           }));
           return new Promise(function (resolve) {
             if (_this3.optOut) {
-              _this3.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+              _this3.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
                 file: file,
                 api: ApiEnum.GET_VARIATION_NAME
               }));
@@ -348,7 +348,7 @@ function () {
         }
 
         if (this.optOut) {
-          this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+          this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
             file: file,
             api: ApiEnum.GET_VARIATION_NAME
           }));
@@ -388,7 +388,7 @@ function () {
           }));
           return new Promise(function (resolve) {
             if (_this4.optOut) {
-              _this4.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+              _this4.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
                 file: file,
                 api: ApiEnum.TRACK
               }));
@@ -421,7 +421,7 @@ function () {
         }
 
         if (this.optOut) {
-          this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+          this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
             file: file,
             api: ApiEnum.TRACK
           }));
@@ -462,7 +462,7 @@ function () {
           }));
           return new Promise(function (resolve) {
             if (_this5.optOut) {
-              _this5.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+              _this5.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
                 file: file,
                 api: ApiEnum.IS_FEATURE_ENABLED
               }));
@@ -488,7 +488,7 @@ function () {
         }
 
         if (this.optOut) {
-          this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+          this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
             file: file,
             api: ApiEnum.IS_FEATURE_ENABLED
           }));
@@ -538,7 +538,7 @@ function () {
           }));
           return new Promise(function (resolve) {
             if (_this6.optOut) {
-              _this6.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+              _this6.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
                 file: file,
                 api: ApiEnum.GET_FEATURE_VARIABLE_VALUE
               }));
@@ -552,7 +552,7 @@ function () {
         }
 
         if (this.optOut) {
-          this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+          this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
             file: file,
             api: ApiEnum.GET_FEATURE_VARIABLE_VALUE
           }));
@@ -609,7 +609,7 @@ function () {
           }));
           return new Promise(function (resolve) {
             if (_this7.optOut) {
-              _this7.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+              _this7.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
                 file: file,
                 api: ApiEnum.PUSH
               }));
@@ -641,7 +641,7 @@ function () {
         }
 
         if (this.optOut) {
-          this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+          this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
             file: file,
             api: ApiEnum.PUSH
           }));
@@ -659,18 +659,13 @@ function () {
     value: function setOptOut() {
       var _this8 = this;
 
-      this.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.OPT_OUT_API_CALLED, {
+      this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.OPT_OUT_API_CALLED, {
         file: file
       }));
 
       if (this.returnPromiseFor && (this.returnPromiseFor.optOut || this.returnPromiseFor.all)) {
         return new Promise(function (resolve) {
-          _this8.userStorageService = undefined;
-          _this8.SettingsFileManager._configObj = null;
-          _this8.SettingsFileManager = undefined;
-          _this8.usageStats = undefined;
-          _this8.eventQueue = undefined;
-          _this8.optOut = true;
+          _this8._destroyInstanceVariables();
 
           if (_this8.batchEventsQueue) {
             _this8.flushEvents().then(function () {
@@ -689,12 +684,8 @@ function () {
         });
       }
 
-      this.userStorageService = undefined;
-      this.SettingsFileManager._configObj = null;
-      this.SettingsFileManager = undefined;
-      this.usageStats = undefined;
-      this.eventQueue = undefined;
-      this.optOut = true;
+      this._destroyInstanceVariables();
+
       return true;
     }
     /**
@@ -722,7 +713,7 @@ function () {
     key: "getAndUpdateSettingsFile",
     value: function getAndUpdateSettingsFile(accountId, sdkKey) {
       if (this.optOut) {
-        this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+        this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
           file: file,
           api: 'getAndUpdateSettingsFile'
         }));
@@ -732,6 +723,15 @@ function () {
       }
 
       return this.SettingsFileManager.getAndUpdateSettingsFile(accountId, sdkKey);
+    }
+  }, {
+    key: "_destroyInstanceVariables",
+    value: function _destroyInstanceVariables() {
+      this.userStorageService = undefined;
+      this.SettingsFileManager = undefined;
+      this.usageStats = undefined;
+      this.eventQueue = undefined;
+      this.optOut = true;
     }
   }]);
 
@@ -1971,7 +1971,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.27.1"
+    version: "1.28.0"
   };
 } else {}
 
