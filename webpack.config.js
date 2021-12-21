@@ -76,6 +76,7 @@ module.exports = function(_env, argv) {
       },
       library: 'vwoSdk',
       libraryTarget: 'umd',
+      globalObject: 'this',
       auxiliaryComment: {
         root: ' Root',
         commonjs: ' CommonJS',

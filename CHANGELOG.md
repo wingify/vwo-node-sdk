@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.29.0] - 2021-12-21
+
+### Changed
+
+- Update `webpack.config.js` to use `globalObject.this` flag to make the distributable library compatible with both client-isde as well as server-side rendering engines like Next.js, etc.
+
 ## [1.28.0] - 2021-12-09
 
 ### Changed
