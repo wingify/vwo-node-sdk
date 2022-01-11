@@ -14,20 +14,20 @@
  * limitations under the License.
  */
 
-const SegmentEvaluator = require('../../lib/core/SegmentEvaluator');
-const SegmentEvaluatorData = require('../test-utils/data/SegmentEvaluatorData');
+const UrlService = require('../../lib/services/UrlService');
+const UrlEnum = require('../../lib/enums/UrlEnum');
 
-const testCasesKeys = Object.keys(SegmentEvaluatorData);
+describe('UrlService', () => {
+  describe('method: getBaseUrl', () => {
+    test('should return base URL without data residency location', () => {
+      const urlService = UrlService.init();
+      expect(urlService.getBaseUrl()).toBe(UrlEnum.BASE_URL);
+    });
 
-describe('SegmentorService', () => {
-  testCasesKeys.forEach(key => {
-    describe(key, () => {
-      Object.keys(SegmentEvaluatorData[key]).forEach(testName => {
-        const testObj = SegmentEvaluatorData[key][testName];
-        test(testName, () => {
-          expect(SegmentEvaluator(testObj.dsl, testObj.customVariables)).toBe(testObj.expectation);
-        });
-      });
+    test('should return base URL with data residency location', () => {
+      const collectionPrefix = 'eu';
+      const urlService = UrlService.init({ collectionPrefix });
+      expect(urlService.getBaseUrl()).toBe(`${UrlEnum.BASE_URL}/${collectionPrefix}`);
     });
   });
 });
