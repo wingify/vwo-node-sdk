@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.30.0
+ * vwo-javascript-sdk - v1.30.1
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -20,6 +20,7 @@
  *  1. murmurhash - ^0.0.2
  *  2. superstruct - ^0.10.12
  *  3. uuid - ^3.3.2
+ *  4. vwo-sdk-log-messages - https://github.com/wingify/vwo-sdk-log-messages.git#0.1.0
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	// CommonJS2
@@ -153,31 +154,31 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  */
 var api = __webpack_require__(/*! ./api */ "./lib/api/index.js");
 
+var FileNameEnum = __webpack_require__(/*! ./enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
+
+var ApiEnum = __webpack_require__(/*! ./enums/ApiEnum */ "./lib/enums/ApiEnum.js");
+
+var DataTypeUtil = __webpack_require__(/*! ./utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
+
+var FunctionUtil = __webpack_require__(/*! ./utils/FunctionUtil */ "./lib/utils/FunctionUtil.js");
+
 var EventQueue = __webpack_require__(/*! ./services/EventQueue */ "./lib/services/EventQueue.js");
 
 var SettingsFileService = __webpack_require__(/*! ./services/SettingsFileManager */ "./lib/services/SettingsFileManager.js");
 
-var FunctionUtil = __webpack_require__(/*! ./utils/FunctionUtil */ "./lib/utils/FunctionUtil.js");
+var logging = __webpack_require__(/*! ./services/logging */ "./lib/services/logging/index.js");
+
+var HooksManager = __webpack_require__(/*! ./services/HooksManager */ "./lib/services/HooksManager.js");
+
+var UrlService = __webpack_require__(/*! ./services/UrlService */ "./lib/services/UrlService.js");
+
+var UsageStats = __webpack_require__(/*! ./services/UsageStats */ "./lib/services/UsageStats.js");
 
 var BatchEventsDispatcher;
 var customEventUtil;
 var BatchEventsQueue;
 
 if (false) {}
-
-var DataTypeUtil = __webpack_require__(/*! ./utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
-var logging = __webpack_require__(/*! ./services/logging */ "./lib/services/logging/index.js");
-
-var FileNameEnum = __webpack_require__(/*! ./enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
-var HooksManager = __webpack_require__(/*! ./services/HooksManager */ "./lib/services/HooksManager.js");
-
-var UsageStats = __webpack_require__(/*! ./services/UsageStats */ "./lib/services/UsageStats.js");
-
-var UrlService = __webpack_require__(/*! ./services/UrlService */ "./lib/services/UrlService.js");
-
-var ApiEnum = __webpack_require__(/*! ./enums/ApiEnum */ "./lib/enums/ApiEnum.js");
 
 var LogLevelEnum = logging.LogLevelEnum,
     LogMessageEnum = logging.LogMessageEnum,
@@ -204,33 +205,33 @@ function () {
     var settingsFileManager = new SettingsFileService(config); // Validate the config file i.e. check if required fields contain appropriate data
 
     if (!settingsFileManager.isSettingsFileValid()) {
-      this.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.INVALID_SETTINGS_FILE, {
+      this.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SETTINGS_FILE_INVALID, {
         file: file
       }));
       return;
     }
 
-    this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.VALID_CONFIGURATION, {
+    this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_VALID, {
       file: file
     })); // Initialize Hooks manager so that callbacks can be invoked
 
-    HooksManager.init(config);
-    settingsFileManager.checkAndPoll(); // Checks if pollingInterval is passed then starts polling settingsFile
-    // Setup event quque for sending impressions to VWO server
+    HooksManager.init(config); // Setup event quque for sending impressions to VWO server
 
     this.eventQueue = new EventQueue();
-    this.SettingsFileManager = settingsFileManager;
     this.usageStats = new UsageStats();
+    this.SettingsFileManager = settingsFileManager;
+    settingsFileManager.checkAndPoll(); // Checks if pollingInterval is passed then starts polling settingsFile
 
-    if (!settingsFileManager.getConfig().isDevelopmentMode) {
+    if (!config.isDevelopmentMode) {
       this.usageStats.collectUsageStats(settingsFileManager.getConfig());
-    }
+    } // Only for Node.js SDK
+
 
     if (false) { var sdkKey, accountId; } // Process settingsFile for various things. For eg: assign bucket range to variation, etc.
 
 
     this.SettingsFileManager.processSettingsFile();
-    this.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.SDK_INITIALIZED, {
+    this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SDK_INITIALIZED, {
       file: file
     }));
     this.UrlService = UrlService.init(config.settings);
@@ -596,9 +597,9 @@ function () {
         } else if (arguments.length === 3) {
           customDimensionMap = {};
         } else {
-          this.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.PUSH_INVALID_PARAMS, {
+          this.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_BAD_PARAMETERS, {
             file: file,
-            method: ApiEnum.PUSH
+            api: ApiEnum.PUSH
           }));
           return false;
         } // Check if returnPromiseFor is provided. If yes, return a promise instead of value
@@ -699,6 +700,8 @@ function () {
     key: "flushEvents",
     value: function flushEvents() {
       var _this9 = this;
+
+      var accountId = this.SettingsFileManager.getSettingsFile().accountId;
 
       if (false) {}
     }
@@ -837,8 +840,9 @@ function activate(vwoInstance, campaignKey, userId) {
   }
 
   if (areParamsValid === false) {
-    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.ACTIVATE_API_MISSING_PARAMS, {
-      file: file
+    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_BAD_PARAMETERS, {
+      file: file,
+      api: ApiEnum.ACTIVATE
     }));
     return null;
   } // Get the cached configuration
@@ -856,7 +860,7 @@ function activate(vwoInstance, campaignKey, userId) {
   var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey); // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
 
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
-    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CAMPAIGN_NOT_RUNNING, {
+    vwoInstance.logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_RUNNING, {
       file: file,
       campaignKey: campaignKey,
       api: api
@@ -865,7 +869,7 @@ function activate(vwoInstance, campaignKey, userId) {
   }
 
   if (!CampaignUtil.isAbCampaign(campaign)) {
-    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.INVALID_API, {
+    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_NOT_APPLICABLE, {
       file: file,
       campaignKey: campaignKey,
       campaignType: campaign.type,
@@ -883,7 +887,7 @@ function activate(vwoInstance, campaignKey, userId) {
 
 
   if (!ValidateUtil.isValidValue(variationName)) {
-    vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.INVALID_VARIATION_KEY, {
+    vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.DECISION_NO_VARIATION_ALLOTED, {
       file: file,
       userId: userId,
       campaignKey: campaignKey
@@ -893,7 +897,7 @@ function activate(vwoInstance, campaignKey, userId) {
 
 
   if (isStoredVariation && !shouldTrackReturningUser) {
-    vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_ALREADY_TRACKED, {
+    vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CAMPAIGN_USER_ALREADY_TRACKED, {
       file: file,
       userId: userId,
       campaignKey: campaignKey,
@@ -1030,10 +1034,9 @@ function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) 
     }
 
     if (areParamsValid === false) {
-      vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.GET_FEATURE_VARIABLE_MISSING_PARAMS, {
+      vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_BAD_PARAMETERS, {
         file: file,
-        campaignKey: campaignKey,
-        variableKey: variableKey
+        api: ApiEnum.GetFeatureVariableValue
       }));
       return null;
     } // Get the cached configuration
@@ -1050,7 +1053,7 @@ function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) 
     var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
 
     if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
-      vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CAMPAIGN_NOT_RUNNING, {
+      vwoInstance.logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_RUNNING, {
         file: file,
         campaignKey: campaignKey,
         api: api
@@ -1060,7 +1063,7 @@ function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) 
 
     if (CampaignUtil.isAbCampaign(campaign)) {
       // API not allowed for full-stack AB campaigns
-      vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.INVALID_API, {
+      vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_NOT_APPLICABLE, {
         file: file,
         campaignKey: campaignKey,
         campaignType: campaign.type,
@@ -1077,10 +1080,11 @@ function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) 
         variationName = _DecisionUtil$getVari.variationName;
 
     if (!variationName) {
-      vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_NOT_ENABLED_FOR_USER, {
+      vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_STATUS, {
         file: file,
         campaignKey: campaignKey,
-        userId: userId
+        userId: userId,
+        status: 'disabled'
       }));
       return null;
     }
@@ -1091,7 +1095,7 @@ function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) 
       variable = FeatureUtil.getVariableValueForVariation(campaign, variation, variableKey);
 
       if (ObjectUtil.areObjectKeys(variable) && variation.isFeatureEnabled) {
-        vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_RECEIVED_VARIABLE_VALUE, {
+        vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_VARIABLE_VALUE, {
           file: file,
           variableKey: variableKey,
           campaignKey: campaign.key,
@@ -1099,7 +1103,7 @@ function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) 
           userId: userId
         }));
       } else if (ObjectUtil.areObjectKeys(variable) && !variation.isFeatureEnabled) {
-        vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.VARIABLE_NOT_USED_RETURN_DEFAULT_VARIABLE_VALUE, {
+        vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_VARIABLE_DEFAULT_VALUE, {
           file: file,
           variableKey: variableKey,
           variationName: variationName
@@ -1212,8 +1216,9 @@ function getVariation(vwoInstance, campaignKey, userId) {
   }
 
   if (areParamsValid === false) {
-    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.GET_VARIATION_API_MISSING_PARAMS, {
-      file: file
+    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_BAD_PARAMETERS, {
+      file: file,
+      api: ApiEnum.GET_VARIATION_NAME
     }));
     return null;
   } // Get the cached configuration
@@ -1231,7 +1236,7 @@ function getVariation(vwoInstance, campaignKey, userId) {
   var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey); // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
 
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
-    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CAMPAIGN_NOT_RUNNING, {
+    vwoInstance.logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_RUNNING, {
       file: file,
       campaignKey: campaignKey,
       api: api
@@ -1240,7 +1245,7 @@ function getVariation(vwoInstance, campaignKey, userId) {
   }
 
   if (CampaignUtil.isFeatureRolloutCampaign(campaign)) {
-    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.INVALID_API, {
+    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_NOT_APPLICABLE, {
       file: file,
       campaignKey: campaignKey,
       campaignType: campaign.type,
@@ -1399,8 +1404,9 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
   }
 
   if (areParamsValid === false) {
-    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.IS_FEATURE_ENABLED_API_MISSING_PARAMS, {
-      file: file
+    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_BAD_PARAMETERS, {
+      file: file,
+      api: ApiEnum.isFeatureEnabled
     }));
     return null;
   } // Get the cached configuration
@@ -1418,7 +1424,7 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
   var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
 
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
-    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CAMPAIGN_NOT_RUNNING, {
+    vwoInstance.logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_RUNNING, {
       file: file,
       campaignKey: campaignKey,
       api: api
@@ -1428,7 +1434,7 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
 
   if (CampaignUtil.isAbCampaign(campaign)) {
     // API not allowed for full-stack AB campaigns
-    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.INVALID_API, {
+    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_NOT_APPLICABLE, {
       file: file,
       campaignKey: campaignKey,
       campaignType: campaign.type,
@@ -1450,7 +1456,7 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
     isFeatureEnabled = CampaignUtil.isFeatureRolloutCampaign(campaign) || variation.isFeatureEnabled;
 
     if (isStoredVariation && !shouldTrackReturningUser) {
-      vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_ALREADY_TRACKED, {
+      vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CAMPAIGN_USER_ALREADY_TRACKED, {
         file: file,
         userId: userId,
         campaignKey: campaignKey,
@@ -1479,19 +1485,12 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
     }
   }
 
-  if (isFeatureEnabled) {
-    vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_ENABLED_FOR_USER, {
-      file: file,
-      campaignKey: campaignKey,
-      userId: userId
-    }));
-  } else {
-    vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_NOT_ENABLED_FOR_USER, {
-      file: file,
-      campaignKey: campaignKey,
-      userId: userId
-    }));
-  }
+  vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_STATUS, {
+    file: file,
+    campaignKey: campaignKey,
+    userId: userId,
+    status: isFeatureEnabled ? 'enabled' : 'disabled'
+  }));
 
   if (isStoredVariation || config.isDevelopmentMode) {
     return {
@@ -1601,7 +1600,7 @@ function push(vwoInstance, tagKey, tagValue, userId, customDimensionMap) {
   }
 
   if (tagKey === ' ' && tagValue === ' ' && (!customDimensionMap || Object.keys(customDimensionMap).length === 0)) {
-    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.PUSH_INVALID_PARAMS_CD_MAP, {
+    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.PUSH_INVALID_PARAMS, {
       file: file,
       method: api
     }));
@@ -1760,8 +1759,9 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   }
 
   if (areParamsValid === false) {
-    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.TRACK_API_MISSING_PARAMS, {
-      file: file
+    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_BAD_PARAMETERS, {
+      file: file,
+      api: ApiEnum.TRACK
     }));
     return null;
   } // Get the cached configuration
@@ -1837,7 +1837,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
 function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, responseCallback) {
   // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
-    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CAMPAIGN_NOT_RUNNING, {
+    vwoInstance.logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_RUNNING, {
       file: file,
       campaignKey: campaignKey,
       api: api
@@ -1846,7 +1846,7 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
   }
 
   if (CampaignUtil.isFeatureRolloutCampaign(campaign)) {
-    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.INVALID_API, {
+    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_NOT_APPLICABLE, {
       file: file,
       campaignKey: campaignKey,
       campaignType: campaign.type,
@@ -1900,7 +1900,7 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
 
         DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, storedGoalIdentifier);
       } else if (!shouldTrackReturningUser) {
-        vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GOAL_ALREADY_TRACKED, {
+        vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CAMPAIGN_GOAL_ALREADY_TRACKED, {
           file: file,
           userId: userId,
           goalIdentifier: goalIdentifier,
@@ -1974,7 +1974,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.30.0"
+    version: "1.30.1"
   };
 } else {}
 
@@ -2037,6 +2037,7 @@ var LogLevelEnum = logging.LogLevelEnum,
     LogMessageEnum = logging.LogMessageEnum,
     LogMessageUtil = logging.LogMessageUtil;
 var logger = logging.getLogger();
+var file = FileNameEnum.BucketingService;
 var BucketingService = {
   /**
    * Generates Bucket Value of the User by hashing the User ID by murmurHash
@@ -2089,7 +2090,7 @@ var BucketingService = {
     var bucketValue = BucketingService._generateBucketValue(hashValue, Constants.MAX_TRAFFIC_PERCENT);
 
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.USER_HASH_BUCKET_VALUE, {
-      file: FileNameEnum.BucketingService,
+      file: file,
       hashValue: hashValue,
       bucketValue: bucketValue,
       userId: userId
@@ -2108,7 +2109,7 @@ var BucketingService = {
   isUserPartOfCampaign: function isUserPartOfCampaign(userId, campaign) {
     var disableLog = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
-    if (!ValidateUtil.isValidValue(userId) || !campaign) {
+    if (!campaign) {
       return false;
     }
 
@@ -2117,10 +2118,11 @@ var BucketingService = {
     var valueAssignedToUser = BucketingService._getBucketValueForUser(CampaignUtil.getBucketingSeed(userId, campaign), userId, disableLog);
 
     var isUserPart = valueAssignedToUser !== 0 && valueAssignedToUser <= trafficAllocation;
-    logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_ELIGIBILITY_FOR_CAMPAIGN, {
-      file: FileNameEnum.BucketingService,
+    logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_CAMPAIGN_ELIGIBILITY, {
+      file: file,
       userId: userId,
-      isUserPart: isUserPart
+      campaignKey: campaign.key,
+      status: isUserPart ? 'eligible' : 'not eligible'
     }), disableLog);
     return isUserPart;
   },
@@ -2137,11 +2139,6 @@ var BucketingService = {
     var multiplier;
 
     if (!ValidateUtil.isValidValue(userId)) {
-      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.INVALID_USER_ID, {
-        file: FileNameEnum.BucketingService,
-        userId: userId,
-        method: 'bucketUserToVariation'
-      }));
       return null;
     }
 
@@ -2157,8 +2154,8 @@ var BucketingService = {
 
     var bucketValue = BucketingService._generateBucketValue(hashValue, Constants.MAX_TRAFFIC_VALUE, multiplier);
 
-    logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.VARIATION_HASH_BUCKET_VALUE, {
-      file: FileNameEnum.BucketingService,
+    logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.USER_CAMPAIGN_BUCKET_VALUES, {
+      file: file,
       userId: userId,
       campaignKey: campaign.key,
       percentTraffic: campaign.percentTraffic,
@@ -2349,6 +2346,7 @@ var LogLevelEnum = logging.LogLevelEnum,
     LogMessageEnum = logging.LogMessageEnum,
     LogMessageUtil = logging.LogMessageUtil;
 var logger = logging.getLogger();
+var file = FileNameEnum.VariationDecider;
 var VariationDecider = {
   /**
    * Returns the Variation Allotted to User
@@ -2366,10 +2364,9 @@ var VariationDecider = {
     };
 
     if (!ValidateUtil.isValidValue(userId)) {
-      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.INVALID_USER_ID, {
-        file: FileNameEnum.BucketingService,
-        userId: userId,
-        method: 'getVariationAllotted'
+      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.USER_ID_INVALID, {
+        file: file,
+        userId: userId
       }));
       return response;
     }
@@ -2379,19 +2376,11 @@ var VariationDecider = {
       response.variation = variation;
       response.variationId = variation.id;
       response.variationName = variation.name;
-      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.GOT_VARIATION_FOR_USER, {
-        file: FileNameEnum.VariationDecider,
-        variationName: variation.name,
-        userId: userId,
-        campaignKey: campaign.key,
-        method: 'getVariationAllotted'
-      }));
     } else {
-      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.USER_NOT_PART_OF_CAMPAIGN, {
-        file: FileNameEnum.VariationDecider,
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_NOT_PART_OF_CAMPAIGN, {
+        file: file,
         userId: userId,
-        campaignKey: campaign.key,
-        method: 'getVariationAllotted'
+        campaignKey: campaign.key
       }));
     }
 
@@ -2408,18 +2397,18 @@ var VariationDecider = {
    * @return {Object|null} Variation allotted to User
    */
   getVariationOfCampaignForUser: function getVariationOfCampaignForUser(userId, campaign) {
-    if (!ValidateUtil.isValidValue(userId) || !campaign) {
+    if (!campaign) {
       return null;
     }
 
     var variation = Bucketer.bucketUserToVariation(userId, campaign);
 
     if (variation && variation.name) {
-      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GOT_VARIATION_FOR_USER, {
-        file: FileNameEnum.VariationDecider,
-        variationName: variation.name,
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_VARIATION_STATUS, {
+        file: file,
         userId: userId,
-        campaignKey: campaign.key
+        campaignKey: campaign.key,
+        status: "got Varation:".concat(variation.name)
       }));
       return {
         variation: variation,
@@ -2428,10 +2417,11 @@ var VariationDecider = {
       };
     }
 
-    logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_GOT_NO_VARIATION, {
-      file: FileNameEnum.VariationDecider,
+    logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_VARIATION_STATUS, {
+      file: file,
       userId: userId,
-      campaignKey: campaign.key
+      campaignKey: campaign.key,
+      status: 'got no variation'
     }));
     return null;
   }
@@ -2814,140 +2804,6 @@ module.exports = {
 
 /***/ }),
 
-/***/ "./lib/enums/LogMessageEnum.js":
-/*!*************************************!*\
-  !*** ./lib/enums/LogMessageEnum.js ***!
-  \*************************************/
-/*! no static exports found */
-/***/ (function(module, exports) {
-
-/**
- * Copyright 2019-2022 Wingify Software Pvt. Ltd.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-module.exports = {
-  DEBUG_MESSAGES: {
-    CUSTOM_LOGGER_USED: '({file}): Custom logger used',
-    GETTING_STORED_VARIATION: '({file}): Got stored variation for User ID:{userId} of Campaign:{campaignKey} as Variation:{variationName}, found in UserStorageService',
-    GOT_FROM_CACHE: '({file}): Got data from cache for the finalKey:{finalKey}',
-    GOT_VARIATION_FOR_USER: '({file}): User ID:{userId} for Campaign:{campaignKey} got variationName:{variationName} inside method:{method}',
-    IMPRESSION_FOR_PUSH: '({file}): impression built for pushing - {properties}',
-    IMPRESSION_FOR_TRACK_GOAL: '({file}): impression built for track-goal - {properties}',
-    IMPRESSION_FOR_TRACK_USER: '({file}): impression built for track-user - {properties}',
-    IMPRESSION_FOR_EVENT_ARCH_TRACK_USER: '({file}): impression built for vwo_variationShown event for account ID:{a}, user ID:{u}, and campaign ID:{c}',
-    IMPRESSION_FOR_EVENT_ARCH_TRACK_GOAL: '({file}): impression built for {goalName} event for accountId:{a}, user ID:{u}, and campaign ID:{c}',
-    IMPRESSION_FOR_EVENT_ARCH_PUSH: '({file}): impression built for visitor property:{property} for accountId:{a} and user ID:{u}',
-    LOG_LEVEL_SET: '({file}): Log level set to {level}',
-    NO_STORED_VARIATION: '({file}): No stored variation for User ID:{userId} for Campaign:{campaignKey} found in UserStorageService',
-    NO_USER_STORAGE_SERVICE_GET: '({file}): No UserStorageService to get stored data',
-    NO_USER_STORAGE_SERVICE_SET: '({file}): No UserStorageService to set data',
-    // REMOVE_FROM_CACHE: '({file}): Removed data from cache for the finalKey:{finalKey}',
-    RESET_CACHE: '({file}): Cache Reset on VWO instantiation',
-    SDK_INITIALIZED: '({file}): SDK properly initialzed',
-    SEGMENTATION_SKIPPED: '({file}): For userId:{userId} of Campaign:{campaignKey}, segment was missing, hence skipping segmentation{variation}',
-    SEGMENTATION_STATUS: '({file}): For userId:{userId} of Campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}',
-    SET_DEVELOPMENT_MODE: '({file}): DEVELOPMENT mode is ON',
-    SET_IN_CACHE: '({file}): Set data in cache for the finalKey:{finalKey}',
-    SETTINGS_FILE_PROCESSED: '({file}): Settings file processed',
-    USER_HASH_BUCKET_VALUE: '({file}): User ID:{userId} having hash:{hashValue} got bucketValue:{bucketValue}',
-    USER_NOT_PART_OF_Campaign: '({file}): userId:{userId} for Campaign:{campaignKey} did not become part of campaign, method:{method}',
-    UUID_FOR_USER: '({file}): Uuid generated for User ID:{userId} and accountId:{accountId} is {desiredUuid}',
-    VALID_CONFIGURATION: '({file}): SDK configuration and account settings are valid',
-    VARIATION_HASH_BUCKET_VALUE: '({file}): User ID:{userId} for Campaign:{campaignKey} having percent traffic:{percentTraffic} got hash-value:{hashValue} and bucket value:{bucketValue}',
-    WHITELISTING_SKIPPED: '({file}): For userId:{userId} of Campaign:{campaignKey}, whitelisting was skipped',
-    STARTED_POLLING: '({file}): Polling of settings-file is registered with a periodic interval of {pollingInterval}ms',
-    BATCH_EVENT_LIMIT_EXCEEDED: '({file}): Impression event - {endPoint} failed due to exceeding payload size. Parameter eventsPerRequest in batchEvents config in launch API has value:{eventsPerRequest} for accountId:{accountId}. Please read the official documentation for knowing the size limits',
-    BULK_NOT_PROCESSED: "({file}): Batch events couldn't be received by VWO. Calling Flush Callback with error and data",
-    BEFORE_FLUSHING: '({file}): Flushing events queue {manually} having {length} events for account:{accountId}. {timer}',
-    FLUSH_EVENTS: '{{file}}: Manually flushing events for account:{accountId} having {queueLength} events',
-    CAMPAIGN_NOT_ACTIVATED: '({file}): Campaign:{campaignKey} for User ID:{userId} is not yet activated for API:{api}. Use activate API to activate A/B test or isFeatureEnabled API to activate Feature Test.',
-    GOT_ELIGIBLE_CAMPAIGNS: '({file}): Campaigns: {eligibleCampaignKeys} are eligible, {inEligibleText} are ineligible from the Group:{groupName} for the User Id:{userId}'
-  },
-  ERROR_MESSAGES: {
-    API_HAS_CORRUPTED_SETTINGS_FILE: '({file}): "{api}" API has corrupted settings-file. Please check or reach out to VWO support',
-    ACTIVATE_API_MISSING_PARAMS: '({file}): "activate" API got bad parameters. It expects campaignKey(String) as first, userId(String) as second and options(optional Object) as third argument',
-    CAMPAIGN_NOT_RUNNING: '({file}): API used:{api} - Campaign:{campaignKey} is not RUNNING. Please verify from VWO App',
-    GET_FEATURE_VARIABLE_MISSING_PARAMS: "({file}): \"getFeatureVariableValue\" API got bad parameters. It expects campaignKey(String) as first, variableKey(String) as second, userId(String) as third, and options(optional Object) as fourth argument",
-    GET_VARIATION_API_MISSING_PARAMS: '({file}): "getVariation" API got bad parameters. It expects campaignKey(String) as first, userId(String) as second and options(optional Object) as third argument',
-    IMPRESSION_FAILED: '({file}): Impression event could not be sent to VWO - {endPoint}. Reason: {err}',
-    INVALID_API: '({file}): {api} API is not valid for Campaign:{campaignKey} of type:{campaignType} for User ID:{userId}',
-    INVALID_SETTINGS_FILE: '({file}): Settings-file fetched is not proper',
-    IS_FEATURE_ENABLED_API_MISSING_PARAMS: '({file}): "isFeatureEnabled" API got bad parameters. It expects Campaign(String) as first, userId(String) as second and options(optional Object) as third argument',
-    GET_USER_STORAGE_SERVICE_FAILED: '({file}): Getting data from UserStorageService failed for User ID:{userId}',
-    SDK_CONFIG_CORRUPTED: '({file}): config passed to launch API is not a valid JSON object',
-    PUSH_INVALID_PARAMS: '({file}): "{method}" API got bad parameters. It expects tagKey(String) as first, tagValue(String) as second and userId(String) as third argument',
-    PUSH_INVALID_PARAMS_CD_MAP: '({file}): "{method}" API got bad parameters. It expects customDimensionMap(String, String) as first and userId(String) as second argument',
-    REGEX_CREATION_FAILED: '({file}): Regex cound not be processed',
-    SET_USER_STORAGE_SERVICE_FAILED: '({file}): Saving data into UserStorageService failed for User ID:{userId}',
-    SEGMENTATION_ERROR: '({file}): Error while segmenting the user:{userId} of Campaign:{campaignKey}{variation} with customVariables:{customVariables}. Error message: {err}',
-    SETTINGS_FILE_CORRUPTED: '({file}): Settings file is corrupted. Please contact VWO Support for help',
-    TAG_KEY_LENGTH_EXCEEDED: '({file}): Length of tagKey:{tagKey} for userID:{userId} can not be greater than 255',
-    TAG_VALUE_LENGTH_EXCEEDED: '({file}): Length of value:{tagValue} of tagKey:{tagKey} for userID:{userId} can not be greater than 255',
-    TRACK_API_GOAL_NOT_FOUND: '({file}): Goal:{goalIdentifier} not found for Campaign:{campaignKey} and userId:{userId}',
-    TRACK_API_MISSING_PARAMS: '({file}): "track" API got bad parameters. It expects campaignKey(String or Array of strings or null or undefined) as first, userId(String) as second, goalIdentifier(String/Number) as third and options(optional Object) as fourth argument',
-    TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL: '({file}): Revenue value should be passed for revenue goal:{goalIdentifier} for Campaign:{campaignKey} and userId:{userId}',
-    UNABLE_TO_CAST_VALUE: "({file}): Unable to cast value:{variableValue} to type:{variableType}, returning null",
-    VARIABLE_NOT_FOUND: "({file}): Variable:{variableKey} for User ID:{userId} is not found in settings-file. Returning null",
-    NO_CAMPAIGN_FOUND: "({file}): No campaign found for goalIdentifier:{goalIdentifier}. Please verify from VWO app.",
-    POLLING_FAILED: '({file}): Failed fetching of Settings-file via polling for the accountId:{accountId}',
-    POLLING_INTERVAL_INVALID: '({file}): pollingParameter provided is not of type number',
-    SDK_KEY_NOT_PROVIVED: '({file}): sdkKey is required along with pollingInterval to poll the settings-file',
-    SDK_KEY_NOT_STRING: '({file}): sdkKey provided is not of type string',
-    INVALID_USER_ID: '({file}): Invalid userId:{userId} passed to {method} of this file',
-    EVENT_BATCHING_NOT_OBJECT: '({file}): Batch events settings are not of type object',
-    NO_BATCH_QUEUE: '{{file}}: No batch queue present for account:{accountId} when calling flushEvents API. Check batchEvents config in launch API'
-  },
-  INFO_MESSAGES: {
-    FEATURE_ENABLED_FOR_USER: "({file}): Campaign:{campaignKey} for user ID:{userId} is enabled",
-    FEATURE_NOT_ENABLED_FOR_USER: "({file}): Campaign:{campaignKey} for user ID:{userId} is not enabled",
-    IMPRESSION_SUCCESS: '({file}): Impression event - {endPoint} was successfully received by VWO having main keys: accountId:{accountId}, {mainKeys}',
-    IMPRESSION_SUCCESS_FOR_EVENT_ARCH: '({file}): Impression for {event} - {endPoint} was successfully received by VWO for account ID:{a}',
-    INVALID_VARIATION_KEY: '({file}): Variation was not assigned to User ID:{userId} for Campaign:{campaignKey}',
-    GETTING_DATA_USER_STORAGE_SERVICE: '({file}): Getting data from UserStorageService for User ID:{userId} successful',
-    SETTING_DATA_USER_STORAGE_SERVICE: '({file}): Setting data into UserStorageService for User ID:{userId} successful',
-    SEGMENTATION_STATUS: '({file}): UserId:{userId} of Campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}',
-    USER_GOT_NO_VARIATION: '({file}): User ID:{userId} for Campaign:{campaignKey} did not allot any variation',
-    USER_RECEIVED_VARIABLE_VALUE: "({file}): Value for variable:{variableKey} of feature flag:{campaignKey} is:{variableValue} for user:{userId}",
-    VARIABLE_NOT_USED_RETURN_DEFAULT_VARIABLE_VALUE: "({file}): Variable:{variableKey} is not used in variation:{variationName}. Returning default value",
-    VARIATION_ALLOCATED: '({file}): User ID:{userId} of Campaign:{campaignKey} got variation:{variationName}',
-    NO_VARIATION_ALLOCATED: '({file}): User ID:{userId} of Campaign:{campaignKey} did not get any variation',
-    VARIATION_RANGE_ALLOCATION: '({file}): Campaign:{campaignKey} having variation:{variationName} with weight:{variationWeight} got range as: ( {start} - {end} ))',
-    GOAL_ALREADY_TRACKED: '({file}): Goal:{goalIdentifier} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. Skipping now',
-    USER_ALREADY_TRACKED: '({file}): User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for "{api}" API. Skipping now',
-    POLLING_SUCCESS: '({file}): Settings-file fetched successfully via polling for the accountId:{accountId}',
-    SETTINGS_FILE_UPDATED: '({file}): vwo-sdk instance is updated with the latest settings-file for the accountId:{accountId}',
-    USER_ELIGIBILITY_FOR_CAMPAIGN: '({file}): Is User ID:{userId} part of campaign? {isUserPart}',
-    GOT_VARIATION_FOR_USER: '({file}): userId:{userId} for campaign:{campaignTestKey} got variationName:{variationName}',
-    BULK_IMPRESSION_SUCCESS: '({file}): Impression event - {endPoint} was successfully received by VWO having accountId:{a}',
-    AFTER_FLUSHING: '({file}): Events queue having {length} events has been flushed {manually}',
-    SETTINGS_NOT_UPDATED: '{{file}}: Settings-file fetched are same as earlier fetched settings',
-    GOT_STORED_VARIATION: '({file}): Got stored variation for User ID:{userId} of Campaign:{campaignKey} as Variation:{variationName}, found in UserStorageService',
-    CAMPAIGN_NOT_ACTIVATED: '({file}): Activate the campaign:{campaignKey} for User ID:{userId} to {reason}.',
-    GOT_WINNER_CAMPAIGN: '({file}): Campaign:{campaignKey} is selected from the mutually exclusive group:{groupName} for the User ID:{userId}.',
-    GOT_ELIGIBLE_CAMPAIGNS: '({file}): Got {noOfEligibleCampaigns} eligible winners out of {noOfGroupCampaigns} campaigns from the Group:{groupName} and for User ID:{userId}',
-    CALLED_CAMPAIGN_NOT_WINNER: '({file}): Campaign:{campaignKey} does not qualify from the mutually exclusive group:{groupName} for User ID:{userId}',
-    OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE: '({file}): Campaign:{campaignKey} of Group:{groupName} satisfies {type} for User ID:{userId}',
-    OPT_OUT_API_CALLED: '({file}): You have opted out for not tracking i.e. all API calls will stop functioning and will simply early return',
-    API_NOT_ENABLED: '({file}): {api} API is disabled as you opted out for tracking. Reinitialize the SDK to enable the normal functioning of all APIs.',
-    DEV_MODE_ON: '({file}): isDevelopmentMode is set to true. No tracking call is made to VWO server.',
-    CONFIG_RETURN_PROMISE: '({file}): {method} API returns a promise as returnPromiseFor is set to true for this API'
-  },
-  WARNING_MESSAGES: {}
-};
-
-/***/ }),
-
 /***/ "./lib/enums/StatusEnum.js":
 /*!*********************************!*\
   !*** ./lib/enums/StatusEnum.js ***!
@@ -3220,6 +3076,8 @@ var _require2 = __webpack_require__(/*! ./constants */ "./lib/constants/index.js
 
 var logging = __webpack_require__(/*! ./services/logging */ "./lib/services/logging/index.js");
 
+var ApiEnum = __webpack_require__(/*! ./enums/ApiEnum */ "./lib/enums/ApiEnum.js");
+
 var FileNameEnum = __webpack_require__(/*! ./enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
 
 var file = FileNameEnum.INDEX;
@@ -3233,9 +3091,27 @@ var logger = logging.getLogger(); // By default, all ERRORS should be logged
 
 logging.setLogLevel(LogLevelEnum.ERROR);
 
-function logError(log) {
-  logger.log(LogLevelEnum.ERROR, log);
+function logError() {
+  var parameter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+  var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+  var log = LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CONFIG_PARAMETER_INVALID, {
+    file: file,
+    parameter: parameter,
+    type: type,
+    api: ApiEnum.LAUNCH
+  });
   throw new Error(logger.log(LogLevelEnum.ERROR, log));
+}
+
+function logInfo() {
+  var parameter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
+  var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+  var log = LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_PARAMETER_USED, {
+    file: file,
+    parameter: parameter,
+    type: type
+  });
+  console.info("VWO-SDK - [INFO]:   ".concat(FunctionUtil.getCurrentTime(), " ").concat(log));
 }
 
 module.exports = {
@@ -3259,62 +3135,80 @@ module.exports = {
       FunctionUtil.cloneObject(sdkConfig);
 
       if (!DataTypeUtil.isUndefined(sdkConfig.shouldTrackReturningUser) && !DataTypeUtil.isBoolean(sdkConfig.shouldTrackReturningUser)) {
-        throw new Error('shouldTrackReturningUser should be boolean');
+        logError('shouldTrackReturningUser', 'boolean');
+      } else if (!DataTypeUtil.isUndefined(sdkConfig.shouldTrackReturningUser)) {
+        logInfo('shouldTrackReturningUser', 'boolean');
       }
 
       if (!DataTypeUtil.isUndefined(sdkConfig.isDevelopmentMode) && !DataTypeUtil.isBoolean(sdkConfig.isDevelopmentMode)) {
-        throw new Error('isDevelopmentMode should be boolean');
+        logError('isDevelopmentMode', 'boolean');
+      } else if (!DataTypeUtil.isUndefined(sdkConfig.isDevelopmentMode)) {
+        logInfo('isDevelopmentMode', 'boolean');
       }
 
       if (sdkConfig.goalTypeToTrack && !objectValues(GoalTypeEnum).includes(sdkConfig.goalTypeToTrack)) {
-        throw new Error('goalTypeToTrack should be certain strings');
+        logError('goalTypeToTrack', 'string(REVENUE_TRACKING, CUSTOM_GOAL, ALL)');
+      } else if (sdkConfig.goalTypeToTrack) {
+        logInfo('goalTypeToTrack', 'string(REVENUE_TRACKING, CUSTOM_GOAL, ALL)');
       }
 
       if (sdkConfig.logging && sdkConfig.logging.level && !objectValues(LogLevelEnum).includes(sdkConfig.logging.level)) {
-        throw new Error('log level should be certain values');
+        logError('logLevel', 'number(1,2,3,4)');
+      } else if (sdkConfig.logging && sdkConfig.logging.level) {
+        logInfo('logLevel', 'number(1,2,3,4)');
       }
 
       if (sdkConfig.pollingInterval && !DataTypeUtil.isNumber(sdkConfig.pollingInterval)) {
-        var log = LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.POLLING_INTERVAL_INVALID, {
-          file: file
-        });
-        logError(log);
+        logError('pollingInterval', 'number(in miliiseconds)');
+      } else if (sdkConfig.pollingInterval) {
+        logInfo('pollingInterval', 'number(in miliiseconds)');
       }
 
       if (sdkConfig.pollingInterval && DataTypeUtil.isUndefined(sdkConfig.sdkKey)) {
-        var _log = LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SDK_KEY_NOT_PROVIVED, {
-          file: file
-        });
-
-        logError(_log);
+        logError();
       }
 
       if (sdkConfig.pollingInterval && !DataTypeUtil.isString(sdkConfig.sdkKey)) {
-        var _log2 = LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SDK_KEY_NOT_STRING, {
-          file: file
-        });
-
-        logError(_log2);
+        logError('sdkKey', 'string');
       }
 
       if (!DataTypeUtil.isUndefined(sdkConfig.batchEvents) && !DataTypeUtil.isObject(sdkConfig.batchEvents)) {
-        var _log3 = LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.EVENT_BATCHING_NOT_OBJECT, {
-          file: file
-        });
-
-        logError(_log3);
+        logError('batchEvents', 'object');
+      } else if (!DataTypeUtil.isUndefined(sdkConfig.batchEvents)) {
+        logInfo('batchEvents', 'object');
       }
+
+      if (!DataTypeUtil.isUndefined(sdkConfig.returnPromiseFor) && !DataTypeUtil.isObject(sdkConfig.returnPromiseFor)) {
+        logError('returnPromiseFor', 'object');
+      } else if (!DataTypeUtil.isUndefined(sdkConfig.returnPromiseFor)) {
+        logInfo('returnPromiseFor', 'object');
+      }
+
+      if (!DataTypeUtil.isUndefined(sdkConfig.integrations) && !DataTypeUtil.isObject(sdkConfig.integrations)) {
+        logError('integrations', 'object');
+      } else if (!DataTypeUtil.isUndefined(sdkConfig.integrations)) {
+        logInfo('integrations', 'object');
+      }
+
+      if (!DataTypeUtil.isUndefined(sdkConfig.userStorageService) && !DataTypeUtil.isObject(sdkConfig.userStorageService)) {
+        logError('userStorageService', 'object');
+      } else if (!DataTypeUtil.isUndefined(sdkConfig.userStorageService)) {
+        logInfo('userStorageService', 'object');
+      } // For JavaScript SDK, batching is not required and is not available
+
 
       if (DataTypeUtil.isObject(sdkConfig.batchEvents) && "undefined" === 'undefined') {
         sdkConfig.batchEvents = null;
-      }
+      } // For Node.js SDK
+
 
       if (false) {}
 
       config = sdkConfig;
     } catch (err) {
-      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SDK_CONFIG_CORRUPTED, {
-        file: file
+      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CONFIG_CORRUPTED, {
+        file: file,
+        api: ApiEnum.LAUNCH
       }));
       config = {};
     } // If DEV mode, set colorful logs to true
@@ -3333,18 +3227,16 @@ module.exports = {
       if (config.logging.logger && DataTypeUtil.isObject(config.logging.logger) && DataTypeUtil.isFunction(config.logging.logger.log)) {
         logging.setLogHandler(config.logging.logger);
         logging.setLogLevel(logging.LogLevelEnum.NOTSET);
-        logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.CUSTOM_LOGGER_USED, {
+        logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.CONFIG_CUSTOM_LOGGER_USED, {
           file: file
         }));
       } else if (config.logging.logger) {
-        logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CUSTOM_LOGGER_MISCONFIGURED, {
-          file: file
-        }));
+        logError('logging.logger', 'object');
       }
 
       if (config.logging.level !== undefined) {
         logging.setLogLevel(config.logging.level);
-        logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.LOG_LEVEL_SET, {
+        logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.CONFIG_LOG_LEVEL_SET, {
           file: file,
           level: LogNumberLevel['_' + config.logging.level]
         }));
@@ -3353,7 +3245,7 @@ module.exports = {
 
 
     if (config.isDevelopmentMode) {
-      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.SET_DEVELOPMENT_MODE, {
+      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.CONFIG_DEVELOPMENT_MODE_STATUS, {
         file: file
       }));
     } // Set logger on config Obkect, to be required later
@@ -3565,6 +3457,11 @@ function () {
           }
         }
       });
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.EVENT_QUEUE, {
+        file: file,
+        queueType: 'normal',
+        event: 'VWO_MASKED_PAYLOAD'
+      }));
       vwoInstance.eventQueue.executeNext(properties);
 
       if (!this.running) {
@@ -3770,12 +3667,12 @@ function () {
 
             _this.updateSettingsFile(latestSettingsFile);
 
-            _this._configObj.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SETTINGS_FILE_UPDATED, {
+            _this._configObj.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.POLLING_SETTINGS_FILE_UPDATED, {
               file: file,
               accountId: _this._clonedSettingsFile.accountId
             }));
           } else {
-            _this._configObj.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SETTINGS_NOT_UPDATED, {
+            _this._configObj.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.POLLING_SETTINGS_FILE_NOT_UPDATED, {
               file: file,
               accountId: _this._clonedSettingsFile.accountId
             }));
@@ -3788,7 +3685,7 @@ function () {
         });
       }, this._configObj.pollingInterval);
 
-      this._configObj.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.STARTED_POLLING, {
+      this._configObj.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.POLLING_SETTINGS_FILE_REGISTERED, {
         file: file,
         pollingInterval: this._configObj.pollingInterval
       }));
@@ -3805,7 +3702,8 @@ function () {
       }
 
       this._configObj.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.SETTINGS_FILE_PROCESSED, {
-        file: file
+        file: file,
+        accountId: this._clonedSettingsFile.accountId
       }));
 
       return settingsFile;
@@ -4160,11 +4058,17 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  * Local Modifications: This library is not used as a dependency. Source code was referenced and is modified as per requirements.
  *
  */
+// TODO: change path
+var LogMessageEnum = {
+  DEBUG_MESSAGES: __webpack_require__(/*! vwo-sdk-log-messages/src/debug-messages.json */ "./node_modules/vwo-sdk-log-messages/src/debug-messages.json"),
+  INFO_MESSAGES: __webpack_require__(/*! vwo-sdk-log-messages/src/info-messages.json */ "./node_modules/vwo-sdk-log-messages/src/info-messages.json"),
+  WARNING_MESSAGES: __webpack_require__(/*! vwo-sdk-log-messages/src/warning-messages.json */ "./node_modules/vwo-sdk-log-messages/src/warning-messages.json"),
+  ERROR_MESSAGES: __webpack_require__(/*! vwo-sdk-log-messages/src/error-messages.json */ "./node_modules/vwo-sdk-log-messages/src/error-messages.json")
+};
+
 var _require = __webpack_require__(/*! ../../enums/LogLevelEnum */ "./lib/enums/LogLevelEnum.js"),
     LogLevelEnum = _require.LogLevelEnum,
     LogNumberLevel = _require.LogNumberLevel;
-
-var LogMessageEnum = __webpack_require__(/*! ../../enums/LogMessageEnum */ "./lib/enums/LogMessageEnum.js");
 
 var LogMessageUtil = __webpack_require__(/*! ../../utils/LogMessageUtil */ "./lib/utils/LogMessageUtil.js");
 
@@ -4461,7 +4365,7 @@ var CampaignUtil = {
     });
 
     if (!campaigns.length) {
-      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.NO_CAMPAIGN_FOUND, {
+      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CAMPAIGN_NOT_FOUND_FOR_GOAL, {
         file: FileNameEnum.CampaignUtil,
         goalIdentifier: goalIdentifier
       }));
@@ -4508,7 +4412,7 @@ var CampaignUtil = {
       var variation = campaign.variations[i];
       stepFactor = CampaignUtil.assignRangeValues(variation, currentAllocation);
       currentAllocation += stepFactor;
-      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.VARIATION_RANGE_ALLOCATION, {
+      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.VARIATION_RANGE_ALLOCATION, {
         file: FileNameEnum.CampaignUtil,
         campaignKey: campaign.key,
         variationName: variation.name,
@@ -4846,6 +4750,12 @@ var DecisionUtil = {
     var newGoalIdentifier = arguments.length > 10 ? arguments[10] : undefined;
     var api = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : '';
     var vwoUserId = UuidUtil.generateFor(userId, settingsFile.accountId);
+    logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.USER_UUID, {
+      file: FileNameEnum.UuidUtil,
+      userId: userId,
+      accountId: settingsFile.accountId,
+      uuid: vwoUserId
+    }));
     var decision = {
       // campaign info
       campaignId: campaign.id,
@@ -4918,7 +4828,7 @@ var DecisionUtil = {
 
       if (isWhitelistedOrStoredVariation) {
         // other campaigns satisfy the whitelisting or storage, therfore returning
-        logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CALLED_CAMPAIGN_NOT_WINNER, {
+        logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.MEG_CALLED_CAMPAIGN_NOT_WINNER, {
           userId: userId,
           groupName: groupName,
           file: file,
@@ -4942,14 +4852,14 @@ var DecisionUtil = {
       eligibleCampaigns.forEach(function (campaign) {
         eligibleCampaignKeys = eligibleCampaignKeys + campaign.key + ',';
       });
-      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.GOT_ELIGIBLE_CAMPAIGNS, {
+      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.MEG_ELIGIBLE_CAMPAIGNS, {
         userId: userId,
         groupName: groupName,
         file: file,
         eligibleCampaignKeys: eligibleCampaignKeys.slice(0, -1),
         inEligibleText: inEligibleCampaignKeys === '' ? 'no campaigns' : "campaigns: ".concat(inEligibleCampaignKeys.slice(0, -1))
       }));
-      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GOT_ELIGIBLE_CAMPAIGNS, {
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.MEG_ELIGIBLE_CAMPAIGNS, {
         userId: userId,
         groupName: groupName,
         file: file,
@@ -5046,12 +4956,6 @@ var DecisionUtil = {
         goalIdentifier = userData.goalIdentifier;
 
     if (userData && userData.campaignKey && variationName) {
-      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.GETTING_STORED_VARIATION, {
-        file: file,
-        campaignKey: campaignKey,
-        userId: userId,
-        variationName: variationName
-      }), disableLogs);
       return {
         storedVariation: CampaignUtil.getCampaignVariation(settingsFile, campaignKey, variationName),
         goalIdentifier: goalIdentifier
@@ -5059,7 +4963,7 @@ var DecisionUtil = {
     } // Log if stored variation is not found even after implementing UserStorageService
 
 
-    logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.NO_STORED_VARIATION, {
+    logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.USER_STORAGE_SERVICE_NO_STORED_DATA, {
       file: file,
       campaignKey: campaignKey,
       userId: userId
@@ -5105,7 +5009,7 @@ var DecisionUtil = {
     };
 
     if (!config.userStorageService) {
-      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.NO_USER_STORAGE_SERVICE_GET, {
+      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.USER_STORAGE_SERVICE_NOT_CONFIGURED, {
         file: file
       }), disableLogs);
       return userStorageMap;
@@ -5116,14 +5020,16 @@ var DecisionUtil = {
 
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GETTING_DATA_USER_STORAGE_SERVICE, {
         file: file,
-        userId: userId
+        userId: userId,
+        campaignKey: campaignKey
       }), disableLogs);
       return Object.assign({}, data, userStorageData);
     } catch (err) {
       // if no data found
-      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.GET_USER_STORAGE_SERVICE_FAILED, {
+      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.USER_STORAGE_SERVICE_GET_FAILED, {
         file: file,
-        userId: userId
+        userId: userId,
+        error: err
       }), disableLogs);
     }
   },
@@ -5141,7 +5047,7 @@ var DecisionUtil = {
     var isSaved = false;
 
     if (!config.userStorageService) {
-      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.NO_USER_STORAGE_SERVICE_SET, {
+      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.USER_STORAGE_SERVICE_NOT_CONFIGURED, {
         file: file
       }));
       return isSaved;
@@ -5165,13 +5071,15 @@ var DecisionUtil = {
       config.userStorageService.set(properties);
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SETTING_DATA_USER_STORAGE_SERVICE, {
         file: file,
-        userId: userId
+        userId: userId,
+        campaignKey: campaign.key
       }));
       isSaved = true;
-    } catch (ex) {
-      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SET_USER_STORAGE_SERVICE_FAILED, {
+    } catch (err) {
+      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.USER_STORAGE_SERVICE_SET_FAILED, {
         file: file,
-        userId: userId
+        userId: userId,
+        error: err
       }));
       isSaved = false;
     }
@@ -5304,24 +5212,16 @@ var DecisionUtil = {
     variation = _VariationDecider$get.variation;
     variationName = _VariationDecider$get.variationName;
     variationId = _VariationDecider$get.variationId;
+    logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_VARIATION_ALLOCATION_STATUS, {
+      file: file,
+      campaignKey: campaignKey,
+      userId: userId,
+      status: variationName ? "got variation:".concat(variationName) : 'did not get any variation'
+    })); // Check if variation-name has been assigned to the userId. If not, return no variation
 
-    // Check if variation-name has been assigned to the userId. If not, return no variation
     if (variationName) {
       // If userStorageService is provided, look into it for the saved variation for the campaign and userId
       DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, newGoalIdentifier);
-
-      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.VARIATION_ALLOCATED, {
-        file: file,
-        campaignKey: campaignKey,
-        userId: userId,
-        variationName: variationName
-      }));
-    } else {
-      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.NO_VARIATION_ALLOCATED, {
-        file: file,
-        campaignKey: campaignKey,
-        userId: userId
-      }));
     } // Executing the callback when SDK makes the decision
 
 
@@ -5460,7 +5360,7 @@ var DecisionUtil = {
         isStoredVariation: true
       };
     } else if (!DataTypeUtil.isUndefined(config.userStorageService) && !isTrackUserAPI && DataTypeUtil.isUndefined(storedVariation)) {
-      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.CAMPAIGN_NOT_ACTIVATED, {
+      logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_ACTIVATED, {
         file: file,
         campaignKey: campaignKey,
         userId: userId,
@@ -5532,7 +5432,7 @@ var DecisionUtil = {
 
     var winnerCampaign = BucketingService._getVariation(shortlistedCampaigns, BucketingService.calculateBucketValue(CampaignUtil.getBucketingSeed(userId, undefined, groupId)));
 
-    logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GOT_WINNER_CAMPAIGN, {
+    logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.MEG_GOT_WINNER_CAMPAIGN, {
       userId: userId,
       groupName: groupName,
       file: file,
@@ -5544,7 +5444,7 @@ var DecisionUtil = {
       return DecisionUtil.evaluateTrafficAndGetVariation(config, winnerCampaign, winnerCampaign.key, userId, metaData, newGoalIdentifier, decision);
     } else {
       // if winning campaign not the called camapaign, return
-      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CALLED_CAMPAIGN_NOT_WINNER, {
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.MEG_CALLED_CAMPAIGN_NOT_WINNER, {
         userId: userId,
         groupName: groupName,
         file: file,
@@ -5721,7 +5621,7 @@ var EventDispatcher = {
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.IMPRESSION_SUCCESS_FOR_EVENT_ARCH, {
         file: file,
         endPoint: endPoint,
-        a: properties.a,
+        accountId: properties.a,
         event: event
       }));
       return true;
@@ -5937,8 +5837,9 @@ var FunctionUtil = {
           LogMessageEnum = logging.LogMessageEnum,
           LogMessageUtil = logging.LogMessageUtil;
       var file = FileNameEnum.FunctionUtil;
-      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.REGEX_CREATION_FAILED, {
-        file: file
+      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SEGMENTATION_REGEX_CREATION_FAILED, {
+        file: file,
+        regex: regex
       }));
       return null;
     }
@@ -6376,9 +6277,9 @@ var ImpressionUtil = {
     properties.d.event.props.isFirst = 1;
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_EVENT_ARCH_TRACK_USER, {
       file: FileNameEnum.ImpressionUtil,
-      a: configObj.accountId,
-      u: userId,
-      c: campaignId
+      accountId: configObj.accountId,
+      userId: userId,
+      campaignId: campaignId
     }));
     return properties;
   },
@@ -6400,9 +6301,9 @@ var ImpressionUtil = {
       logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_EVENT_ARCH_TRACK_GOAL, {
         file: FileNameEnum.ImpressionUtil,
         goalName: eventName,
-        a: configObj.accountId,
+        accountId: configObj.accountId,
         u: userId,
-        c: key
+        campaignId: key
       }));
     });
     properties.d.event.props.vwoMeta = {
@@ -6437,8 +6338,8 @@ var ImpressionUtil = {
     });
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_EVENT_ARCH_PUSH, {
       file: FileNameEnum.ImpressionUtil,
-      a: configObj.accountId,
-      u: userId,
+      accountId: configObj.accountId,
+      userId: userId,
       property: JSON.stringify(customDimensionMap)
     }));
     return properties;
@@ -6961,14 +6862,6 @@ var uuidv5 = __webpack_require__(/*! uuid/v5 */ "./node_modules/uuid/v5.js");
 
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
 
-var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
-var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
-var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
-var logger = logging.getLogger();
 var VWO_NAMESPACE = uuidv5(Constants.SEED_URL, uuidv5.URL);
 var UuidUtil = {
   generateFor: function generateFor(userId, accountId) {
@@ -6978,12 +6871,6 @@ var UuidUtil = {
     var userIdNamespace = UuidUtil.generate(hash, VWO_NAMESPACE);
     var uuidForUserIdAccountId = UuidUtil.generate(userId, userIdNamespace);
     var desiredUuid = uuidForUserIdAccountId.replace(/-/gi, '').toUpperCase();
-    logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.UUID_FOR_USER, {
-      file: FileNameEnum.UuidUtil,
-      userId: userId,
-      accountId: accountId,
-      desiredUuid: desiredUuid
-    }));
     return desiredUuid;
   },
   generate: function generate(name, namespace) {
@@ -8629,6 +8516,50 @@ var v35 = __webpack_require__(/*! ./lib/v35.js */ "./node_modules/uuid/lib/v35.j
 var sha1 = __webpack_require__(/*! ./lib/sha1 */ "./node_modules/uuid/lib/sha1-browser.js");
 module.exports = v35('v5', 0x50, sha1);
 
+
+/***/ }),
+
+/***/ "./node_modules/vwo-sdk-log-messages/src/debug-messages.json":
+/*!*******************************************************************!*\
+  !*** ./node_modules/vwo-sdk-log-messages/src/debug-messages.json ***!
+  \*******************************************************************/
+/*! exports provided: CONFIG_BATCH_EVENT_LIMIT_EXCEEDED, CONFIG_LOG_LEVEL_SET, CONFIG_CUSTOM_LOGGER_USED, CONFIG_DEVELOPMENT_MODE_STATUS, POLLING_SETTINGS_FILE_REGISTERED, SETTINGS_FILE_PROCESSED, IMPRESSION_FOR_TRACK_USER, IMPRESSION_FOR_TRACK_GOAL, IMPRESSION_FOR_PUSH, IMPRESSION_FOR_EVENT_ARCH_TRACK_USER, IMPRESSION_FOR_EVENT_ARCH_TRACK_GOAL, IMPRESSION_FOR_EVENT_ARCH_PUSH, EVENT_BATCH_BEFORE_FLUSHING, EVENT_BATCH_FLUSH, USER_STORAGE_SERVICE_NOT_CONFIGURED, USER_STORAGE_SERVICE_NO_STORED_DATA, VARIATION_RANGE_ALLOCATION, MEG_ELIGIBLE_CAMPAIGNS, SEGMENTATION_SKIPPED, SEGMENTATION_STATUS, WHITELISTING_SKIPPED, USER_UUID, USER_HASH_BUCKET_VALUE, USER_CAMPAIGN_BUCKET_VALUES, default */
+/***/ (function(module) {
+
+module.exports = JSON.parse("{\"CONFIG_BATCH_EVENT_LIMIT_EXCEEDED\":\"({file}): Impression event - {endPoint} failed due to exceeding payload size. Parameter eventsPerRequest in batchEvents config in launch API has value:{eventsPerRequest} for account ID:{accountId}. Please read the official documentation for knowing the size limits\",\"CONFIG_LOG_LEVEL_SET\":\"({file}): Log level set to {level}\",\"CONFIG_CUSTOM_LOGGER_USED\":\"({file}): Custom logger used\",\"CONFIG_DEVELOPMENT_MODE_STATUS\":\"({file}): DEVELOPMENT mode is ON. No tracking call will be made to VWO Server\",\"POLLING_SETTINGS_FILE_REGISTERED\":\"({file}): Polling of settings-file is registered with a periodic interval of {pollingInterval} ms\",\"SETTINGS_FILE_PROCESSED\":\"({file}): settings-file matches the schema, validated and properly processed for the Account ID:{accountId}\",\"IMPRESSION_FOR_TRACK_USER\":\"({file}): Impression built for tracking user - {properties}\",\"IMPRESSION_FOR_TRACK_GOAL\":\"({file}): Impression built for tracking goal - {properties}\",\"IMPRESSION_FOR_PUSH\":\"({file}): Impression built for pushing custom dimension - {properties}\",\"IMPRESSION_FOR_EVENT_ARCH_TRACK_USER\":\"({file}): Impression built for vwo_variationShown event for Account ID:{accountId}, User ID:{userId}, and Campaign ID:{campaignId}\",\"IMPRESSION_FOR_EVENT_ARCH_TRACK_GOAL\":\"({file}): Impression built for {goalName} event for Account ID:{accountId}, User ID:{userId}, and Campaign ID:{campaignId}\",\"IMPRESSION_FOR_EVENT_ARCH_PUSH\":\"({file}): Impression built for visitor-property:{property} for Account ID:{accountId} and User ID:{userId}\",\"EVENT_BATCH_BEFORE_FLUSHING\":\"({file}): flushing event queue {manually} having {length} events for Account ID:{accountId}. {timer}\",\"EVENT_BATCH_FLUSH\":\"{{file}}: Manually flushing batch events for Account ID:{accountId} having {queueLength} events\",\"USER_STORAGE_SERVICE_NOT_CONFIGURED\":\"({file}): User Storage Service is not configured to get/set the data\",\"USER_STORAGE_SERVICE_NO_STORED_DATA\":\"({file}): No stored variation for User ID:{userId} for Campaign:{campaignKey} found in User Storage Service\",\"VARIATION_RANGE_ALLOCATION\":\"({file}): Variation:{variationName} of Campaign:{campaignKey} having weight:{variationWeight} got bucketing range: ( {start} - {end} )\",\"MEG_ELIGIBLE_CAMPAIGNS\":\"({file}): Campaigns: {eligibleCampaignKeys} are eligible, {inEligibleText} are ineligible from the Group:{groupName} for the User ID:{userId}\",\"SEGMENTATION_SKIPPED\":\"({file}): Segmentation is not used for Campaign:{campaignKey}, hence skipping evaluating segmentation{variation} for User ID:{userId}\",\"SEGMENTATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}\",\"WHITELISTING_SKIPPED\":\"({file}): Whitelisting is not used for Campaign:{campaignKey}, hence skipping evaluating whitelisting for User ID:{userId}\",\"USER_UUID\":\"({file}): VWO UUID generated for Account Id:{accountId} and User ID:{userId} is {uuid}\",\"USER_HASH_BUCKET_VALUE\":\"({file}): User ID:{userId} having hash:{hashValue} got bucketValue:{bucketValue}\",\"USER_CAMPAIGN_BUCKET_VALUES\":\"({file}): User ID:{userId} for Campaign:{campaignKey} having percent-traffic:{percentTraffic} got hash-value:{hashValue} and bucket-value:{bucketValue}\"}");
+
+/***/ }),
+
+/***/ "./node_modules/vwo-sdk-log-messages/src/error-messages.json":
+/*!*******************************************************************!*\
+  !*** ./node_modules/vwo-sdk-log-messages/src/error-messages.json ***!
+  \*******************************************************************/
+/*! exports provided: CONFIG_PARAMETER_INVALID, CONFIG_POLLING_SDK_KEY_NOT_PROVIVED, CONFIG_CORRUPTED, SETTINGS_FILE_INVALID, SETTINGS_FILE_CORRUPTED, BATCH_QUEUE_EMPTY, API_HAS_CORRUPTED_SETTINGS_FILE, API_BAD_PARAMETERS, API_NOT_APPLICABLE, USER_ID_INVALID, CAMPAIGN_NOT_FOUND_FOR_GOAL, POLLING_FAILED, SEGMENTATION_REGEX_CREATION_FAILED, SEGMENTATION_ERROR, USER_STORAGE_SERVICE_GET_FAILED, USER_STORAGE_SERVICE_SET_FAILED, IMPRESSION_FAILED, TAG_KEY_LENGTH_EXCEEDED, TAG_VALUE_LENGTH_EXCEEDED, TRACK_API_GOAL_NOT_FOUND, TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL, UNABLE_TO_CAST_VALUE, VARIABLE_NOT_FOUND, default */
+/***/ (function(module) {
+
+module.exports = JSON.parse("{\"CONFIG_PARAMETER_INVALID\":\"({file}): {parameter} paased in {api} API is not correct. It should be of type:{type}\",\"CONFIG_POLLING_SDK_KEY_NOT_PROVIVED\":\"({file}): SDK Key is required along with pollingInterval to poll the settings-file\",\"CONFIG_CORRUPTED\":\"({file}): Config passed to {api} API is invalid. Please refer developer docs\",\"SETTINGS_FILE_INVALID\":\"({file}): Settings file passed while instantiating SDK instance is invalid\",\"SETTINGS_FILE_CORRUPTED\":\"({file}): Fetched settings-file doesn't match the desired schema. Please contact VWO Support for help\",\"BATCH_QUEUE_EMPTY\":\"{{file}}: No batch queue present for account:{accountId} when calling flushEvents API. Check batchEvents config in launch API\",\"API_HAS_CORRUPTED_SETTINGS_FILE\":\"({file}): {api} API has corrupted settings-file. Please check or reach out to VWO support\",\"API_BAD_PARAMETERS\":\"({file}): {api} API got bad parameters. Refer the developer docs\",\"API_NOT_APPLICABLE\":\"({file}): {api} API is not valid for Campaign:{campaignKey} having type:{campaignType} for User ID:{userId}\",\"USER_ID_INVALID\":\"({file}): Invalid User Id:{userId} passed to the API\",\"CAMPAIGN_NOT_FOUND_FOR_GOAL\":\"({file}): No such campaign found corresponding to goalIdentifier:{goalIdentifier}. Please verify from VWO app\",\"POLLING_FAILED\":\"({file}): Fetching of settings-file failed via polling for the accountId:{accountId}\",\"SEGMENTATION_REGEX_CREATION_FAILED\":\"({file}): Regular expression:{regex} used for targeting cound not be evaluated\",\"SEGMENTATION_ERROR\":\"({file}): Could not segment the User ID:{userId} for Campaign:{campaignKey}{variation} with customVariables:{customVariables}. Error message: {err}\",\"USER_STORAGE_SERVICE_GET_FAILED\":\"({file}): Getting data from User Storage Service failed for User ID:{userId}. Error: {error}\",\"USER_STORAGE_SERVICE_SET_FAILED\":\"({file}): Saving data into User Storage Service failed for User ID:{userId}. Error: {error}\",\"IMPRESSION_FAILED\":\"({file}): Impression event could not be sent to VWO - {endPoint}. Reason: {err}\",\"TAG_KEY_LENGTH_EXCEEDED\":\"({file}): Length of custom dimension key:{tagKey} for User Id:{userId} can not be greater than 255\",\"TAG_VALUE_LENGTH_EXCEEDED\":\"({file}): Length of custom dimension value:{tagValue} of tagKey:{tagKey} for User Id:{userId} can not be greater than 255\",\"TRACK_API_GOAL_NOT_FOUND\":\"({file}): Goal:{goalIdentifier} not found for Campaign:{campaignKey} and User Id:{userId}\",\"TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL\":\"({file}): Revenue value should be passed for revenue goal:{goalIdentifier} for Campaign:{campaignKey} and User Id:{userId}\",\"UNABLE_TO_CAST_VALUE\":\"({file}): Unable to cast value:{variableValue} to type:{variableType}, returning null\",\"VARIABLE_NOT_FOUND\":\"({file}): Variable:{variableKey} for User ID:{userId} is not found in settings-file, returning null\"}");
+
+/***/ }),
+
+/***/ "./node_modules/vwo-sdk-log-messages/src/info-messages.json":
+/*!******************************************************************!*\
+  !*** ./node_modules/vwo-sdk-log-messages/src/info-messages.json ***!
+  \******************************************************************/
+/*! exports provided: CONFIG_VALID, CONFIG_PARAMETER_USED, CONFIG_RETURN_PROMISE, SDK_INITIALIZED, POLLING_SUCCESS, POLLING_SETTINGS_FILE_UPDATED, POLLING_SETTINGS_FILE_NOT_UPDATED, DECISION_NO_VARIATION_ALLOTED, EVENT_BATCH_DEFAULTS, EVENT_QUEUE, EVENT_BATCH_After_FLUSHING, CAMPAIGN_NOT_ACTIVATED, CAMPAIGN_USER_ALREADY_TRACKED, CAMPAIGN_GOAL_ALREADY_TRACKED, GOT_STORED_VARIATION, GETTING_DATA_USER_STORAGE_SERVICE, SETTING_DATA_USER_STORAGE_SERVICE, IMPRESSION_SUCCESS, IMPRESSION_SUCCESS_FOR_EVENT_ARCH, IMPRESSION_BATCH_SUCCESS, IMPRESSION_BATCH_FAILED, MEG_ELIGIBLE_CAMPAIGNS, OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE, SEGMENTATION_STATUS, MEG_CALLED_CAMPAIGN_NOT_WINNER, MEG_GOT_WINNER_CAMPAIGN, FEATURE_STATUS, FEATURE_VARIABLE_VALUE, FEATURE_VARIABLE_DEFAULT_VALUE, USER_NOT_PART_OF_CAMPAIGN, USER_VARIATION_STATUS, USER_CAMPAIGN_ELIGIBILITY, USER_VARIATION_ALLOCATION_STATUS, OPT_OUT_API_CALLED, API_NOT_ENABLED, default */
+/***/ (function(module) {
+
+module.exports = JSON.parse("{\"CONFIG_VALID\":\"({file}): SDK configuration and account settings-file are valid\",\"CONFIG_PARAMETER_USED\":\"({file}): {parameter} paased in launch API having type:{type}\",\"CONFIG_RETURN_PROMISE\":\"({file}): {method} API returns a promise as returnPromiseFor is set to true for this API\",\"SDK_INITIALIZED\":\"({file}): SDK is properly initialzed with the passed configuration\",\"POLLING_SUCCESS\":\"({file}): settings-file fetched successfully via polling for the accountId:{accountId}\",\"POLLING_SETTINGS_FILE_UPDATED\":\"({file}): SDK instance is updated with the latest settings-file for the accountId:{accountId}\",\"POLLING_SETTINGS_FILE_NOT_UPDATED\":\"{{file}}: settings-file fetched via polling is same as earlier fetched settings\",\"DECISION_NO_VARIATION_ALLOTED\":\"({file}): Variation was not assigned to the User ID:{userId} for Campaign:{campaignKey}\",\"EVENT_BATCH_DEFAULTS\":\"({file}): {parameter} not passed in SDK configuration, setting it default to {defaultValue}\",\"EVENT_QUEUE\":\"({file}): Event with payload:{event} pushed to the {queueType} queue\",\"EVENT_BATCH_After_FLUSHING\":\"({file}): Event queue having {length} events has been flushed {manually}\",\"CAMPAIGN_NOT_ACTIVATED\":\"({file}): Activate the campaign:{campaignKey} first for User ID:{userId} to {reason}\",\"CAMPAIGN_USER_ALREADY_TRACKED\":\"({file}): User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for \\\"{api}\\\" API. No tracking call is made to VWO server\",\"CAMPAIGN_GOAL_ALREADY_TRACKED\":\"({file}): Goal:{goalIdentifier} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. No tracking call is made to VWO server\",\"GOT_STORED_VARIATION\":\"({file}): Got stored variation from User Storage Service for User ID:{userId} for Campaign:{campaignKey} as Variation:{variationName}\",\"GETTING_DATA_USER_STORAGE_SERVICE\":\"({file}): Read data from User Storage Service for User ID:{userId} and Campaign:{campaignKey}\",\"SETTING_DATA_USER_STORAGE_SERVICE\":\"({file}): Set data into User Storage Service for User ID:{userId} and Campaign:{campaignKey}\",\"IMPRESSION_SUCCESS\":\"({file}): Impression event - {endPoint} was successfully received by VWO having main keys: Account ID:{accountId}, {mainKeys}\",\"IMPRESSION_SUCCESS_FOR_EVENT_ARCH\":\"({file}): Impression for {event} - {endPoint} was successfully received by VWO for Account ID:{accountId}\",\"IMPRESSION_BATCH_SUCCESS\":\"({file}): Impression event - {endPoint} was successfully received by VWO having Account ID:{accountId}\",\"IMPRESSION_BATCH_FAILED\":\"({file}): Batch events couldn\\\"t be received by VWO. Calling Flush Callback with error and data\",\"MEG_ELIGIBLE_CAMPAIGNS\":\"({file}): Got {noOfEligibleCampaigns} eligible winners out of {noOfGroupCampaigns} campaigns from the Group:{groupName} and for User ID:{userId}\",\"OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE\":\"({file}): Campaign:{campaignKey} of Group:{groupName} satisfies {type} for User ID:{userId}\",\"SEGMENTATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}\",\"MEG_CALLED_CAMPAIGN_NOT_WINNER\":\"({file}): Campaign:{campaignKey} does not qualify from the mutually exclusive group:{groupName} for User ID:{userId}\",\"MEG_GOT_WINNER_CAMPAIGN\":\"({file}): Campaign:{campaignKey} is selected from the mutually exclusive group:{groupName} for the User ID:{userId}\",\"FEATURE_STATUS\":\"({file}): Campaign:{campaignKey} is {status} for user ID:{userId}\",\"FEATURE_VARIABLE_VALUE\":\"({file}): For User ID:{userId}, value for variable:{variableKey} of feature:{campaignKey} is:{variableValue}\",\"FEATURE_VARIABLE_DEFAULT_VALUE\":\"({file}): Feature is not enabled for variation:{variationName}. Returning default value for the variable:{variableKey}\",\"USER_NOT_PART_OF_CAMPAIGN\":\"({file}): User ID:{userId} did not qualify for Campaign:{campaignKey}\",\"USER_VARIATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} {status}\",\"USER_CAMPAIGN_ELIGIBILITY\":\"({file}): User ID:{userId} for Campaign:{campaignKey} is {status} to become part of campaign\",\"USER_VARIATION_ALLOCATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} {status}\",\"OPT_OUT_API_CALLED\":\"({file}): You have opted out for not tracking i.e. all API calls will stop functioning and will simply early return\",\"API_NOT_ENABLED\":\"({file}): {api} API is disabled as you opted out for tracking. Reinitialize the SDK to enable the normal functioning of all APIs.\"}");
+
+/***/ }),
+
+/***/ "./node_modules/vwo-sdk-log-messages/src/warning-messages.json":
+/*!*********************************************************************!*\
+  !*** ./node_modules/vwo-sdk-log-messages/src/warning-messages.json ***!
+  \*********************************************************************/
+/*! exports provided: CAMPAIGN_NOT_RUNNING, CAMPAIGN_NOT_ACTIVATED, default */
+/***/ (function(module) {
+
+module.exports = JSON.parse("{\"CAMPAIGN_NOT_RUNNING\":\"({file}): {api} API called with Campaign:{campaignKey} but the campaign is not RUNNING. Please verify from VWO App\",\"CAMPAIGN_NOT_ACTIVATED\":\"({file}): Campaign:{campaignKey} for User ID:{userId} is not yet activated for API:{api}. Use activate API to activate A/B test or isFeatureEnabled API to activate Feature Test\"}");
 
 /***/ })
 

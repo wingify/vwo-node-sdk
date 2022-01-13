@@ -67,12 +67,6 @@ describe('BucketingService', () => {
       expect(result).toBe(false);
     });
 
-    test('should return false if no userId is passed', () => {
-      const result = BucketingService.isUserPartOfCampaign(null, dummyCampaign);
-
-      expect(result).toBe(false);
-    });
-
     test('should return true if user becomes a part of campaign after validating traffic allocation', () => {
       userId = 'Bob';
       // Bob, with above campaign settings, will get hashValue:2033809345 and bucketValue:48
