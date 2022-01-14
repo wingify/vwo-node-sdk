@@ -6945,7 +6945,7 @@ vm-browserify@^1.0.1:
   resolved "https://registry.yarnpkg.com/vm-browserify/-/vm-browserify-1.1.0.tgz#bd76d6a23323e2ca8ffa12028dc04559c75f9019"
   integrity sha512-iq+S7vZJE60yejDYM0ek6zg308+UZsdtPExWP9VZoCFCz1zkJoXFnAX7aZfd/ZwrkidzdUZL0C/ryW+JwAiIGw==
 
-"vwo-sdk-log-messages@https://github.com/wingify/vwo-sdk-log-messages.git#0.1.0":
+"vwo-sdk-log-messages@https://github.com/wingify/vwo-sdk-log-messages.git#v0.1.0":
   version "0.1.0"
   resolved "https://github.com/wingify/vwo-sdk-log-messages.git#46f1ae324d8c07e3e3883f2126b1353bb3f9891f"
 

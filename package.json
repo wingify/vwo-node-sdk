@@ -58,7 +58,7 @@
     "murmurhash": "^0.0.2",
     "superstruct": "^0.10.12",
     "uuid": "^3.3.2",
-    "vwo-sdk-log-messages": "https://github.com/wingify/vwo-sdk-log-messages.git#0.1.0"
+    "vwo-sdk-log-messages": "https://github.com/wingify/vwo-sdk-log-messages.git#v0.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.6.2",
