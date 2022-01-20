@@ -1226,7 +1226,7 @@ describe('Class VWO', () => {
       vwoClientInstance = new VWO({
         settingsFile: settingsFile2,
         logger,
-        isDevelopmentMode: true,
+        // isDevelopmentMode: true,
         userStorageService
       });
 
@@ -1252,17 +1252,17 @@ describe('Class VWO', () => {
 
       vwoClientInstance = new VWO({
         settingsFile: settingsFile9,
-        logger,
-        isDevelopmentMode: true
+        logger
+        // isDevelopmentMode: true
       });
 
-      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+      let batchEventDispatcher = jest.spyOn(BatchEventsDispatcher, 'dispatch');
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const isTracked = vwoClientInstance.track(null, users[j], 'track');
 
         expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
-        expect(spyEventQueue).toHaveBeenCalled();
+        expect(batchEventDispatcher).toHaveBeenCalled();
         expect(isTracked[campaignKey1]).toBe(true);
         expect(isTracked[campaignKey2]).toBe(false);
       }
@@ -1273,7 +1273,7 @@ describe('Class VWO', () => {
         });
 
         expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
-        expect(spyEventQueue).toHaveBeenCalled();
+        expect(batchEventDispatcher).toHaveBeenCalled();
         expect(isTracked[campaignKey1]).toBe(true);
         expect(isTracked[campaignKey2]).toBe(true);
       }
@@ -1388,11 +1388,10 @@ describe('Class VWO', () => {
       const campaignKey1 = 'track1';
       const campaignKey2 = 'track2';
 
-      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
       vwoClientInstance = new VWO({
         settingsFile: settingsFile9,
         logger,
-        isDevelopmentMode: true,
+        // isDevelopmentMode: true,
         userStorageService: userStorageService1,
         shouldTrackReturningUser: false
       });
