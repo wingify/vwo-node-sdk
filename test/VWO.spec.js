@@ -16,6 +16,7 @@
 
 const VWO = require('../lib/VWO');
 const ImpressionUtil = require('../lib/utils/ImpressionUtil');
+const BatchEventsDispatcher = require('../lib/utils/BatchEventsDispatcher');
 const logging = require('../lib/services/logging');
 const indexFile = require('../lib/index');
 require('regenerator-runtime/runtime');
@@ -1289,7 +1290,7 @@ describe('Class VWO', () => {
         isDevelopmentMode: true
       });
 
-      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+      const batchEventDispatcher = jest.spyOn(BatchEventsDispatcher, 'dispatch');
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const isTracked = vwoClientInstance.track(null, users[j], 'track2', {
@@ -1298,7 +1299,7 @@ describe('Class VWO', () => {
         });
 
         expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
-        expect(spyEventQueue).toHaveBeenCalled();
+        expect(batchEventDispatcher).toHaveBeenCalled();
         expect(isTracked[campaignKey1]).toBe(true);
         expect(isTracked[campaignKey2]).toBe(true);
       }
@@ -1324,7 +1325,7 @@ describe('Class VWO', () => {
         isDevelopmentMode: true
       });
 
-      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+      const batchEventDispatcher = jest.spyOn(BatchEventsDispatcher, 'dispatch');
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const isTracked = vwoClientInstance.track(null, users[j], 'track3', {
@@ -1333,7 +1334,7 @@ describe('Class VWO', () => {
         });
 
         expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
-        expect(spyEventQueue).toHaveBeenCalled();
+        expect(batchEventDispatcher).toHaveBeenCalled();
         expect(isTracked[campaignKey1]).toBe(true);
         expect(isTracked[campaignKey2]).toBe(true);
       }
@@ -1359,13 +1360,13 @@ describe('Class VWO', () => {
         isDevelopmentMode: true
       });
 
-      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+      const batchEventDispatcher = jest.spyOn(BatchEventsDispatcher, 'dispatch');
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const isTracked = vwoClientInstance.track(['track1', 'track2'], users[j], 'track');
 
         expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
-        expect(spyEventQueue).toHaveBeenCalled();
+        expect(batchEventDispatcher).toHaveBeenCalled();
         expect(isTracked[campaignKey1]).toBe(true);
         expect(isTracked[campaignKey2]).toBe(false);
       }
@@ -1376,7 +1377,7 @@ describe('Class VWO', () => {
         });
 
         expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
-        expect(spyEventQueue).toHaveBeenCalled();
+        expect(batchEventDispatcher).toHaveBeenCalled();
         expect(isTracked[campaignKey1]).toBe(true);
         expect(isTracked[campaignKey2]).toBe(true);
       }
@@ -1442,14 +1443,14 @@ describe('Class VWO', () => {
         userStorageService
       });
 
-      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+      const batchEventDispatcher = jest.spyOn(BatchEventsDispatcher, 'dispatch');
 
       for (let i = 0, j = 0; i < settings[campaignKey].length; i++, j++) {
         const isTracked = vwoClientInstance.track(campaignKey, users[j], goalIdentifier);
 
         if (isTracked[campaignKey]) {
           expect(spyImpressionEventTrackGoal).toHaveBeenCalled();
-          expect(spyEventQueue).toHaveBeenCalled();
+          expect(batchEventDispatcher).toHaveBeenCalled();
           expect(isTracked[campaignKey]).toBe(true);
         } else {
           expect(isTracked[campaignKey]).toBe(false);
@@ -2181,9 +2182,11 @@ describe('Class VWO', () => {
         userStorageService
       });
 
-      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+      const BatchEventsDispatcher = require('../lib/utils/BatchEventsDispatcher');
+      const batchEventDispatcher = jest.spyOn(BatchEventsDispatcher, 'dispatch');
+
       expect(vwoClientInstance.push('tagKey', 'tagValue', 'userId')).toEqual({ tagKey: true });
-      expect(spyEventQueue).toHaveBeenCalledTimes(1);
+      expect(batchEventDispatcher).toHaveBeenCalled();
       expect(
         vwoClientInstance.push(
           {
@@ -2194,7 +2197,7 @@ describe('Class VWO', () => {
           'userId'
         )
       ).toEqual({ tag_key_1: true, tag_key_2: true, tag_key_3: true });
-      expect(spyEventQueue).toHaveBeenCalledTimes(4);
+      expect(batchEventDispatcher).toHaveBeenCalled();
     });
 
     test('should test for multiple custom dimensions when event batching is not enabled and event architecture is enabled', () => {
@@ -2206,9 +2209,10 @@ describe('Class VWO', () => {
 
       vwoClientInstance.SettingsFileManager._clonedSettingsFile.isEventArchEnabled = true;
 
-      spyEventQueue = jest.spyOn(vwoClientInstance.eventQueue, 'process');
+      const batchEventDispatcher = jest.spyOn(BatchEventsDispatcher, 'dispatch');
+
       expect(vwoClientInstance.push('tagKey', 'tagValue', 'userId')).toEqual({ success: true });
-      expect(spyEventQueue).toHaveBeenCalledTimes(1);
+      expect(batchEventDispatcher).toHaveBeenCalled();
       expect(
         vwoClientInstance.push(
           {
@@ -2219,7 +2223,7 @@ describe('Class VWO', () => {
           'userId'
         )
       ).toEqual({ success: true });
-      expect(spyEventQueue).toHaveBeenCalledTimes(2);
+      expect(spyEventQueue).toHaveBeenCalled();
     });
 
     test('should test for multiple custom dimensions when event batching and event architecture is enabled', () => {
