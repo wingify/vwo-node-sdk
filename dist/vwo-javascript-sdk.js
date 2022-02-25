@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.32.2
+ * vwo-javascript-sdk - v1.32.3
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -1482,6 +1482,21 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
           responseCallback: responseCallback
         });
       }
+
+      vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_STATUS, {
+        file: file,
+        campaignKey: campaignKey,
+        userId: userId,
+        status: isFeatureEnabled ? 'enabled' : 'disabled'
+      }));
+
+      if (config.isDevelopmentMode) {
+        return {
+          isFeatureEnabled: isFeatureEnabled
+        };
+      }
+
+      return isFeatureEnabled;
     }
   }
 
@@ -2010,7 +2025,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.32.2"
+    version: "1.32.3"
   };
 } else {}
 
@@ -3462,7 +3477,7 @@ function () {
           responseCallback = _ref.responseCallback;
 
       if (config && config.isDevelopmentMode) {
-        logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.DEV_MODE_ON, {
+        logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.CONFIG_DEVELOPMENT_MODE_STATUS, {
           file: file
         }));
         return;
