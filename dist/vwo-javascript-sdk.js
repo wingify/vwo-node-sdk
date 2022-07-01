@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.32.3
+ * vwo-javascript-sdk - v1.34.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -18,9 +18,9 @@
  * 
  * Dependencies used - 
  *  1. murmurhash - ^0.0.2
- *  2. superstruct - ^0.10.12
+ *  2. superstruct - ^0.15.4
  *  3. uuid - ^3.3.2
- *  4. vwo-sdk-log-messages - https://github.com/wingify/vwo-sdk-log-messages.git#v0.1.0
+ *  4. vwo-sdk-log-messages - ^0.5.0
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	// CommonJS2
@@ -1774,7 +1774,8 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
         goalTypeToTrack = options.goalTypeToTrack,
         shouldTrackReturningUser = options.shouldTrackReturningUser,
         metaData = options.metaData,
-        responseCallback = options.responseCallback; // Check if arguments have valid data-type
+        responseCallback = options.responseCallback,
+        eventProperties = options.eventProperties; // Check if arguments have valid data-type
 
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.TRACK,
@@ -1787,7 +1788,8 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
       goalTypeToTrack: goalTypeToTrack,
       shouldTrackReturningUser: shouldTrackReturningUser,
       metaData: metaData,
-      responseCallback: responseCallback
+      responseCallback: responseCallback,
+      eventProperties: eventProperties
     }) && (!goalTypeToTrack || goalTypeToTrack && objectValues(GoalTypeEnum).includes(goalTypeToTrack))) {
       areParamsValid = true;
     }
@@ -1862,7 +1864,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
 
   if (settingsFile.isEventArchEnabled && Object.keys(metricMap).length > 0) {
     var properties = ImpressionUtil.getEventsBaseProperties(settingsFile, goalIdentifier);
-    var payload = ImpressionUtil.getTrackGoalPayloadData(settingsFile, userId, goalIdentifier, metricMap, revenueValue, revenuePropList);
+    var payload = ImpressionUtil.getTrackGoalPayloadData(settingsFile, userId, goalIdentifier, metricMap, revenueValue, revenuePropList, eventProperties);
     vwoInstance.eventQueue.process(config, properties, vwoInstance, {
       payload: payload,
       responseCallback: responseCallback
@@ -1946,7 +1948,7 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
         storedGoalIdentifier += GOAL_IDENTIFIER_SEPERATOR + goalIdentifier;
 
         DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, storedGoalIdentifier);
-      } else if (!shouldTrackReturningUser) {
+      } else if (!shouldTrackReturningUser && goal.mca !== -1) {
         vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CAMPAIGN_GOAL_ALREADY_TRACKED, {
           file: file,
           userId: userId,
@@ -2025,7 +2027,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.32.3"
+    version: "1.34.0"
   };
 } else {}
 
@@ -3350,13 +3352,15 @@ var _require = __webpack_require__(/*! superstruct */ "./node_modules/superstruc
     optional = _require.optional,
     union = _require.union,
     type = _require.type,
-    record = _require.record;
+    record = _require.record,
+    integer = _require.integer;
 
 var campaignGoalSchema = type({
   id: union([number(), string()]),
   identifier: string(),
   type: string(),
-  revenueProp: optional(string())
+  revenueProp: optional(string()),
+  mca: optional(integer())
 });
 var variableObjectSchema = type({
   id: union([number(), string()]),
@@ -6345,6 +6349,7 @@ var ImpressionUtil = {
    * @returns track-goal payload
    */
   getTrackGoalPayloadData: function getTrackGoalPayloadData(configObj, userId, eventName, metricMap, revenueValue, revenuePropList) {
+    var eventProperties = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
     var properties = this.getEventBasePayload(configObj, userId, eventName);
     var metric = {};
     Object.keys(metricMap).forEach(function (key) {
@@ -6368,6 +6373,13 @@ var ImpressionUtil = {
     }
 
     properties.d.event.props.isCustomEvent = true;
+
+    if (Object.keys(eventProperties).length > 0) {
+      for (var prop in eventProperties) {
+        properties.d.event.props[prop] = eventProperties[prop];
+      }
+    }
+
     return properties;
   },
 
@@ -8585,10 +8597,10 @@ module.exports = JSON.parse("{\"CONFIG_BATCH_EVENT_LIMIT_EXCEEDED\":\"({file}): 
 /*!*******************************************************************!*\
   !*** ./node_modules/vwo-sdk-log-messages/src/error-messages.json ***!
   \*******************************************************************/
-/*! exports provided: CONFIG_PARAMETER_INVALID, CONFIG_POLLING_SDK_KEY_NOT_PROVIVED, CONFIG_CORRUPTED, SETTINGS_FILE_INVALID, SETTINGS_FILE_CORRUPTED, BATCH_QUEUE_EMPTY, API_HAS_CORRUPTED_SETTINGS_FILE, API_BAD_PARAMETERS, API_NOT_APPLICABLE, USER_ID_INVALID, CAMPAIGN_NOT_FOUND_FOR_GOAL, POLLING_FAILED, SEGMENTATION_REGEX_CREATION_FAILED, SEGMENTATION_ERROR, USER_STORAGE_SERVICE_GET_FAILED, USER_STORAGE_SERVICE_SET_FAILED, IMPRESSION_FAILED, TAG_KEY_LENGTH_EXCEEDED, TAG_VALUE_LENGTH_EXCEEDED, TRACK_API_GOAL_NOT_FOUND, TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL, UNABLE_TO_CAST_VALUE, VARIABLE_NOT_FOUND, default */
+/*! exports provided: CONFIG_PARAMETER_INVALID, CONFIG_POLLING_SDK_KEY_NOT_PROVIVED, CONFIG_CORRUPTED, SETTINGS_FILE_INVALID, SETTINGS_FILE_CORRUPTED, BATCH_QUEUE_EMPTY, API_HAS_CORRUPTED_SETTINGS_FILE, API_BAD_PARAMETERS, API_NOT_APPLICABLE, USER_ID_INVALID, CAMPAIGN_NOT_FOUND_FOR_GOAL, POLLING_FAILED, SEGMENTATION_REGEX_CREATION_FAILED, SEGMENTATION_ERROR, USER_STORAGE_SERVICE_GET_FAILED, USER_STORAGE_SERVICE_SET_FAILED, IMPRESSION_FAILED, TAG_KEY_LENGTH_EXCEEDED, TAG_VALUE_LENGTH_EXCEEDED, TRACK_API_GOAL_NOT_FOUND, TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL, UNABLE_TO_CAST_VALUE, VARIABLE_NOT_FOUND, MISSING_IMPORT_SETTINGS_MANDATORY_PARAMS, ACCOUNT_SETTINGS_NOT_FOUND, default */
 /***/ (function(module) {
 
-module.exports = JSON.parse("{\"CONFIG_PARAMETER_INVALID\":\"({file}): {parameter} paased in {api} API is not correct. It should be of type:{type}\",\"CONFIG_POLLING_SDK_KEY_NOT_PROVIVED\":\"({file}): SDK Key is required along with pollingInterval to poll the settings-file\",\"CONFIG_CORRUPTED\":\"({file}): Config passed to {api} API is invalid. Please refer developer docs\",\"SETTINGS_FILE_INVALID\":\"({file}): Settings file passed while instantiating SDK instance is invalid\",\"SETTINGS_FILE_CORRUPTED\":\"({file}): Fetched settings-file doesn't match the desired schema. Please contact VWO Support for help\",\"BATCH_QUEUE_EMPTY\":\"{{file}}: No batch queue present for account:{accountId} when calling flushEvents API. Check batchEvents config in launch API\",\"API_HAS_CORRUPTED_SETTINGS_FILE\":\"({file}): {api} API has corrupted settings-file. Please check or reach out to VWO support\",\"API_BAD_PARAMETERS\":\"({file}): {api} API got bad parameters. Refer the developer docs\",\"API_NOT_APPLICABLE\":\"({file}): {api} API is not valid for Campaign:{campaignKey} having type:{campaignType} for User ID:{userId}\",\"USER_ID_INVALID\":\"({file}): Invalid User Id:{userId} passed to the API\",\"CAMPAIGN_NOT_FOUND_FOR_GOAL\":\"({file}): No such campaign found corresponding to goalIdentifier:{goalIdentifier}. Please verify from VWO app\",\"POLLING_FAILED\":\"({file}): Fetching of settings-file failed via polling for the accountId:{accountId}\",\"SEGMENTATION_REGEX_CREATION_FAILED\":\"({file}): Regular expression:{regex} used for targeting cound not be evaluated\",\"SEGMENTATION_ERROR\":\"({file}): Could not segment the User ID:{userId} for Campaign:{campaignKey}{variation} with customVariables:{customVariables}. Error message: {err}\",\"USER_STORAGE_SERVICE_GET_FAILED\":\"({file}): Getting data from User Storage Service failed for User ID:{userId}. Error: {error}\",\"USER_STORAGE_SERVICE_SET_FAILED\":\"({file}): Saving data into User Storage Service failed for User ID:{userId}. Error: {error}\",\"IMPRESSION_FAILED\":\"({file}): Impression event could not be sent to VWO - {endPoint}. Reason: {err}\",\"TAG_KEY_LENGTH_EXCEEDED\":\"({file}): Length of custom dimension key:{tagKey} for User Id:{userId} can not be greater than 255\",\"TAG_VALUE_LENGTH_EXCEEDED\":\"({file}): Length of custom dimension value:{tagValue} of tagKey:{tagKey} for User Id:{userId} can not be greater than 255\",\"TRACK_API_GOAL_NOT_FOUND\":\"({file}): Goal:{goalIdentifier} not found for Campaign:{campaignKey} and User Id:{userId}\",\"TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL\":\"({file}): Revenue value should be passed for revenue goal:{goalIdentifier} for Campaign:{campaignKey} and User Id:{userId}\",\"UNABLE_TO_CAST_VALUE\":\"({file}): Unable to cast value:{variableValue} to type:{variableType}, returning null\",\"VARIABLE_NOT_FOUND\":\"({file}): Variable:{variableKey} for User ID:{userId} is not found in settings-file, returning null\"}");
+module.exports = JSON.parse("{\"CONFIG_PARAMETER_INVALID\":\"({file}): {parameter} paased in {api} API is not correct. It should be of type:{type}\",\"CONFIG_POLLING_SDK_KEY_NOT_PROVIVED\":\"({file}): SDK Key is required along with pollingInterval to poll the settings-file\",\"CONFIG_CORRUPTED\":\"({file}): Config passed to {api} API is invalid. Please refer developer docs\",\"SETTINGS_FILE_INVALID\":\"({file}): Settings file passed while instantiating SDK instance is invalid\",\"SETTINGS_FILE_CORRUPTED\":\"({file}): Fetched settings-file doesn't match the desired schema. Please contact VWO Support for help\",\"BATCH_QUEUE_EMPTY\":\"{{file}}: No batch queue present for account:{accountId} when calling flushEvents API. Check batchEvents config in launch API\",\"API_HAS_CORRUPTED_SETTINGS_FILE\":\"({file}): {api} API has corrupted settings-file. Please check or reach out to VWO support\",\"API_BAD_PARAMETERS\":\"({file}): {api} API got bad parameters. Refer the developer docs\",\"API_NOT_APPLICABLE\":\"({file}): {api} API is not valid for Campaign:{campaignKey} having type:{campaignType} for User ID:{userId}\",\"USER_ID_INVALID\":\"({file}): Invalid User Id:{userId} passed to the API\",\"CAMPAIGN_NOT_FOUND_FOR_GOAL\":\"({file}): No such campaign found corresponding to goalIdentifier:{goalIdentifier}. Please verify from VWO app\",\"POLLING_FAILED\":\"({file}): Fetching of settings-file failed via polling for the accountId:{accountId}\",\"SEGMENTATION_REGEX_CREATION_FAILED\":\"({file}): Regular expression:{regex} used for targeting cound not be evaluated\",\"SEGMENTATION_ERROR\":\"({file}): Could not segment the User ID:{userId} for Campaign:{campaignKey}{variation} with customVariables:{customVariables}. Error message: {err}\",\"USER_STORAGE_SERVICE_GET_FAILED\":\"({file}): Getting data from User Storage Service failed for User ID:{userId}. Error: {error}\",\"USER_STORAGE_SERVICE_SET_FAILED\":\"({file}): Saving data into User Storage Service failed for User ID:{userId}. Error: {error}\",\"IMPRESSION_FAILED\":\"({file}): Impression event could not be sent to VWO - {endPoint}. Reason: {err}\",\"TAG_KEY_LENGTH_EXCEEDED\":\"({file}): Length of custom dimension key:{tagKey} for User Id:{userId} can not be greater than 255\",\"TAG_VALUE_LENGTH_EXCEEDED\":\"({file}): Length of custom dimension value:{tagValue} of tagKey:{tagKey} for User Id:{userId} can not be greater than 255\",\"TRACK_API_GOAL_NOT_FOUND\":\"({file}): Goal:{goalIdentifier} not found for Campaign:{campaignKey} and User Id:{userId}\",\"TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL\":\"({file}): Revenue value should be passed for revenue goal:{goalIdentifier} for Campaign:{campaignKey} and User Id:{userId}\",\"UNABLE_TO_CAST_VALUE\":\"({file}): Unable to cast value:{variableValue} to type:{variableType}, returning null\",\"VARIABLE_NOT_FOUND\":\"({file}): Variable:{variableKey} for User ID:{userId} is not found in settings-file, returning null\",\"MISSING_IMPORT_SETTINGS_MANDATORY_PARAMS\":\"AccountId and sdkKey are required for fetching account settings. Aborting!\",\"ACCOUNT_SETTINGS_NOT_FOUND\":\"({file}): Request failed for fetching account settings. Got Status Code: ${statusCode} and message: ${message}\"}");
 
 /***/ }),
 
@@ -8596,10 +8608,10 @@ module.exports = JSON.parse("{\"CONFIG_PARAMETER_INVALID\":\"({file}): {paramete
 /*!******************************************************************!*\
   !*** ./node_modules/vwo-sdk-log-messages/src/info-messages.json ***!
   \******************************************************************/
-/*! exports provided: CONFIG_VALID, CONFIG_PARAMETER_USED, CONFIG_RETURN_PROMISE, SDK_INITIALIZED, POLLING_SUCCESS, POLLING_SETTINGS_FILE_UPDATED, POLLING_SETTINGS_FILE_NOT_UPDATED, DECISION_NO_VARIATION_ALLOTED, EVENT_BATCH_DEFAULTS, EVENT_QUEUE, EVENT_BATCH_After_FLUSHING, CAMPAIGN_NOT_ACTIVATED, CAMPAIGN_USER_ALREADY_TRACKED, CAMPAIGN_GOAL_ALREADY_TRACKED, GOT_STORED_VARIATION, GETTING_DATA_USER_STORAGE_SERVICE, SETTING_DATA_USER_STORAGE_SERVICE, IMPRESSION_SUCCESS, IMPRESSION_SUCCESS_FOR_EVENT_ARCH, IMPRESSION_BATCH_SUCCESS, IMPRESSION_BATCH_FAILED, MEG_ELIGIBLE_CAMPAIGNS, OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE, SEGMENTATION_STATUS, MEG_CALLED_CAMPAIGN_NOT_WINNER, MEG_GOT_WINNER_CAMPAIGN, FEATURE_STATUS, FEATURE_VARIABLE_VALUE, FEATURE_VARIABLE_DEFAULT_VALUE, USER_NOT_PART_OF_CAMPAIGN, USER_VARIATION_STATUS, USER_CAMPAIGN_ELIGIBILITY, USER_VARIATION_ALLOCATION_STATUS, OPT_OUT_API_CALLED, API_NOT_ENABLED, default */
+/*! exports provided: CONFIG_VALID, CONFIG_PARAMETER_USED, CONFIG_RETURN_PROMISE, SDK_INITIALIZED, POLLING_SUCCESS, POLLING_SETTINGS_FILE_UPDATED, POLLING_SETTINGS_FILE_NOT_UPDATED, DECISION_NO_VARIATION_ALLOTED, EVENT_BATCH_DEFAULTS, EVENT_QUEUE, EVENT_BATCH_After_FLUSHING, CAMPAIGN_NOT_ACTIVATED, CAMPAIGN_USER_ALREADY_TRACKED, CAMPAIGN_GOAL_ALREADY_TRACKED, GOT_STORED_VARIATION, GETTING_DATA_USER_STORAGE_SERVICE, SETTING_DATA_USER_STORAGE_SERVICE, IMPRESSION_SUCCESS, IMPRESSION_SUCCESS_FOR_EVENT_ARCH, IMPRESSION_BATCH_SUCCESS, IMPRESSION_BATCH_FAILED, MEG_ELIGIBLE_CAMPAIGNS, OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE, SEGMENTATION_STATUS, MEG_CALLED_CAMPAIGN_NOT_WINNER, MEG_GOT_WINNER_CAMPAIGN, FEATURE_STATUS, FEATURE_VARIABLE_VALUE, FEATURE_VARIABLE_DEFAULT_VALUE, USER_NOT_PART_OF_CAMPAIGN, USER_VARIATION_STATUS, USER_CAMPAIGN_ELIGIBILITY, USER_VARIATION_ALLOCATION_STATUS, OPT_OUT_API_CALLED, API_NOT_ENABLED, INITIATING_ACTIVATE, INITIATING_GET_VARIATION, INITIATING_GET_FEATURE_VARIATION, INITIATING_IS_FEATURE_ENABLED, INITIATING_PUSH_DIMENSION, default */
 /***/ (function(module) {
 
-module.exports = JSON.parse("{\"CONFIG_VALID\":\"({file}): SDK configuration and account settings-file are valid\",\"CONFIG_PARAMETER_USED\":\"({file}): {parameter} paased in launch API having type:{type}\",\"CONFIG_RETURN_PROMISE\":\"({file}): {method} API returns a promise as returnPromiseFor is set to true for this API\",\"SDK_INITIALIZED\":\"({file}): SDK is properly initialzed with the passed configuration\",\"POLLING_SUCCESS\":\"({file}): settings-file fetched successfully via polling for the accountId:{accountId}\",\"POLLING_SETTINGS_FILE_UPDATED\":\"({file}): SDK instance is updated with the latest settings-file for the accountId:{accountId}\",\"POLLING_SETTINGS_FILE_NOT_UPDATED\":\"{{file}}: settings-file fetched via polling is same as earlier fetched settings\",\"DECISION_NO_VARIATION_ALLOTED\":\"({file}): Variation was not assigned to the User ID:{userId} for Campaign:{campaignKey}\",\"EVENT_BATCH_DEFAULTS\":\"({file}): {parameter} not passed in SDK configuration, setting it default to {defaultValue}\",\"EVENT_QUEUE\":\"({file}): Event with payload:{event} pushed to the {queueType} queue\",\"EVENT_BATCH_After_FLUSHING\":\"({file}): Event queue having {length} events has been flushed {manually}\",\"CAMPAIGN_NOT_ACTIVATED\":\"({file}): Activate the campaign:{campaignKey} first for User ID:{userId} to {reason}\",\"CAMPAIGN_USER_ALREADY_TRACKED\":\"({file}): User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for \\\"{api}\\\" API. No tracking call is made to VWO server\",\"CAMPAIGN_GOAL_ALREADY_TRACKED\":\"({file}): Goal:{goalIdentifier} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. No tracking call is made to VWO server\",\"GOT_STORED_VARIATION\":\"({file}): Got stored variation from User Storage Service for User ID:{userId} for Campaign:{campaignKey} as Variation:{variationName}\",\"GETTING_DATA_USER_STORAGE_SERVICE\":\"({file}): Read data from User Storage Service for User ID:{userId} and Campaign:{campaignKey}\",\"SETTING_DATA_USER_STORAGE_SERVICE\":\"({file}): Set data into User Storage Service for User ID:{userId} and Campaign:{campaignKey}\",\"IMPRESSION_SUCCESS\":\"({file}): Impression event - {endPoint} was successfully received by VWO having main keys: Account ID:{accountId}, {mainKeys}\",\"IMPRESSION_SUCCESS_FOR_EVENT_ARCH\":\"({file}): Impression for {event} - {endPoint} was successfully received by VWO for Account ID:{accountId}\",\"IMPRESSION_BATCH_SUCCESS\":\"({file}): Impression event - {endPoint} was successfully received by VWO having Account ID:{accountId}\",\"IMPRESSION_BATCH_FAILED\":\"({file}): Batch events couldn\\\"t be received by VWO. Calling Flush Callback with error and data\",\"MEG_ELIGIBLE_CAMPAIGNS\":\"({file}): Got {noOfEligibleCampaigns} eligible winners out of {noOfGroupCampaigns} campaigns from the Group:{groupName} and for User ID:{userId}\",\"OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE\":\"({file}): Campaign:{campaignKey} of Group:{groupName} satisfies {type} for User ID:{userId}\",\"SEGMENTATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}\",\"MEG_CALLED_CAMPAIGN_NOT_WINNER\":\"({file}): Campaign:{campaignKey} does not qualify from the mutually exclusive group:{groupName} for User ID:{userId}\",\"MEG_GOT_WINNER_CAMPAIGN\":\"({file}): Campaign:{campaignKey} is selected from the mutually exclusive group:{groupName} for the User ID:{userId}\",\"FEATURE_STATUS\":\"({file}): Campaign:{campaignKey} is {status} for user ID:{userId}\",\"FEATURE_VARIABLE_VALUE\":\"({file}): For User ID:{userId}, value for variable:{variableKey} of feature:{campaignKey} is:{variableValue}\",\"FEATURE_VARIABLE_DEFAULT_VALUE\":\"({file}): Feature is not enabled for variation:{variationName}. Returning default value for the variable:{variableKey}\",\"USER_NOT_PART_OF_CAMPAIGN\":\"({file}): User ID:{userId} did not qualify for Campaign:{campaignKey}\",\"USER_VARIATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} {status}\",\"USER_CAMPAIGN_ELIGIBILITY\":\"({file}): User ID:{userId} for Campaign:{campaignKey} is {status} to become part of campaign\",\"USER_VARIATION_ALLOCATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} {status}\",\"OPT_OUT_API_CALLED\":\"({file}): You have opted out for not tracking i.e. all API calls will stop functioning and will simply early return\",\"API_NOT_ENABLED\":\"({file}): {api} API is disabled as you opted out for tracking. Reinitialize the SDK to enable the normal functioning of all APIs.\"}");
+module.exports = JSON.parse("{\"CONFIG_VALID\":\"({file}): SDK configuration and account settings-file are valid\",\"CONFIG_PARAMETER_USED\":\"({file}): {parameter} paased in launch API having type:{type}\",\"CONFIG_RETURN_PROMISE\":\"({file}): {method} API returns a promise as returnPromiseFor is set to true for this API\",\"SDK_INITIALIZED\":\"({file}): SDK is properly initialzed with the passed configuration\",\"POLLING_SUCCESS\":\"({file}): settings-file fetched successfully via polling for the accountId:{accountId}\",\"POLLING_SETTINGS_FILE_UPDATED\":\"({file}): SDK instance is updated with the latest settings-file for the accountId:{accountId}\",\"POLLING_SETTINGS_FILE_NOT_UPDATED\":\"{file}: settings-file fetched via polling is same as earlier fetched settings\",\"DECISION_NO_VARIATION_ALLOTED\":\"({file}): Variation was not assigned to the User ID:{userId} for Campaign:{campaignKey}\",\"EVENT_BATCH_DEFAULTS\":\"({file}): {parameter} not passed in SDK configuration, setting it default to {defaultValue}\",\"EVENT_QUEUE\":\"({file}): Event with payload:{event} pushed to the {queueType} queue\",\"EVENT_BATCH_After_FLUSHING\":\"({file}): Event queue having {length} events has been flushed {manually}\",\"CAMPAIGN_NOT_ACTIVATED\":\"({file}): Activate the campaign:{campaignKey} first for User ID:{userId} to {reason}\",\"CAMPAIGN_USER_ALREADY_TRACKED\":\"({file}): User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for \\\"{api}\\\" API. No tracking call is made to VWO server\",\"CAMPAIGN_GOAL_ALREADY_TRACKED\":\"({file}): Goal:{goalIdentifier} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. No tracking call is made to VWO server\",\"GOT_STORED_VARIATION\":\"({file}): Got stored variation from User Storage Service for User ID:{userId} for Campaign:{campaignKey} as Variation:{variationName}\",\"GETTING_DATA_USER_STORAGE_SERVICE\":\"({file}): Read data from User Storage Service for User ID:{userId} and Campaign:{campaignKey}\",\"SETTING_DATA_USER_STORAGE_SERVICE\":\"({file}): Set data into User Storage Service for User ID:{userId} and Campaign:{campaignKey}\",\"IMPRESSION_SUCCESS\":\"({file}): Impression event - {endPoint} was successfully received by VWO having main keys: Account ID:{accountId}, {mainKeys}\",\"IMPRESSION_SUCCESS_FOR_EVENT_ARCH\":\"({file}): Impression for {event} - {endPoint} was successfully received by VWO for Account ID:{accountId}\",\"IMPRESSION_BATCH_SUCCESS\":\"({file}): Impression event - {endPoint} was successfully received by VWO having Account ID:{accountId}\",\"IMPRESSION_BATCH_FAILED\":\"({file}): Batch events couldn\\\"t be received by VWO. Calling Flush Callback with error and data\",\"MEG_ELIGIBLE_CAMPAIGNS\":\"({file}): Got {noOfEligibleCampaigns} eligible winners out of {noOfGroupCampaigns} campaigns from the Group:{groupName} and for User ID:{userId}\",\"OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE\":\"({file}): Campaign:{campaignKey} of Group:{groupName} satisfies {type} for User ID:{userId}\",\"SEGMENTATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}\",\"MEG_CALLED_CAMPAIGN_NOT_WINNER\":\"({file}): Campaign:{campaignKey} does not qualify from the mutually exclusive group:{groupName} for User ID:{userId}\",\"MEG_GOT_WINNER_CAMPAIGN\":\"({file}): Campaign:{campaignKey} is selected from the mutually exclusive group:{groupName} for the User ID:{userId}\",\"FEATURE_STATUS\":\"({file}): Campaign:{campaignKey} is {status} for user ID:{userId}\",\"FEATURE_VARIABLE_VALUE\":\"({file}): For User ID:{userId}, value for variable:{variableKey} of feature:{campaignKey} is:{variableValue}\",\"FEATURE_VARIABLE_DEFAULT_VALUE\":\"({file}): Feature is not enabled for variation:{variationName}. Returning default value for the variable:{variableKey}\",\"USER_NOT_PART_OF_CAMPAIGN\":\"({file}): User ID:{userId} did not qualify for Campaign:{campaignKey}\",\"USER_VARIATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} {status}\",\"USER_CAMPAIGN_ELIGIBILITY\":\"({file}): User ID:{userId} for Campaign:{campaignKey} is {status} to become part of campaign\",\"USER_VARIATION_ALLOCATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} {status}\",\"OPT_OUT_API_CALLED\":\"({file}): You have opted out for not tracking i.e. all API calls will stop functioning and will simply early return\",\"API_NOT_ENABLED\":\"({file}): {api} API is disabled as you opted out for tracking. Reinitialize the SDK to enable the normal functioning of all APIs.\",\"INITIATING_ACTIVATE\":\"({file}): Initiating activation of user {userId} for campaign {campaignKey}.\",\"INITIATING_GET_VARIATION\":\"({file}): Initiating getVariation of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_GET_FEATURE_VARIATION\":\"({file}): Initiating getFeatureVariable for variable key '{variableKey}' of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_IS_FEATURE_ENABLED\":\"({file}): Initiating isFeatureEnabled of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_PUSH_DIMENSION\":\"({file}): Initiating push segment of user '{userId}' with tag name `{tagKey}` and tag value '{tagValue}'.\"}");
 
 /***/ }),
 
