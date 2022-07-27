@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.40.0
+ * vwo-javascript-sdk - v1.41.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -18,7 +18,7 @@
  * 
  * Dependencies used - 
  *  1. murmurhash - ^0.0.2
- *  2. superstruct - ^0.15.4
+ *  2. superstruct - ^0.10.12
  *  3. uuid - ^3.3.2
  *  4. vwo-sdk-log-messages - ^0.5.0
  */
@@ -2027,7 +2027,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.40.0"
+    version: "1.41.0"
   };
 } else {}
 
@@ -3218,7 +3218,7 @@ module.exports = {
       }
 
       if (sdkConfig.pollingInterval && DataTypeUtil.isUndefined(sdkConfig.sdkKey)) {
-        logError();
+        logError('sdkKey(required for polling)', 'string');
       }
 
       if (sdkConfig.pollingInterval && !DataTypeUtil.isString(sdkConfig.sdkKey)) {
@@ -7534,7 +7534,7 @@ module.exports = XhrUtil;
 /*!**************************************************!*\
   !*** ./node_modules/superstruct/lib/index.es.js ***!
   \**************************************************/
-/*! exports provided: Struct, StructError, any, array, assert, assign, bigint, boolean, coerce, create, date, defaulted, define, deprecated, dynamic, empty, enums, func, instance, integer, intersection, is, lazy, literal, map, mask, max, min, never, nonempty, nullable, number, object, omit, optional, partial, pattern, pick, record, refine, regexp, set, size, string, struct, trimmed, tuple, type, union, unknown, validate */
+/*! exports provided: Struct, StructError, any, array, assert, boolean, coerce, coercion, date, defaulted, dynamic, empty, enums, func, instance, intersection, is, lazy, length, literal, map, masked, never, nullable, number, object, optional, partial, pattern, record, refinement, set, string, struct, tuple, type, union, validate */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7544,366 +7544,212 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "any", function() { return any; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "array", function() { return array; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "assert", function() { return assert; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "assign", function() { return assign; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bigint", function() { return bigint; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "boolean", function() { return boolean; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "coerce", function() { return coerce; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "create", function() { return create; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "coercion", function() { return coercion; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "date", function() { return date; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "defaulted", function() { return defaulted; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "define", function() { return define; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "deprecated", function() { return deprecated; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "dynamic", function() { return dynamic; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "empty", function() { return empty; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "enums", function() { return enums; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "func", function() { return func; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "instance", function() { return instance; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "integer", function() { return integer; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "intersection", function() { return intersection; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "is", function() { return is; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "lazy", function() { return lazy; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "length", function() { return length; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "literal", function() { return literal; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "map", function() { return map; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "mask", function() { return mask; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "max", function() { return max; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "min", function() { return min; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "masked", function() { return masked; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "never", function() { return never; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "nonempty", function() { return nonempty; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "nullable", function() { return nullable; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "number", function() { return number; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "object", function() { return object; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "omit", function() { return omit; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "optional", function() { return optional; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "partial", function() { return partial; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "pattern", function() { return pattern; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "pick", function() { return pick; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "record", function() { return record; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "refine", function() { return refine; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "regexp", function() { return regexp; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "refinement", function() { return refinement; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "set", function() { return set; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "size", function() { return size; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "string", function() { return string; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "struct", function() { return struct; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "trimmed", function() { return trimmed; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "tuple", function() { return tuple; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "type", function() { return type; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "union", function() { return union; });
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "unknown", function() { return unknown; });
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "validate", function() { return validate; });
-/**
- * A `StructFailure` represents a single specific failure in validation.
- */
-
-/**
- * `StructError` objects are thrown (or returned) when validation fails.
- *
- * Validation logic is design to exit early for maximum performance. The error
- * represents the first error encountered during validation. For more detail,
- * the `error.failures` property is a generator function that can be run to
- * continue validation and receive all the failures in the data.
- */
-class StructError extends TypeError {
-  constructor(failure, failures) {
-    let cached;
-    const {
-      message,
-      ...rest
-    } = failure;
-    const {
-      path
-    } = failure;
-    const msg = path.length === 0 ? message : "At path: " + path.join('.') + " -- " + message;
-    super(msg);
-    this.value = void 0;
-    this.key = void 0;
-    this.type = void 0;
-    this.refinement = void 0;
-    this.path = void 0;
-    this.branch = void 0;
-    this.failures = void 0;
-    Object.assign(this, rest);
-    this.name = this.constructor.name;
-
-    this.failures = () => {
-      var _cached;
-
-      return (_cached = cached) != null ? _cached : cached = [failure, ...failures()];
-    };
+function _defineProperty(obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
   }
 
+  return obj;
 }
 
-/**
- * Check if a value is an iterator.
- */
-function isIterable(x) {
-  return isObject(x) && typeof x[Symbol.iterator] === 'function';
-}
-/**
- * Check if a value is a plain object.
- */
+function ownKeys(object, enumerableOnly) {
+  var keys = Object.keys(object);
 
-
-function isObject(x) {
-  return typeof x === 'object' && x != null;
-}
-/**
- * Check if a value is a plain object.
- */
-
-function isPlainObject(x) {
-  if (Object.prototype.toString.call(x) !== '[object Object]') {
-    return false;
+  if (Object.getOwnPropertySymbols) {
+    var symbols = Object.getOwnPropertySymbols(object);
+    if (enumerableOnly) symbols = symbols.filter(function (sym) {
+      return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+    });
+    keys.push.apply(keys, symbols);
   }
 
-  const prototype = Object.getPrototypeOf(x);
-  return prototype === null || prototype === Object.prototype;
+  return keys;
 }
-/**
- * Return a value as a printable string.
- */
 
-function print(value) {
-  return typeof value === 'string' ? JSON.stringify(value) : "" + value;
+function _objectSpread2(target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i] != null ? arguments[i] : {};
+
+    if (i % 2) {
+      ownKeys(Object(source), true).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      });
+    } else if (Object.getOwnPropertyDescriptors) {
+      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+    } else {
+      ownKeys(Object(source)).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
+    }
+  }
+
+  return target;
+}
+
+function _objectWithoutPropertiesLoose(source, excluded) {
+  if (source == null) return {};
+  var target = {};
+  var sourceKeys = Object.keys(source);
+  var key, i;
+
+  for (i = 0; i < sourceKeys.length; i++) {
+    key = sourceKeys[i];
+    if (excluded.indexOf(key) >= 0) continue;
+    target[key] = source[key];
+  }
+
+  return target;
+}
+
+function _objectWithoutProperties(source, excluded) {
+  if (source == null) return {};
+
+  var target = _objectWithoutPropertiesLoose(source, excluded);
+
+  var key, i;
+
+  if (Object.getOwnPropertySymbols) {
+    var sourceSymbolKeys = Object.getOwnPropertySymbols(source);
+
+    for (i = 0; i < sourceSymbolKeys.length; i++) {
+      key = sourceSymbolKeys[i];
+      if (excluded.indexOf(key) >= 0) continue;
+      if (!Object.prototype.propertyIsEnumerable.call(source, key)) continue;
+      target[key] = source[key];
+    }
+  }
+
+  return target;
+}
+
+/**
+ * Convert a validation result to an iterable of failures.
+ */
+function* toFailures(result, context) {
+  if (result === true) ; else if (result === false) {
+    yield context.fail();
+  } else {
+    yield* result;
+  }
 }
 /**
  * Shifts (removes and returns) the first value from the `input` iterator.
  * Like `Array.prototype.shift()` but for an `Iterator`.
  */
 
-function shiftIterator(input) {
+function iteratorShift(input) {
   const {
     done,
     value
   } = input.next();
   return done ? undefined : value;
 }
-/**
- * Convert a single validation result to a failure.
- */
-
-function toFailure(result, context, struct, value) {
-  if (result === true) {
-    return;
-  } else if (result === false) {
-    result = {};
-  } else if (typeof result === 'string') {
-    result = {
-      message: result
-    };
-  }
-
-  const {
-    path,
-    branch
-  } = context;
-  const {
-    type
-  } = struct;
-  const {
-    refinement,
-    message = "Expected a value of type `" + type + "`" + (refinement ? " with refinement `" + refinement + "`" : '') + ", but received: `" + print(value) + "`"
-  } = result;
-  return {
-    value,
-    type,
-    refinement,
-    key: path[path.length - 1],
-    path,
-    branch,
-    ...result,
-    message
-  };
-}
-/**
- * Convert a validation result to an iterable of failures.
- */
-
-function* toFailures(result, context, struct, value) {
-  if (!isIterable(result)) {
-    result = [result];
-  }
-
-  for (const r of result) {
-    const failure = toFailure(r, context, struct, value);
-
-    if (failure) {
-      yield failure;
-    }
-  }
-}
-/**
- * Check a value against a struct, traversing deeply into nested values, and
- * returning an iterator of failures or success.
- */
-
-function* run(value, struct, options = {}) {
-  const {
-    path = [],
-    branch = [value],
-    coerce = false,
-    mask = false
-  } = options;
-  const ctx = {
-    path,
-    branch
-  };
-
-  if (coerce) {
-    value = struct.coercer(value, ctx);
-
-    if (mask && struct.type !== 'type' && isObject(struct.schema) && isObject(value) && !Array.isArray(value)) {
-      for (const key in value) {
-        if (struct.schema[key] === undefined) {
-          delete value[key];
-        }
-      }
-    }
-  }
-
-  let valid = true;
-
-  for (const failure of struct.validator(value, ctx)) {
-    valid = false;
-    yield [failure, undefined];
-  }
-
-  for (let [k, v, s] of struct.entries(value, ctx)) {
-    const ts = run(v, s, {
-      path: k === undefined ? path : [...path, k],
-      branch: k === undefined ? branch : [...branch, v],
-      coerce,
-      mask
-    });
-
-    for (const t of ts) {
-      if (t[0]) {
-        valid = false;
-        yield [t[0], undefined];
-      } else if (coerce) {
-        v = t[1];
-
-        if (k === undefined) {
-          value = v;
-        } else if (value instanceof Map) {
-          value.set(k, v);
-        } else if (value instanceof Set) {
-          value.add(v);
-        } else if (isObject(value)) {
-          value[k] = v;
-        }
-      }
-    }
-  }
-
-  if (valid) {
-    for (const failure of struct.refiner(value, ctx)) {
-      valid = false;
-      yield [failure, undefined];
-    }
-  }
-
-  if (valid) {
-    yield [undefined, value];
-  }
-}
 
 /**
- * `Struct` objects encapsulate the validation logic for a specific type of
- * values. Once constructed, you use the `assert`, `is` or `validate` helpers to
- * validate unknown input data against the struct.
+ * `Struct` objects encapsulate the schema for a specific data type (with
+ * optional coercion). You can then use the `assert`, `is` or `validate` helpers
+ * to validate unknown data against a struct.
  */
 
 class Struct {
   constructor(props) {
-    this.TYPE = void 0;
-    this.type = void 0;
-    this.schema = void 0;
-    this.coercer = void 0;
-    this.validator = void 0;
-    this.refiner = void 0;
-    this.entries = void 0;
     const {
       type,
       schema,
-      validator,
-      refiner,
       coercer = value => value,
-      entries = function* () {}
+      validator = () => [],
+      refiner = () => []
     } = props;
     this.type = type;
     this.schema = schema;
-    this.entries = entries;
     this.coercer = coercer;
-
-    if (validator) {
-      this.validator = (value, context) => {
-        const result = validator(value, context);
-        return toFailures(result, context, this, value);
-      };
-    } else {
-      this.validator = () => [];
-    }
-
-    if (refiner) {
-      this.refiner = (value, context) => {
-        const result = refiner(value, context);
-        return toFailures(result, context, this, value);
-      };
-    } else {
-      this.refiner = () => [];
-    }
-  }
-  /**
-   * Assert that a value passes the struct's validation, throwing if it doesn't.
-   */
-
-
-  assert(value) {
-    return assert(value, this);
-  }
-  /**
-   * Create a value with the struct's coercion logic, then validate it.
-   */
-
-
-  create(value) {
-    return create(value, this);
-  }
-  /**
-   * Check if a value passes the struct's validation.
-   */
-
-
-  is(value) {
-    return is(value, this);
-  }
-  /**
-   * Mask a value, coercing and validating it, but returning only the subset of
-   * properties defined by the struct's schema.
-   */
-
-
-  mask(value) {
-    return mask(value, this);
-  }
-  /**
-   * Validate a value with the struct's validation logic, returning a tuple
-   * representing the result.
-   *
-   * You may optionally pass `true` for the `withCoercion` argument to coerce
-   * the value before attempting to validate it. If you do, the result will
-   * contain the coerced result when successful.
-   */
-
-
-  validate(value, options = {}) {
-    return validate(value, this, options);
+    this.validator = validator;
+    this.refiner = refiner;
   }
 
 }
 /**
- * Assert that a value passes a struct, throwing if it doesn't.
+ * `StructError` objects are thrown (or returned) by Superstruct when its
+ * validation fails. The error represents the first error encountered during
+ * validation. But they also have an `error.failures` property that holds
+ * information for all of the failures encountered.
+ */
+
+class StructError extends TypeError {
+  constructor(failure, moreFailures) {
+    const {
+      path,
+      value,
+      type,
+      branch
+    } = failure,
+          rest = _objectWithoutProperties(failure, ["path", "value", "type", "branch"]);
+
+    const message = `Expected a value of type \`${type}\`${path.length ? ` for \`${path.join('.')}\`` : ''} but received \`${JSON.stringify(value)}\`.`;
+    let failuresResult;
+
+    function failures() {
+      if (!failuresResult) {
+        failuresResult = [failure, ...moreFailures];
+      }
+
+      return failuresResult;
+    }
+
+    super(message);
+    this.value = value;
+    Object.assign(this, rest);
+    this.type = type;
+    this.path = path;
+    this.branch = branch;
+    this.failures = failures;
+    this.stack = new Error().stack;
+    this.__proto__ = StructError.prototype;
+  }
+
+}
+/**
+ * Assert that a value passes a `Struct`, throwing if it doesn't.
  */
 
 function assert(value, struct) {
@@ -7914,38 +7760,16 @@ function assert(value, struct) {
   }
 }
 /**
- * Create a value with the coercion logic of struct and validate it.
+ * Coerce a value with the coercion logic of `Struct` and validate it.
  */
 
-function create(value, struct) {
-  const result = validate(value, struct, {
-    coerce: true
-  });
-
-  if (result[0]) {
-    throw result[0];
-  } else {
-    return result[1];
-  }
+function coerce(value, struct) {
+  const ret = struct.coercer(value);
+  assert(ret, struct);
+  return ret;
 }
 /**
- * Mask a value, returning only the subset of properties defined by a struct.
- */
-
-function mask(value, struct) {
-  const result = validate(value, struct, {
-    coerce: true,
-    mask: true
-  });
-
-  if (result[0]) {
-    throw result[0];
-  } else {
-    return result[1];
-  }
-}
-/**
- * Check if a value passes a struct.
+ * Check if a value passes a `Struct`.
  */
 
 function is(value, struct) {
@@ -7953,673 +7777,95 @@ function is(value, struct) {
   return !result[0];
 }
 /**
- * Validate a value against a struct, returning an error if invalid, or the
- * value (with potential coercion) if valid.
+ * Validate a value against a `Struct`, returning an error if invalid.
  */
 
-function validate(value, struct, options = {}) {
-  const tuples = run(value, struct, options);
-  const tuple = shiftIterator(tuples);
+function validate(value, struct, coercing = false) {
+  if (coercing) {
+    value = struct.coercer(value);
+  }
 
-  if (tuple[0]) {
-    const error = new StructError(tuple[0], function* () {
-      for (const t of tuples) {
-        if (t[0]) {
-          yield t[0];
-        }
-      }
-    });
+  const failures = check(value, struct);
+  const failure = iteratorShift(failures);
+
+  if (failure) {
+    const error = new StructError(failure, failures);
     return [error, undefined];
   } else {
-    const v = tuple[1];
-    return [undefined, v];
+    return [undefined, value];
   }
 }
-
-function assign(...Structs) {
-  const isType = Structs[0].type === 'type';
-  const schemas = Structs.map(s => s.schema);
-  const schema = Object.assign({}, ...schemas);
-  return isType ? type(schema) : object(schema);
-}
 /**
- * Define a new struct type with a custom validation function.
+ * Check a value against a `Struct`, returning an iterable of failures.
  */
 
-function define(name, validator) {
-  return new Struct({
-    type: name,
-    schema: null,
-    validator
-  });
-}
-/**
- * Create a new struct based on an existing struct, but the value is allowed to
- * be `undefined`. `log` will be called if the value is not `undefined`.
- */
-
-function deprecated(struct, log) {
-  return new Struct({ ...struct,
-    refiner: (value, ctx) => value === undefined || struct.refiner(value, ctx),
-
-    validator(value, ctx) {
-      if (value === undefined) {
-        return true;
-      } else {
-        log(value, ctx);
-        return struct.validator(value, ctx);
-      }
-    }
-
-  });
-}
-/**
- * Create a struct with dynamic validation logic.
- *
- * The callback will receive the value currently being validated, and must
- * return a struct object to validate it with. This can be useful to model
- * validation logic that changes based on its input.
- */
-
-function dynamic(fn) {
-  return new Struct({
-    type: 'dynamic',
-    schema: null,
-
-    *entries(value, ctx) {
-      const struct = fn(value, ctx);
-      yield* struct.entries(value, ctx);
-    },
-
-    validator(value, ctx) {
-      const struct = fn(value, ctx);
-      return struct.validator(value, ctx);
-    },
-
-    coercer(value, ctx) {
-      const struct = fn(value, ctx);
-      return struct.coercer(value, ctx);
-    },
-
-    refiner(value, ctx) {
-      const struct = fn(value, ctx);
-      return struct.refiner(value, ctx);
-    }
-
-  });
-}
-/**
- * Create a struct with lazily evaluated validation logic.
- *
- * The first time validation is run with the struct, the callback will be called
- * and must return a struct object to use. This is useful for cases where you
- * want to have self-referential structs for nested data structures to avoid a
- * circular definition problem.
- */
-
-function lazy(fn) {
-  let struct;
-  return new Struct({
-    type: 'lazy',
-    schema: null,
-
-    *entries(value, ctx) {
-      var _struct;
-
-      (_struct = struct) != null ? _struct : struct = fn();
-      yield* struct.entries(value, ctx);
-    },
-
-    validator(value, ctx) {
-      var _struct2;
-
-      (_struct2 = struct) != null ? _struct2 : struct = fn();
-      return struct.validator(value, ctx);
-    },
-
-    coercer(value, ctx) {
-      var _struct3;
-
-      (_struct3 = struct) != null ? _struct3 : struct = fn();
-      return struct.coercer(value, ctx);
-    },
-
-    refiner(value, ctx) {
-      var _struct4;
-
-      (_struct4 = struct) != null ? _struct4 : struct = fn();
-      return struct.refiner(value, ctx);
-    }
-
-  });
-}
-/**
- * Create a new struct based on an existing object struct, but excluding
- * specific properties.
- *
- * Like TypeScript's `Omit` utility.
- */
-
-function omit(struct, keys) {
+function* check(value, struct, path = [], branch = []) {
   const {
-    schema
+    type
   } = struct;
-  const subschema = { ...schema
+  const ctx = {
+    value,
+    type,
+    branch,
+    path,
+
+    fail(props = {}) {
+      return _objectSpread2({
+        value,
+        type,
+        path,
+        branch: [...branch, value]
+      }, props);
+    },
+
+    check(v, s, parent, key) {
+      const p = parent !== undefined ? [...path, key] : path;
+      const b = parent !== undefined ? [...branch, parent] : branch;
+      return check(v, s, p, b);
+    }
+
   };
+  const failures = toFailures(struct.validator(value, ctx), ctx);
+  const failure = iteratorShift(failures);
 
-  for (const key of keys) {
-    delete subschema[key];
+  if (failure) {
+    yield failure;
+    yield* failures;
+  } else {
+    yield* toFailures(struct.refiner(value, ctx), ctx);
   }
-
-  switch (struct.type) {
-    case 'type':
-      return type(subschema);
-
-    default:
-      return object(subschema);
-  }
-}
-/**
- * Create a new struct based on an existing object struct, but with all of its
- * properties allowed to be `undefined`.
- *
- * Like TypeScript's `Partial` utility.
- */
-
-function partial(struct) {
-  const schema = struct instanceof Struct ? { ...struct.schema
-  } : { ...struct
-  };
-
-  for (const key in schema) {
-    schema[key] = optional(schema[key]);
-  }
-
-  return object(schema);
-}
-/**
- * Create a new struct based on an existing object struct, but only including
- * specific properties.
- *
- * Like TypeScript's `Pick` utility.
- */
-
-function pick(struct, keys) {
-  const {
-    schema
-  } = struct;
-  const subschema = {};
-
-  for (const key of keys) {
-    subschema[key] = schema[key];
-  }
-
-  return object(subschema);
-}
-/**
- * Define a new struct type with a custom validation function.
- *
- * @deprecated This function has been renamed to `define`.
- */
-
-function struct(name, validator) {
-  console.warn('superstruct@0.11 - The `struct` helper has been renamed to `define`.');
-  return define(name, validator);
-}
-
-/**
- * Ensure that any value passes validation.
- */
-
-function any() {
-  return define('any', () => true);
-}
-function array(Element) {
-  return new Struct({
-    type: 'array',
-    schema: Element,
-
-    *entries(value) {
-      if (Element && Array.isArray(value)) {
-        for (const [i, v] of value.entries()) {
-          yield [i, v, Element];
-        }
-      }
-    },
-
-    coercer(value) {
-      return Array.isArray(value) ? value.slice() : value;
-    },
-
-    validator(value) {
-      return Array.isArray(value) || "Expected an array value, but received: " + print(value);
-    }
-
-  });
-}
-/**
- * Ensure that a value is a bigint.
- */
-
-function bigint() {
-  return define('bigint', value => {
-    return typeof value === 'bigint';
-  });
-}
-/**
- * Ensure that a value is a boolean.
- */
-
-function boolean() {
-  return define('boolean', value => {
-    return typeof value === 'boolean';
-  });
-}
-/**
- * Ensure that a value is a valid `Date`.
- *
- * Note: this also ensures that the value is *not* an invalid `Date` object,
- * which can occur when parsing a date fails but still returns a `Date`.
- */
-
-function date() {
-  return define('date', value => {
-    return value instanceof Date && !isNaN(value.getTime()) || "Expected a valid `Date` object, but received: " + print(value);
-  });
-}
-function enums(values) {
-  const schema = {};
-  const description = values.map(v => print(v)).join();
-
-  for (const key of values) {
-    schema[key] = key;
-  }
-
-  return new Struct({
-    type: 'enums',
-    schema,
-
-    validator(value) {
-      return values.includes(value) || "Expected one of `" + description + "`, but received: " + print(value);
-    }
-
-  });
-}
-/**
- * Ensure that a value is a function.
- */
-
-function func() {
-  return define('func', value => {
-    return typeof value === 'function' || "Expected a function, but received: " + print(value);
-  });
-}
-/**
- * Ensure that a value is an instance of a specific class.
- */
-
-function instance(Class) {
-  return define('instance', value => {
-    return value instanceof Class || "Expected a `" + Class.name + "` instance, but received: " + print(value);
-  });
-}
-/**
- * Ensure that a value is an integer.
- */
-
-function integer() {
-  return define('integer', value => {
-    return typeof value === 'number' && !isNaN(value) && Number.isInteger(value) || "Expected an integer, but received: " + print(value);
-  });
-}
-/**
- * Ensure that a value matches all of a set of types.
- */
-
-function intersection(Structs) {
-  return new Struct({
-    type: 'intersection',
-    schema: null,
-
-    *entries(value, ctx) {
-      for (const S of Structs) {
-        yield* S.entries(value, ctx);
-      }
-    },
-
-    *validator(value, ctx) {
-      for (const S of Structs) {
-        yield* S.validator(value, ctx);
-      }
-    },
-
-    *refiner(value, ctx) {
-      for (const S of Structs) {
-        yield* S.refiner(value, ctx);
-      }
-    }
-
-  });
-}
-function literal(constant) {
-  const description = print(constant);
-  const t = typeof constant;
-  return new Struct({
-    type: 'literal',
-    schema: t === 'string' || t === 'number' || t === 'boolean' ? constant : null,
-
-    validator(value) {
-      return value === constant || "Expected the literal `" + description + "`, but received: " + print(value);
-    }
-
-  });
-}
-function map(Key, Value) {
-  return new Struct({
-    type: 'map',
-    schema: null,
-
-    *entries(value) {
-      if (Key && Value && value instanceof Map) {
-        for (const [k, v] of value.entries()) {
-          yield [k, k, Key];
-          yield [k, v, Value];
-        }
-      }
-    },
-
-    coercer(value) {
-      return value instanceof Map ? new Map(value) : value;
-    },
-
-    validator(value) {
-      return value instanceof Map || "Expected a `Map` object, but received: " + print(value);
-    }
-
-  });
-}
-/**
- * Ensure that no value ever passes validation.
- */
-
-function never() {
-  return define('never', () => false);
-}
-/**
- * Augment an existing struct to allow `null` values.
- */
-
-function nullable(struct) {
-  return new Struct({ ...struct,
-    validator: (value, ctx) => value === null || struct.validator(value, ctx),
-    refiner: (value, ctx) => value === null || struct.refiner(value, ctx)
-  });
-}
-/**
- * Ensure that a value is a number.
- */
-
-function number() {
-  return define('number', value => {
-    return typeof value === 'number' && !isNaN(value) || "Expected a number, but received: " + print(value);
-  });
-}
-function object(schema) {
-  const knowns = schema ? Object.keys(schema) : [];
-  const Never = never();
-  return new Struct({
-    type: 'object',
-    schema: schema ? schema : null,
-
-    *entries(value) {
-      if (schema && isObject(value)) {
-        const unknowns = new Set(Object.keys(value));
-
-        for (const key of knowns) {
-          unknowns.delete(key);
-          yield [key, value[key], schema[key]];
-        }
-
-        for (const key of unknowns) {
-          yield [key, value[key], Never];
-        }
-      }
-    },
-
-    validator(value) {
-      return isObject(value) || "Expected an object, but received: " + print(value);
-    },
-
-    coercer(value) {
-      return isObject(value) ? { ...value
-      } : value;
-    }
-
-  });
-}
-/**
- * Augment a struct to allow `undefined` values.
- */
-
-function optional(struct) {
-  return new Struct({ ...struct,
-    validator: (value, ctx) => value === undefined || struct.validator(value, ctx),
-    refiner: (value, ctx) => value === undefined || struct.refiner(value, ctx)
-  });
-}
-/**
- * Ensure that a value is an object with keys and values of specific types, but
- * without ensuring any specific shape of properties.
- *
- * Like TypeScript's `Record` utility.
- */
-
-function record(Key, Value) {
-  return new Struct({
-    type: 'record',
-    schema: null,
-
-    *entries(value) {
-      if (isObject(value)) {
-        for (const k in value) {
-          const v = value[k];
-          yield [k, k, Key];
-          yield [k, v, Value];
-        }
-      }
-    },
-
-    validator(value) {
-      return isObject(value) || "Expected an object, but received: " + print(value);
-    }
-
-  });
-}
-/**
- * Ensure that a value is a `RegExp`.
- *
- * Note: this does not test the value against the regular expression! For that
- * you need to use the `pattern()` refinement.
- */
-
-function regexp() {
-  return define('regexp', value => {
-    return value instanceof RegExp;
-  });
-}
-function set(Element) {
-  return new Struct({
-    type: 'set',
-    schema: null,
-
-    *entries(value) {
-      if (Element && value instanceof Set) {
-        for (const v of value) {
-          yield [v, v, Element];
-        }
-      }
-    },
-
-    coercer(value) {
-      return value instanceof Set ? new Set(value) : value;
-    },
-
-    validator(value) {
-      return value instanceof Set || "Expected a `Set` object, but received: " + print(value);
-    }
-
-  });
-}
-/**
- * Ensure that a value is a string.
- */
-
-function string() {
-  return define('string', value => {
-    return typeof value === 'string' || "Expected a string, but received: " + print(value);
-  });
-}
-/**
- * Ensure that a value is a tuple of a specific length, and that each of its
- * elements is of a specific type.
- */
-
-function tuple(Structs) {
-  const Never = never();
-  return new Struct({
-    type: 'tuple',
-    schema: null,
-
-    *entries(value) {
-      if (Array.isArray(value)) {
-        const length = Math.max(Structs.length, value.length);
-
-        for (let i = 0; i < length; i++) {
-          yield [i, value[i], Structs[i] || Never];
-        }
-      }
-    },
-
-    validator(value) {
-      return Array.isArray(value) || "Expected an array, but received: " + print(value);
-    }
-
-  });
-}
-/**
- * Ensure that a value has a set of known properties of specific types.
- *
- * Note: Unrecognized properties are allowed and untouched. This is similar to
- * how TypeScript's structural typing works.
- */
-
-function type(schema) {
-  const keys = Object.keys(schema);
-  return new Struct({
-    type: 'type',
-    schema,
-
-    *entries(value) {
-      if (isObject(value)) {
-        for (const k of keys) {
-          yield [k, value[k], schema[k]];
-        }
-      }
-    },
-
-    validator(value) {
-      return isObject(value) || "Expected an object, but received: " + print(value);
-    }
-
-  });
-}
-/**
- * Ensure that a value matches one of a set of types.
- */
-
-function union(Structs) {
-  const description = Structs.map(s => s.type).join(' | ');
-  return new Struct({
-    type: 'union',
-    schema: null,
-
-    coercer(value, ctx) {
-      const firstMatch = Structs.find(s => {
-        const [e] = s.validate(value, {
-          coerce: true
-        });
-        return !e;
-      }) || unknown();
-      return firstMatch.coercer(value, ctx);
-    },
-
-    validator(value, ctx) {
-      const failures = [];
-
-      for (const S of Structs) {
-        const [...tuples] = run(value, S, ctx);
-        const [first] = tuples;
-
-        if (!first[0]) {
-          return [];
-        } else {
-          for (const [failure] of tuples) {
-            if (failure) {
-              failures.push(failure);
-            }
-          }
-        }
-      }
-
-      return ["Expected the value to satisfy a union of `" + description + "`, but received: " + print(value), ...failures];
-    }
-
-  });
-}
-/**
- * Ensure that any value passes validation, without widening its type to `any`.
- */
-
-function unknown() {
-  return define('unknown', () => true);
 }
 
 /**
  * Augment a `Struct` to add an additional coercion step to its input.
- *
- * This allows you to transform input data before validating it, to increase the
- * likelihood that it passes validation—for example for default values, parsing
- * different formats, etc.
- *
- * Note: You must use `create(value, Struct)` on the value to have the coercion
- * take effect! Using simply `assert()` or `is()` will not use coercion.
  */
 
-function coerce(struct, condition, coercer) {
-  return new Struct({ ...struct,
-    coercer: (value, ctx) => {
-      return is(value, condition) ? struct.coercer(coercer(value, ctx), ctx) : struct.coercer(value, ctx);
+function coercion(struct, coercer) {
+  const fn = struct.coercer;
+  return new Struct(_objectSpread2(_objectSpread2({}, struct), {}, {
+    coercer: value => {
+      return fn(coercer(value));
     }
-  });
+  }));
 }
 /**
- * Augment a struct to replace `undefined` values with a default.
+ * Augment a struct to coerce a default value for missing values.
  *
- * Note: You must use `create(value, Struct)` on the value to have the coercion
- * take effect! Using simply `assert()` or `is()` will not use coercion.
+ * Note: You must use `coerce(value, Struct)` on the value before validating it
+ * to have the value defaulted!
  */
 
-function defaulted(struct, fallback, options = {}) {
-  return coerce(struct, unknown(), x => {
+function defaulted(S, fallback, strict) {
+  return coercion(S, x => {
     const f = typeof fallback === 'function' ? fallback() : fallback;
 
     if (x === undefined) {
       return f;
     }
 
-    if (!options.strict && isPlainObject(x) && isPlainObject(f)) {
-      const ret = { ...x
-      };
+    if (strict !== true && isPlainObject(x) && isPlainObject(f)) {
+      const ret = _objectSpread2({}, x);
+
       let changed = false;
 
       for (const key in f) {
@@ -8638,125 +7884,477 @@ function defaulted(struct, fallback, options = {}) {
   });
 }
 /**
- * Augment a struct to trim string inputs.
- *
- * Note: You must use `create(value, Struct)` on the value to have the coercion
- * take effect! Using simply `assert()` or `is()` will not use coercion.
+ * Coerce a value to mask its properties to only that defined in the struct.
  */
 
-function trimmed(struct) {
-  return coerce(struct, string(), x => x.trim());
-}
-
-/**
- * Ensure that a string, array, map, or set is empty.
- */
-
-function empty(struct) {
-  return refine(struct, 'empty', value => {
-    const size = getSize(value);
-    return size === 0 || "Expected an empty " + struct.type + " but received one with a size of `" + size + "`";
-  });
-}
-
-function getSize(value) {
-  if (value instanceof Map || value instanceof Set) {
-    return value.size;
-  } else {
-    return value.length;
-  }
-}
-/**
- * Ensure that a number or date is below a threshold.
- */
-
-
-function max(struct, threshold, options = {}) {
-  const {
-    exclusive
-  } = options;
-  return refine(struct, 'max', value => {
-    return exclusive ? value < threshold : value <= threshold || "Expected a " + struct.type + " less than " + (exclusive ? '' : 'or equal to ') + threshold + " but received `" + value + "`";
-  });
-}
-/**
- * Ensure that a number or date is above a threshold.
- */
-
-function min(struct, threshold, options = {}) {
-  const {
-    exclusive
-  } = options;
-  return refine(struct, 'min', value => {
-    return exclusive ? value > threshold : value >= threshold || "Expected a " + struct.type + " greater than " + (exclusive ? '' : 'or equal to ') + threshold + " but received `" + value + "`";
-  });
-}
-/**
- * Ensure that a string, array, map or set is not empty.
- */
-
-function nonempty(struct) {
-  return refine(struct, 'nonempty', value => {
-    const size = getSize(value);
-    return size > 0 || "Expected a nonempty " + struct.type + " but received an empty one";
-  });
-}
-/**
- * Ensure that a string matches a regular expression.
- */
-
-function pattern(struct, regexp) {
-  return refine(struct, 'pattern', value => {
-    return regexp.test(value) || "Expected a " + struct.type + " matching `/" + regexp.source + "/` but received \"" + value + "\"";
-  });
-}
-/**
- * Ensure that a string, array, number, date, map, or set has a size (or length, or time) between `min` and `max`.
- */
-
-function size(struct, min, max = min) {
-  const expected = "Expected a " + struct.type;
-  const of = min === max ? "of `" + min + "`" : "between `" + min + "` and `" + max + "`";
-  return refine(struct, 'size', value => {
-    if (typeof value === 'number' || value instanceof Date) {
-      return min <= value && value <= max || expected + " " + of + " but received `" + value + "`";
-    } else if (value instanceof Map || value instanceof Set) {
-      const {
-        size
-      } = value;
-      return min <= size && size <= max || expected + " with a size " + of + " but received one with a size of `" + size + "`";
-    } else {
-      const {
-        length
-      } = value;
-      return min <= length && length <= max || expected + " with a length " + of + " but received one with a length of `" + length + "`";
+function masked(S) {
+  return coercion(S, x => {
+    if (!isPlainObject(x)) {
+      return x;
     }
+
+    const ret = {};
+
+    for (const key in S.schema) {
+      ret[key] = x[key];
+    }
+
+    return ret;
+  });
+}
+/**
+ * Check if a value is a plain object.
+ */
+
+function isPlainObject(value) {
+  if (Object.prototype.toString.call(value) !== '[object Object]') {
+    return false;
+  }
+
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === null || prototype === Object.prototype;
+}
+
+/**
+ * Augment a string or array struct to constrain its length to zero.
+ */
+
+function empty(S) {
+  return refinement(S, `${S.type} & Empty`, value => {
+    return value.length === 0;
+  });
+}
+/**
+ * Augment a string or array struct to constrain its length to being between a
+ * minimum and maximum size.
+ */
+
+function length(S, min, max) {
+  return refinement(S, `${S.type} & Length<${min},${max}>`, value => {
+    return min < value.length && value.length < max;
+  });
+}
+/**
+ * Refine a string struct to match a specific regexp pattern.
+ */
+
+function pattern(S, regexp) {
+  return refinement(S, `${S.type} & Pattern<${regexp.source}>`, value => {
+    return regexp.test(value);
   });
 }
 /**
  * Augment a `Struct` to add an additional refinement to the validation.
- *
- * The refiner function is guaranteed to receive a value of the struct's type,
- * because the struct's existing validation will already have passed. This
- * allows you to layer additional validation on top of existing structs.
  */
 
-function refine(struct, name, refiner) {
-  return new Struct({ ...struct,
+function refinement(struct, type, refiner) {
+  const fn = struct.refiner;
+  return new Struct(_objectSpread2(_objectSpread2({}, struct), {}, {
+    type,
 
-    *refiner(value, ctx) {
-      yield* struct.refiner(value, ctx);
-      const result = refiner(value, ctx);
-      const failures = toFailures(result, ctx, struct, value);
+    *refiner(value, fail) {
+      yield* toFailures(fn(value, fail), fail);
+      yield* toFailures(refiner(value, fail), fail);
+    }
 
-      for (const failure of failures) {
-        yield { ...failure,
-          refinement: name
-        };
+  }));
+}
+
+/**
+ * Validate any value.
+ */
+
+function any() {
+  return struct('any', () => true);
+}
+function array(Element) {
+  return new Struct({
+    type: `Array<${Element ? Element.type : 'unknown'}>`,
+    schema: Element,
+    coercer: value => {
+      return Element && Array.isArray(value) ? value.map(v => coerce(v, Element)) : value;
+    },
+
+    *validator(value, ctx) {
+      if (!Array.isArray(value)) {
+        yield ctx.fail();
+        return;
+      }
+
+      if (Element) {
+        for (const [i, v] of value.entries()) {
+          yield* ctx.check(v, Element, value, i);
+        }
       }
     }
 
   });
+}
+/**
+ * Validate that boolean values.
+ */
+
+function boolean() {
+  return struct('boolean', value => {
+    return typeof value === 'boolean';
+  });
+}
+/**
+ * Validate that `Date` values.
+ *
+ * Note: this also ensures that the value is *not* an invalid `Date` object,
+ * which can occur when parsing a date fails but still returns a `Date`.
+ */
+
+function date() {
+  return struct('Date', value => {
+    return value instanceof Date && !isNaN(value.getTime());
+  });
+}
+/**
+ * Validate that a value dynamically, determing which struct to use at runtime.
+ */
+
+function dynamic(fn) {
+  return struct('Dynamic<...>', (value, ctx) => {
+    return ctx.check(value, fn(value, ctx));
+  });
+}
+function enums(values) {
+  return struct(`Enum<${values.map(toLiteralString)}>`, value => {
+    return values.includes(value);
+  });
+}
+/**
+ * Validate that a value is a function.
+ */
+
+function func() {
+  return struct('Function', value => {
+    return typeof value === 'function';
+  });
+}
+/**
+ * Validate that a value is an instance of a class.
+ */
+
+function instance(Class) {
+  return struct(`InstanceOf<${Class.name}>`, value => {
+    return value instanceof Class;
+  });
+}
+function intersection(Structs) {
+  return struct(Structs.map(s => s.type).join(' & '), function* (value, ctx) {
+    for (const S of Structs) {
+      yield* ctx.check(value, S);
+    }
+  });
+}
+/**
+ * Validate a value lazily, by constructing the struct right before the first
+ * validation. This is useful for cases where you want to have self-referential
+ * structs for nested data structures.
+ */
+
+function lazy(fn) {
+  let S;
+  return struct('Lazy<...>', (value, ctx) => {
+    if (!S) {
+      S = fn();
+    }
+
+    return ctx.check(value, S);
+  });
+}
+function literal(constant) {
+  return struct(`Literal<${toLiteralString(constant)}>`, value => {
+    return value === constant;
+  });
+}
+/**
+ * Validate that a value is a map with specific key and value entries.
+ */
+
+function map(Key, Value) {
+  return struct(`Map<${Key.type},${Value.type}>`, function* (value, ctx) {
+    if (!(value instanceof Map)) {
+      yield ctx.fail();
+      return;
+    }
+
+    for (const [k, v] of value.entries()) {
+      yield* ctx.check(k, Key, value, k);
+      yield* ctx.check(v, Value, value, k);
+    }
+  });
+}
+/**
+ * Validate that a value always fails.
+ */
+
+function never() {
+  return struct('never', () => false);
+}
+/**
+ * Augment a struct to make it accept `null` values.
+ */
+
+function nullable(S) {
+  return new Struct({
+    type: `${S.type} | null`,
+    schema: S.schema,
+    validator: (value, ctx) => {
+      return value === null || ctx.check(value, S);
+    }
+  });
+}
+/**
+ * Validate that a value is a number.
+ */
+
+function number() {
+  return struct(`number`, value => {
+    return typeof value === 'number' && !isNaN(value);
+  });
+}
+function object(Structs) {
+  const knowns = Structs ? Object.keys(Structs) : [];
+  const Never = never();
+  return new Struct({
+    type: Structs ? `Object<{${knowns.join(',')}}>` : 'Object',
+    schema: Structs ? Structs : null,
+    coercer: Structs ? createObjectCoercer(Structs) : x => x,
+
+    *validator(value, ctx) {
+      if (typeof value !== 'object' || value == null) {
+        yield ctx.fail();
+        return;
+      }
+
+      if (Structs) {
+        const unknowns = new Set(Object.keys(value));
+
+        for (const key of knowns) {
+          unknowns.delete(key);
+          const Value = Structs[key];
+          const v = value[key];
+          yield* ctx.check(v, Value, value, key);
+        }
+
+        for (const key of unknowns) {
+          const v = value[key];
+          yield* ctx.check(v, Never, value, key);
+        }
+      }
+    }
+
+  });
+}
+/**
+ * Augment a struct to make it optionally accept `undefined` values.
+ */
+
+function optional(S) {
+  return new Struct({
+    type: `${S.type}?`,
+    schema: S.schema,
+    validator: (value, ctx) => {
+      return value === undefined || ctx.check(value, S);
+    }
+  });
+}
+/**
+ * Validate that a partial object with specific entry values.
+ */
+
+function partial(Structs) {
+  if (Structs instanceof Struct) {
+    Structs = Structs.schema;
+  }
+
+  const knowns = Object.keys(Structs);
+  const Never = never();
+  return new Struct({
+    type: `Partial<{${knowns.join(',')}}>`,
+    schema: Structs,
+    coercer: createObjectCoercer(Structs),
+
+    *validator(value, ctx) {
+      if (typeof value !== 'object' || value == null) {
+        yield ctx.fail();
+        return;
+      }
+
+      const unknowns = new Set(Object.keys(value));
+
+      for (const key of knowns) {
+        unknowns.delete(key);
+
+        if (!(key in value)) {
+          continue;
+        }
+
+        const Value = Structs[key];
+        const v = value[key];
+        yield* ctx.check(v, Value, value, key);
+      }
+
+      for (const key of unknowns) {
+        const v = value[key];
+        yield* ctx.check(v, Never, value, key);
+      }
+    }
+
+  });
+}
+/**
+ * Validate that a value is a record with specific key and
+ * value entries.
+ */
+
+function record(Key, Value) {
+  return struct(`Record<${Key.type},${Value.type}>`, function* (value, ctx) {
+    if (typeof value !== 'object' || value == null) {
+      yield ctx.fail();
+      return;
+    }
+
+    for (const k in value) {
+      const v = value[k];
+      yield* ctx.check(k, Key, value, k);
+      yield* ctx.check(v, Value, value, k);
+    }
+  });
+}
+/**
+ * Validate that a set of values matches a specific type.
+ */
+
+function set(Element) {
+  return struct(`Set<${Element.type}>`, (value, ctx) => {
+    if (!(value instanceof Set)) {
+      return false;
+    }
+
+    for (const val of value) {
+      const [failure] = ctx.check(val, Element);
+
+      if (failure) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+}
+/**
+ * Validate that a value is a string.
+ */
+
+function string() {
+  return struct('string', value => {
+    return typeof value === 'string';
+  });
+}
+/**
+ * Define a `Struct` instance with a type and validation function.
+ */
+
+function struct(name, validator) {
+  return new Struct({
+    type: name,
+    validator,
+    schema: null
+  });
+}
+function tuple(Elements) {
+  const Never = never();
+  return struct(`[${Elements.map(s => s.type).join(',')}]`, function* (value, ctx) {
+    if (!Array.isArray(value)) {
+      yield ctx.fail();
+      return;
+    }
+
+    for (const [index, Element] of Elements.entries()) {
+      const v = value[index];
+      yield* ctx.check(v, Element, value, index);
+    }
+
+    if (value.length > Elements.length) {
+      const index = Elements.length;
+      const v = value[index];
+      yield* ctx.check(v, Never, value, index);
+    }
+  });
+}
+/**
+ * Validate that a value matches a specific strutural interface, like the
+ * structural typing that TypeScript uses.
+ */
+
+function type(Structs) {
+  const keys = Object.keys(Structs);
+  return struct(`Type<{${keys.join(',')}}>`, function* (value, ctx) {
+    if (typeof value !== 'object' || value == null) {
+      yield ctx.fail();
+      return;
+    }
+
+    for (const key of keys) {
+      const Value = Structs[key];
+      const v = value[key];
+      yield* ctx.check(v, Value, value, key);
+    }
+  });
+}
+function union(Structs) {
+  return struct(`${Structs.map(s => s.type).join(' | ')}`, function* (value, ctx) {
+    for (const S of Structs) {
+      const [...failures] = ctx.check(value, S);
+
+      if (failures.length === 0) {
+        return;
+      }
+    }
+
+    yield ctx.fail();
+  });
+}
+/**
+ * Convert a value to a literal string.
+ */
+
+function toLiteralString(value) {
+  return typeof value === 'string' ? `"${value.replace(/"/g, '"')}"` : `${value}`;
+}
+/**
+ * Coerce the values of an object-like struct.
+ */
+
+
+function createObjectCoercer(Structs) {
+  const knowns = Object.keys(Structs);
+  return value => {
+    if (typeof value !== 'object' || value == null) {
+      return value;
+    }
+
+    const ret = {};
+    const unknowns = new Set(Object.keys(value));
+
+    for (const key of knowns) {
+      unknowns.delete(key);
+      const Value = Structs[key];
+      const v = value[key];
+      ret[key] = coerce(v, Value);
+    }
+
+    for (const key of unknowns) {
+      ret[key] = value[key];
+    }
+
+    return ret;
+  };
 }
 
 
