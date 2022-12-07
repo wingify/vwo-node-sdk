@@ -108,6 +108,6 @@
   },
   "engineStrict": true,
   "engines": {
-    "node": ">= 6.10.0"
+    "node": "14.x || 16.x || 18.x"
   }
 }
