@@ -15,6 +15,254 @@
  */
 
 module.exports = {
+  greater_than_operator: {
+    is_greater_than_operator_pass: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'gt(100)'
+            }
+          }
+        ]
+      },
+      expectation: true,
+      customVariables: {
+        eq: 200
+      }
+    },
+    is_greater_than_operator_fail: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'gt(100)'
+            }
+          }
+        ]
+      },
+      expectation: false,
+      customVariables: {
+        eq: 50
+      }
+    },
+    is_greater_than_operator_equal_values_fail: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'gt(100)'
+            }
+          }
+        ]
+      },
+      expectation: false,
+      customVariables: {
+        eq: 100
+      }
+    },
+    is_greater_than_operator_string_fail: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'gt(100)'
+            }
+          }
+        ]
+      },
+      expectation: false,
+      customVariables: {
+        eq: 'abc'
+      }
+    }
+  },
+  less_than_operator: {
+    is_less_than_operator_pass: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'lt(100)'
+            }
+          }
+        ]
+      },
+      expectation: true,
+      customVariables: {
+        eq: 50
+      }
+    },
+    is_less_than_operator_fail: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'lt(100)'
+            }
+          }
+        ]
+      },
+      expectation: false,
+      customVariables: {
+        eq: 150
+      }
+    },
+    is_less_than_operator_equal_values_fail: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'lt(100)'
+            }
+          }
+        ]
+      },
+      expectation: false,
+      customVariables: {
+        eq: 100
+      }
+    },
+    is_less_than_operator_string_fail: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'lt(100)'
+            }
+          }
+        ]
+      },
+      expectation: false,
+      customVariables: {
+        eq: 'abc'
+      }
+    }
+  },
+  greater_than_equal_to_operator: {
+    is_greater_than_equal_to_operator_pass: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'gte(100)'
+            }
+          }
+        ]
+      },
+      expectation: true,
+      customVariables: {
+        eq: 150
+      }
+    },
+    is_greater_than_equal_to_operator_equal_values_pass: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'gte(100)'
+            }
+          }
+        ]
+      },
+      expectation: true,
+      customVariables: {
+        eq: 100
+      }
+    },
+    is_greater_than_equal_to_operator_fail: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'gte(100)'
+            }
+          }
+        ]
+      },
+      expectation: false,
+      customVariables: {
+        eq: 50
+      }
+    },
+    is_greater_than_equal_to_operator_string_fail: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'gte(100)'
+            }
+          }
+        ]
+      },
+      expectation: false,
+      customVariables: {
+        eq: 'abc'
+      }
+    }
+  },
+  less_than_equal_to_operator: {
+    is_less_than_equal_to_operator_pass: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'lte(100)'
+            }
+          }
+        ]
+      },
+      expectation: true,
+      customVariables: {
+        eq: 50
+      }
+    },
+    is_less_than_equal_to_operator_equal_values_pass: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'lte(100)'
+            }
+          }
+        ]
+      },
+      expectation: true,
+      customVariables: {
+        eq: 100
+      }
+    },
+    is_less_than_equal_to_operator_fail: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'lte(100)'
+            }
+          }
+        ]
+      },
+      expectation: false,
+      customVariables: {
+        eq: 120
+      }
+    },
+    is_less_than_equal_to_operator_string_fail: {
+      dsl: {
+        or: [
+          {
+            custom_variable: {
+              eq: 'lte(100)'
+            }
+          }
+        ]
+      },
+      expectation: false,
+      customVariables: {
+        eq: 'abc'
+      }
+    }
+  },
   and_operator: {
     single_and_operator_matching: {
       dsl: {

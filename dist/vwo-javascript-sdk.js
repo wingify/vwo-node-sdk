@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.41.0
+ * vwo-javascript-sdk - v1.41.1
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -2027,7 +2027,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.41.0"
+    version: "1.41.1"
   };
 } else {}
 
@@ -2981,7 +2981,11 @@ module.exports = {
   REGEX: /^regex/,
   REGEX_MATCH: /^regex\((.*)\)/,
   STARTING_STAR: /^\*/,
-  ENDING_STAR: /\*$/
+  ENDING_STAR: /\*$/,
+  GREATER_THAN_MATCH: /^gt\(((\d+\.?\d*)|(\.\d+))\)/,
+  GREATER_THAN_EQUAL_TO_MATCH: /^gte\(((\d+\.?\d*)|(\.\d+))\)/,
+  LESS_THAN_MATCH: /^lt\(((\d+\.?\d*)|(\.\d+))\)/,
+  LESS_THAN_EQUAL_TO_MATCH: /^lte\(((\d+\.?\d*)|(\.\d+))\)/
 };
 
 /***/ }),
@@ -3014,7 +3018,11 @@ module.exports = {
   STARTING_STAR_VALUE: 3,
   ENDING_STAR_VALUE: 4,
   REGEX_VALUE: 5,
-  EQUAL_VALUE: 6
+  EQUAL_VALUE: 6,
+  GREATER_THAN_VALUE: 7,
+  GREATER_THAN_EQUAL_TO_VALUE: 8,
+  LESS_THAN_VALUE: 9,
+  LESS_THAN_EQUAL_TO_VALUE: 10
 };
 
 /***/ }),
@@ -6585,14 +6593,22 @@ var _SegmentEnum$SegmentO = SegmentEnum.SegmentOperandValueTypeRegexes,
     WILDCARD_MATCH = _SegmentEnum$SegmentO.WILDCARD_MATCH,
     REGEX_MATCH = _SegmentEnum$SegmentO.REGEX_MATCH,
     STARTING_STAR = _SegmentEnum$SegmentO.STARTING_STAR,
-    ENDING_STAR = _SegmentEnum$SegmentO.ENDING_STAR;
+    ENDING_STAR = _SegmentEnum$SegmentO.ENDING_STAR,
+    GREATER_THAN_MATCH = _SegmentEnum$SegmentO.GREATER_THAN_MATCH,
+    GREATER_THAN_EQUAL_TO_MATCH = _SegmentEnum$SegmentO.GREATER_THAN_EQUAL_TO_MATCH,
+    LESS_THAN_MATCH = _SegmentEnum$SegmentO.LESS_THAN_MATCH,
+    LESS_THAN_EQUAL_TO_MATCH = _SegmentEnum$SegmentO.LESS_THAN_EQUAL_TO_MATCH;
 var _SegmentEnum$SegmentO2 = SegmentEnum.SegmentOperandValues,
     LOWER_VALUE = _SegmentEnum$SegmentO2.LOWER_VALUE,
     STARTING_ENDING_STAR_VALUE = _SegmentEnum$SegmentO2.STARTING_ENDING_STAR_VALUE,
     STARTING_STAR_VALUE = _SegmentEnum$SegmentO2.STARTING_STAR_VALUE,
     ENDING_STAR_VALUE = _SegmentEnum$SegmentO2.ENDING_STAR_VALUE,
     REGEX_VALUE = _SegmentEnum$SegmentO2.REGEX_VALUE,
-    EQUAL_VALUE = _SegmentEnum$SegmentO2.EQUAL_VALUE;
+    EQUAL_VALUE = _SegmentEnum$SegmentO2.EQUAL_VALUE,
+    GREATER_THAN_VALUE = _SegmentEnum$SegmentO2.GREATER_THAN_VALUE,
+    GREATER_THAN_EQUAL_TO_VALUE = _SegmentEnum$SegmentO2.GREATER_THAN_EQUAL_TO_VALUE,
+    LESS_THAN_VALUE = _SegmentEnum$SegmentO2.LESS_THAN_VALUE,
+    LESS_THAN_EQUAL_TO_VALUE = _SegmentEnum$SegmentO2.LESS_THAN_EQUAL_TO_VALUE;
 
 function extractOperandValue(operand, regex) {
   return matchWithRegex(operand, regex) && matchWithRegex(operand, regex)[1];
@@ -6674,6 +6690,18 @@ function preProcessOperandValue(operand) {
   } else if (matchWithRegex(operand, REGEX_MATCH)) {
     operandType = REGEX_VALUE;
     operandValue = extractOperandValue(operand, REGEX_MATCH);
+  } else if (matchWithRegex(operand, GREATER_THAN_MATCH)) {
+    operandType = GREATER_THAN_VALUE;
+    operandValue = extractOperandValue(operand, GREATER_THAN_MATCH);
+  } else if (matchWithRegex(operand, GREATER_THAN_EQUAL_TO_MATCH)) {
+    operandType = GREATER_THAN_EQUAL_TO_VALUE;
+    operandValue = extractOperandValue(operand, GREATER_THAN_EQUAL_TO_MATCH);
+  } else if (matchWithRegex(operand, LESS_THAN_MATCH)) {
+    operandType = LESS_THAN_VALUE;
+    operandValue = extractOperandValue(operand, LESS_THAN_MATCH);
+  } else if (matchWithRegex(operand, LESS_THAN_EQUAL_TO_MATCH)) {
+    operandType = LESS_THAN_EQUAL_TO_VALUE;
+    operandValue = extractOperandValue(operand, LESS_THAN_EQUAL_TO_MATCH);
   } else {
     operandType = EQUAL_VALUE;
     operandValue = operand;
@@ -6763,6 +6791,50 @@ function extractResult(operandType, operandValue, tagValue) {
         result = !!pattern.test(tagValue);
       } catch (err) {
         result = false;
+      }
+
+      break;
+
+    case GREATER_THAN_VALUE:
+      if (tagValue !== null) {
+        try {
+          result = parseFloat(operandValue) < parseFloat(tagValue);
+        } catch (err) {
+          result = false;
+        }
+      }
+
+      break;
+
+    case GREATER_THAN_EQUAL_TO_VALUE:
+      if (tagValue !== null) {
+        try {
+          result = parseFloat(operandValue) <= parseFloat(tagValue);
+        } catch (err) {
+          result = false;
+        }
+      }
+
+      break;
+
+    case LESS_THAN_VALUE:
+      if (tagValue !== null) {
+        try {
+          result = parseFloat(operandValue) > parseFloat(tagValue);
+        } catch (err) {
+          result = false;
+        }
+      }
+
+      break;
+
+    case LESS_THAN_EQUAL_TO_VALUE:
+      if (tagValue !== null) {
+        try {
+          result = parseFloat(operandValue) >= parseFloat(tagValue);
+        } catch (err) {
+          result = false;
+        }
       }
 
       break;
