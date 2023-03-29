@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.41.1
+ * vwo-javascript-sdk - v1.42.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -2027,7 +2027,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.41.1"
+    version: "1.42.0"
   };
 } else {}
 
@@ -5631,6 +5631,28 @@ var EventDispatcher = {
     try {
       // Require files only if required in respective Engine i.e. Node / Browser
       if (true) {
+        if (typeof XMLHttpRequest === 'undefined') {
+          __webpack_require__(/*! ./FetchUtil */ "./lib/utils/FetchUtil.js").send({
+            method: 'POST',
+            url: "".concat(properties.url).concat(queryParams),
+            payload: payload
+          }).then(function () {
+            _this2.handlePostResponse(properties, payload);
+
+            if (responseCallback) {
+              responseCallback(null, {
+                status: 'success'
+              });
+            }
+          })["catch"](function (error) {
+            _this2.handlePostResponse(properties, payload, error);
+
+            responseCallback(error, {
+              status: 'failure'
+            });
+          });
+        }
+
         __webpack_require__(/*! ./XhrUtil */ "./lib/utils/XhrUtil.js").send({
           method: 'POST',
           url: "".concat(properties.url).concat(queryParams),
@@ -5846,6 +5868,125 @@ module.exports = FeatureUtil;
 
 /***/ }),
 
+/***/ "./lib/utils/FetchUtil.js":
+/*!********************************!*\
+  !*** ./lib/utils/FetchUtil.js ***!
+  \********************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/**
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var _require = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUtil.js"),
+    getCurrentTime = _require.getCurrentTime;
+
+var _require2 = __webpack_require__(/*! ./DataTypeUtil */ "./lib/utils/DataTypeUtil.js"),
+    isObject = _require2.isObject,
+    isFunction = _require2.isFunction;
+
+var FetchUtil = {
+  _getStoredSettings: function _getStoredSettings(userStorageService) {
+    var isStoredData = false;
+    var parsedSettings;
+
+    if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.getSettings)) {
+      try {
+        var settings = userStorageService.getSettings();
+        parsedSettings = JSON.parse(settings);
+
+        if (parsedSettings && isObject(parsedSettings) && Object.keys(parsedSettings).length > 3) {
+          var info = "VWO-SDK - [INFO]: ".concat(getCurrentTime(), " VWO settings found in Storage Service.");
+          console.info(info);
+          isStoredData = true;
+        } else if (parsedSettings) {
+          var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " VWO settings found in Storage Service is not valid.");
+          console.error(error);
+        } else {
+          var warning = "VWO-SDK - [WARNING]: ".concat(getCurrentTime(), " VWO settings is empty in Storage Service.");
+          console.warn(warning);
+        }
+      } catch (err) {
+        var _error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " VWO settings found in Storage Service is not valid. ").concat(err);
+
+        console.error(_error);
+        isStoredData = false;
+      }
+    }
+
+    return {
+      isStoredData: isStoredData,
+      parsedSettings: parsedSettings
+    };
+  },
+  send: function send() {
+    var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+        method = _ref.method,
+        url = _ref.url,
+        payload = _ref.payload,
+        userStorageService = _ref.userStorageService;
+
+    if (!url || !method) {
+      return;
+    }
+
+    return new Promise(function (resolve, reject) {
+      var _FetchUtil$_getStored = FetchUtil._getStoredSettings(userStorageService),
+          isStoredData = _FetchUtil$_getStored.isStoredData,
+          parsedSettings = _FetchUtil$_getStored.parsedSettings;
+
+      if (isStoredData) {
+        resolve(parsedSettings);
+      } else {
+        var options = {
+          method: method
+        };
+
+        if (method === 'POST') {
+          options.body = payload;
+        }
+
+        return fetch(url, options).then(function (res) {
+          var jsonData = res.json();
+
+          if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.setSettings)) {
+            userStorageService.setSettings(jsonData);
+          }
+
+          console.log(res.status);
+
+          if (res.status === 200) {
+            resolve(jsonData);
+          } else {
+            var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(res.status);
+            console.error(error);
+            reject(error);
+          }
+        })["catch"](function (err) {
+          var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(err);
+          console.error(error);
+          reject(error);
+        });
+      }
+    });
+  }
+};
+module.exports = FetchUtil;
+
+/***/ }),
+
 /***/ "./lib/utils/FunctionUtil.js":
 /*!***********************************!*\
   !*** ./lib/utils/FunctionUtil.js ***!
@@ -6005,6 +6146,31 @@ var HttpImageUtil = {
         errorCallback = options.errorCallback;
     errorCallback = errorCallback || successCallback;
     var isCallbackCalled = false;
+
+    if (typeof Image === 'undefined') {
+      fetch(endPoint).then(function () {
+        if (isCallbackCalled) {
+          return;
+        }
+
+        isCallbackCalled = true;
+        successCallback(null, {
+          status: 'success'
+        });
+      })["catch"](function (_err) {
+        if (isCallbackCalled) {
+          return;
+        }
+
+        isCallbackCalled = true;
+        errorCallback(null, {
+          status: 'success'
+        });
+        printLog(url, queryParams);
+      });
+      return;
+    }
+
     var img = new Image();
     this.handleGetCall(url, queryParams, img, successCallback, errorCallback, endPoint, isCallbackCalled);
   },
@@ -6915,6 +7081,14 @@ var SettingsFileUtil = {
     }
 
     if (true) {
+      if (typeof XMLHttpRequest === 'undefined') {
+        return __webpack_require__(/*! ./FetchUtil */ "./lib/utils/FetchUtil.js").send({
+          method: 'GET',
+          url: "".concat(protocol, "://").concat(hostname).concat(path),
+          userStorageService: userStorageService
+        });
+      }
+
       return __webpack_require__(/*! ./XhrUtil */ "./lib/utils/XhrUtil.js").send({
         method: 'GET',
         url: "".concat(protocol, "://").concat(hostname).concat(path),
