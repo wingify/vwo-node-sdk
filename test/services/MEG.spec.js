@@ -17,7 +17,7 @@
 const VWO = require('../../lib/VWO');
 
 const logger = { log: jest.fn() };
-const { settingsFileMeg } = require('../test-utils/data/settingsFiles');
+const { settingsFileMeg, settingsFileNewMeg } = require('../test-utils/data/settingsFiles');
 let userData = {};
 const userStorageService1 = {
   get: (userId, campaignKey) => {
@@ -466,6 +466,112 @@ describe('MEG', () => {
       // since user has already seen that campaign, they will continue to become part of that campaign
       variation = vwoClientInstance.activate(campaignKey, 'Ashley');
       expect(variation).toBe('Control');
+    });
+
+    it('should return an empty object when no winner campaign is found in advanced option', () => {
+      const campaignKey = settingsFileNewMeg.campaigns[0].key;
+      let vwoClientInstance = new VWO({
+        settingsFile: settingsFileNewMeg,
+        logger,
+        isDevelopmentMode: true
+      });
+
+      vwoClientInstance.SettingsFileManager.getSettingsFile(1).groups['3'].p = [];
+      var variation = vwoClientInstance.activate(campaignKey, 'George');
+      var variationName = vwoClientInstance.getVariationName(campaignKey, 'George');
+      var isGoalTracked = vwoClientInstance.track(campaignKey, 'George', 'CUSTOM');
+      expect(variation).toBe(null);
+      expect(variationName).toBe(null);
+      expect(isGoalTracked[campaignKey]).toBe(false);
+    });
+
+    it('should return an empty object when winner campaign is not the called campaign after priority', () => {
+      const campaignKey = settingsFileNewMeg.campaigns[0].key;
+      let vwoClientInstance = new VWO({
+        settingsFile: settingsFileNewMeg,
+        logger,
+        isDevelopmentMode: true
+      });
+
+      var variation = vwoClientInstance.activate(campaignKey, 'George');
+      var variationName = vwoClientInstance.getVariationName(campaignKey, 'George');
+      var isGoalTracked = vwoClientInstance.track(campaignKey, 'George', 'CUSTOM');
+      expect(variation).toBe(null);
+      expect(variationName).toBe(null);
+      expect(isGoalTracked[campaignKey]).toBe(false);
+    });
+
+    it('should return an empty object when winner campaign is not the called campaign after random weightage distribution', () => {
+      // winnerCampaign is not the called campaign for most of the times
+      // distributions is 80:20 for winner and calledCampaign
+      // Called campaign (id - 34) has just 20% weighted distribution
+      const campaignKey = settingsFileNewMeg.campaigns[4].key;
+      let vwoClientInstance = new VWO({
+        settingsFile: settingsFileNewMeg,
+        logger,
+        isDevelopmentMode: true
+      });
+
+      let wt = {
+        31: 80,
+        34: 20
+      };
+      vwoClientInstance.SettingsFileManager.getSettingsFile().groups['3'].p = [];
+      vwoClientInstance.SettingsFileManager.getSettingsFile().groups['3'].wt = wt;
+
+      const iterations = 1000; // number of times to call the function
+      const expectedRatio = 0.2; // expected ratio for campaignId - 34 (20%) (called campaign -34)
+      const allowedError = 0.05; // allowed error range (5%)
+
+      let winners = 0;
+      for (let i = 0; i < iterations; i++) {
+        var variation = vwoClientInstance.activate(campaignKey, 'George');
+        winners = variation === 'Control' ? winners + 1 : winners;
+      }
+
+      const actualRatio = winners / iterations;
+      expect(actualRatio).toBeGreaterThan(expectedRatio - allowedError);
+      expect(actualRatio).toBeLessThan(expectedRatio + allowedError);
+    });
+
+    it('should return the variation when winner campaign found through priority', () => {
+      const campaignKey = settingsFileNewMeg.campaigns[4].key;
+      let vwoClientInstance = new VWO({
+        settingsFile: settingsFileNewMeg,
+        logger,
+        isDevelopmentMode: true
+      });
+
+      var variation = vwoClientInstance.activate(campaignKey, 'George');
+      var variationName = vwoClientInstance.getVariationName(campaignKey, 'George');
+      var isGoalTracked = vwoClientInstance.track(campaignKey, 'George', 'CUSTOM');
+      expect(variation).toBe('Control');
+      expect(variationName).toBe('Control');
+      expect(isGoalTracked[campaignKey]).toBe(true);
+    });
+
+    it('should return the variation when winner campaign found through weightage ', () => {
+      const campaignKey = settingsFileNewMeg.campaigns[1].key;
+      let vwoClientInstance = new VWO({
+        settingsFile: settingsFileNewMeg,
+        logger,
+        isDevelopmentMode: true
+      });
+
+      vwoClientInstance.SettingsFileManager.getSettingsFile().groups['3'].p = [];
+      const iterations = 1000; // number of times to call the function
+      const expectedRatio = 0.8; // expected ratio for campaignId - 31 (80%)
+      const allowedError = 0.05; // allowed error range (5%)
+
+      let winners = 0;
+      for (let i = 0; i < iterations; i++) {
+        var variation = vwoClientInstance.activate(campaignKey, 'George');
+        winners = variation === 'Control' ? winners + 1 : winners;
+      }
+
+      const actualRatio = winners / iterations;
+      expect(actualRatio).toBeGreaterThan(expectedRatio - allowedError);
+      expect(actualRatio).toBeLessThan(expectedRatio + allowedError);
     });
   });
 });
