@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.42.0
+ * vwo-javascript-sdk - v1.46.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -2027,7 +2027,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.42.0"
+    version: "1.46.0"
   };
 } else {}
 
@@ -3391,7 +3391,7 @@ var campaignObjectSchema = type({
   type: string(),
   key: string(),
   status: string(),
-  name: string(),
+  name: optional(string()),
   isBucketingSeedEnabled: optional(_boolean()),
   percentTraffic: number(),
   goals: union([object(), array(campaignGoalSchema)]),
@@ -3402,6 +3402,9 @@ var campaignObjectSchema = type({
   isUserListEnabled: optional(_boolean())
 });
 var groupSchema = type({
+  et: optional(string()),
+  p: optional(array(number())),
+  wt: optional(record(string(), number())),
   groupName: string(),
   campaigns: array(number())
 });
@@ -4778,6 +4781,7 @@ var CampaignTypeEnum = __webpack_require__(/*! ../enums/CampaignTypeEnum */ "./l
 
 var ApiEnum = __webpack_require__(/*! ../enums/ApiEnum */ "./lib/enums/ApiEnum.js");
 
+var RandomAlgo = 1;
 var file = FileNameEnum.DecisionUtil;
 var SegmentationTypeEnum = {
   WHITELISTING: 'whitelisting',
@@ -4927,14 +4931,20 @@ var DecisionUtil = {
         file: file,
         noOfEligibleCampaigns: eligibleCampaigns.length,
         noOfGroupCampaigns: inEligibleCampaigns.length + eligibleCampaigns.length
-      }));
+      })); // Whether normalised/random implementation has to be done or advanced
+
+      var megAlgoNumber = typeof settingsFile.groups[groupId].et !== 'undefined' ? settingsFile.groups[groupId].et : RandomAlgo;
 
       if (eligibleCampaigns.length === 1) {
         // if the called campaign is the only winner.
         return DecisionUtil.evaluateTrafficAndGetVariation(config, eligibleCampaigns[0], eligibleCampaigns[0].key, userId, metaData, newGoalIdentifier, decision);
       } else {
-        // normalize the eligible campaigns and decide winner
-        return DecisionUtil._normalizeAndFindWinningCampaign(config, campaign, eligibleCampaigns, userId, groupName, groupId, metaData, newGoalIdentifier, decision);
+        if (megAlgoNumber === RandomAlgo) {
+          // normalize the eligible campaigns and decide winner
+          return DecisionUtil._normalizeAndFindWinningCampaign(config, campaign, eligibleCampaigns, userId, groupName, groupId, metaData, newGoalIdentifier, decision);
+        } else {
+          return DecisionUtil._advancedAlgoFindWinningCampaign(config, settingsFile, campaign, eligibleCampaigns, userId, groupName, groupId, metaData, newGoalIdentifier, decision);
+        }
       }
     } else {
       // campaign is not a part of mutually exclusive group
@@ -5514,6 +5524,102 @@ var DecisionUtil = {
       }));
       return {};
     }
+  },
+
+  /** Assign the winner campaign by checking priority order and/or weightage distribution
+   * @param {Object} config
+   * @param {Object} settingsFile
+   * @param {Object} calledCampaign
+   * @param {Array} shortlistedCampaigns
+   * @param {String} userId
+   * @param {Object} metaData
+   * @param {String} newGoalIdentifier
+   * @param {Object} decision
+   *
+   * @returns {Object} variation of the winner campaign
+   */
+  _advancedAlgoFindWinningCampaign: function _advancedAlgoFindWinningCampaign(config, settingsFile, calledCampaign, shortlistedCampaigns, userId, groupName, groupId, metaData, newGoalIdentifier, decision) {
+    var winnerCampaign = null;
+    var found = false; // flag to check whether winnerCampaign has been found or not and helps to break from the outer loop
+
+    var priorityOrder = typeof settingsFile.groups[groupId].p !== 'undefined' ? settingsFile.groups[groupId].p : {};
+    var wt = typeof settingsFile.groups[groupId].wt !== 'undefined' ? settingsFile.groups[groupId].wt : {};
+
+    for (var i = 0; i < priorityOrder.length; i++) {
+      for (var j = 0; j < shortlistedCampaigns.length; j++) {
+        if (shortlistedCampaigns[j].id === priorityOrder[i]) {
+          winnerCampaign = FunctionUtil.cloneObject(shortlistedCampaigns[j]);
+          found = true;
+          break;
+        }
+      }
+
+      if (found === true) break;
+    } // If winnerCampaign not found through Priority, then go for weighted Random distribution and for that,
+    // Store the list of campaigns (participatingCampaigns) out of shortlistedCampaigns and their corresponding weights which are present in weightage distribution array (wt) in 2 different lists
+
+
+    if (winnerCampaign === null) {
+      var weights = [];
+      var partipatingCampaignList = [];
+
+      for (var _i = 0; _i < shortlistedCampaigns.length; _i++) {
+        var campaignId = shortlistedCampaigns[_i].id;
+
+        if (typeof wt[campaignId] !== 'undefined') {
+          weights.push(wt[campaignId]);
+          partipatingCampaignList.push(FunctionUtil.cloneObject(shortlistedCampaigns[_i]));
+        }
+      }
+      /*
+        * Finding winner campaign using weighted random distribution :
+        1. Calculate the sum of all weights
+        2. Generate a random number between 0 and the weight sum:
+        3. Iterate over the weights array and subtract each weight from the random number until the random number becomes negative. The corresponding ith value is the required value
+        4. Set the ith campaign as WinnerCampaign
+        */
+
+
+      var weightSum = weights.reduce(function (a, b) {
+        return a + b;
+      }, 0);
+      var randomNumber = Math.random() * weightSum;
+      var sum = 0;
+
+      for (var _i2 = 0; _i2 < weights.length; _i2++) {
+        sum += weights[_i2];
+
+        if (randomNumber < sum) {
+          winnerCampaign = partipatingCampaignList[_i2];
+          break;
+        }
+      }
+    }
+
+    if (winnerCampaign != null) {
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.MEG_GOT_WINNER_CAMPAIGN, {
+        userId: userId,
+        groupName: groupName,
+        file: file,
+        campaignKey: winnerCampaign.key
+      }));
+    } // WinnerCampaign should not be null, in case when winnerCampaign hasn't been found through PriorityOrder and
+    // also shortlistedCampaigns and wt array does not have a single campaign id in common
+
+
+    if (winnerCampaign != null && winnerCampaign.id === calledCampaign.id) {
+      // if called campaign is the winner campaign, get the variation for the campaign
+      return DecisionUtil.evaluateTrafficAndGetVariation(config, winnerCampaign, winnerCampaign.key, userId, metaData, newGoalIdentifier, decision);
+    } else {
+      // if winning campaign not the called camapaign, return
+      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.MEG_CALLED_CAMPAIGN_NOT_WINNER, {
+        userId: userId,
+        groupName: groupName,
+        file: file,
+        campaignKey: calledCampaign.key
+      }));
+      return {};
+    }
   }
 };
 module.exports = DecisionUtil;
@@ -5632,7 +5738,7 @@ var EventDispatcher = {
       // Require files only if required in respective Engine i.e. Node / Browser
       if (true) {
         if (typeof XMLHttpRequest === 'undefined') {
-          __webpack_require__(/*! ./FetchUtil */ "./lib/utils/FetchUtil.js").send({
+          return __webpack_require__(/*! ./FetchUtil */ "./lib/utils/FetchUtil.js").send({
             method: 'POST',
             url: "".concat(properties.url).concat(queryParams),
             payload: payload
@@ -5653,7 +5759,7 @@ var EventDispatcher = {
           });
         }
 
-        __webpack_require__(/*! ./XhrUtil */ "./lib/utils/XhrUtil.js").send({
+        return __webpack_require__(/*! ./XhrUtil */ "./lib/utils/XhrUtil.js").send({
           method: 'POST',
           url: "".concat(properties.url).concat(queryParams),
           payload: payload
@@ -5682,7 +5788,7 @@ var EventDispatcher = {
       }));
     }
 
-    return false;
+    return Promise.resolve(false);
   },
   handlePostResponse: function handlePostResponse(properties, payload, error) {
     var endPoint = properties.url;
@@ -5955,25 +6061,33 @@ var FetchUtil = {
         };
 
         if (method === 'POST') {
-          options.body = payload;
+          options.body = JSON.stringify(payload);
         }
 
         return fetch(url, options).then(function (res) {
-          var jsonData = res.json();
+          // Some endpoints return empty strings as the response body; treat
+          // as raw text and handle potential JSON parsing errors below
+          return res.text().then(function (text) {
+            var jsonData = {};
 
-          if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.setSettings)) {
-            userStorageService.setSettings(jsonData);
-          }
+            try {
+              jsonData = JSON.parse(text);
+            } catch (err) {
+              console.info("VWO-SDK - [INFO]: ".concat(getCurrentTime(), " VWO didn't send JSON response which is expected: ").concat(err));
+            }
 
-          console.log(res.status);
+            if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.setSettings)) {
+              userStorageService.setSettings(jsonData);
+            }
 
-          if (res.status === 200) {
-            resolve(jsonData);
-          } else {
-            var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(res.status);
-            console.error(error);
-            reject(error);
-          }
+            if (res.status === 200) {
+              resolve(jsonData);
+            } else {
+              var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(res.status);
+              console.error(error);
+              reject(error);
+            }
+          });
         })["catch"](function (err) {
           var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(err);
           console.error(error);
