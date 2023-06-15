@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.46.0
+ * vwo-javascript-sdk - v1.47.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -2027,7 +2027,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.46.0"
+    version: "1.47.0"
   };
 } else {}
 
@@ -2189,7 +2189,7 @@ var BucketingService = {
    * @return {Object|null} variation data into which user is bucketed in or null if not
    */
   bucketUserToVariation: function bucketUserToVariation(userId, campaign) {
-    var multiplier;
+    var multiplier = 1;
 
     if (!ValidateUtil.isValidValue(userId)) {
       return null;
@@ -2198,10 +2198,10 @@ var BucketingService = {
     if (!campaign) {
       return null;
     }
-
-    if (campaign.percentTraffic) {
+    /* if (campaign.percentTraffic) {
       multiplier = Constants.MAX_TRAFFIC_VALUE / campaign.percentTraffic / 100;
-    }
+    } */
+
 
     var hashValue = BucketingService._generateHashValue(campaign.isBucketingSeedEnabled ? "".concat(campaign.id, "_").concat(userId) : userId);
 
