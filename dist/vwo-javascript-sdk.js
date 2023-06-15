@@ -2203,7 +2203,7 @@ var BucketingService = {
     } */
 
 
-    var hashValue = BucketingService._generateHashValue(campaign.isBucketingSeedEnabled ? "".concat(campaign.id, "_").concat(userId) : userId);
+    var hashValue = BucketingService._generateHashValue(userId);
 
     var bucketValue = BucketingService._generateBucketValue(hashValue, Constants.MAX_TRAFFIC_VALUE, multiplier);
 
