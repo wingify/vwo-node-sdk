@@ -18,7 +18,7 @@ const SettingsFileService = require('../../lib/services/SettingsFileManager');
 const logging = require('../../lib/services/logging');
 const logger = logging.getLogger();
 
-const { settingsFile1 } = require('../test-utils/data/settingsFiles');
+const { settingsFile1, settingsFileExtraKeyValidation } = require('../test-utils/data/settingsFiles');
 
 let SettingsFileManager;
 let globalConfig = {
@@ -31,8 +31,8 @@ beforeEach(() => {
 });
 
 describe('Service SettingsFileManager', () => {
-  describe('contructor', () => {
-    it('should set default values to keys of settingsFile if somwhow not provided', () => {
+  describe('constructor', () => {
+    it('should set default values to keys of settingsFile if somehow not provided', () => {
       const config = {
         settingsFile: {}
       };
@@ -130,6 +130,17 @@ describe('Service SettingsFileManager', () => {
     });
 
     it('should return true if config is valid', () => {
+      const isValid = SettingsFileManager.isSettingsFileValid();
+
+      expect(isValid).toBe(true);
+    });
+
+    it('should validate the settings even if new key is present in campaigns object without adding in schema', () => {
+      SettingsFileManager = new SettingsFileService({
+        settingsFile: settingsFileExtraKeyValidation,
+        logger
+      });
+
       const isValid = SettingsFileManager.isSettingsFileValid();
 
       expect(isValid).toBe(true);

@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.46.0
+ * vwo-javascript-sdk - v1.47.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -162,6 +162,8 @@ var DataTypeUtil = __webpack_require__(/*! ./utils/DataTypeUtil */ "./lib/utils/
 
 var FunctionUtil = __webpack_require__(/*! ./utils/FunctionUtil */ "./lib/utils/FunctionUtil.js");
 
+var VWOFeatureFlags = __webpack_require__(/*! ./utils/VWOFeatureFlags */ "./lib/utils/VWOFeatureFlags.js");
+
 var EventQueue = __webpack_require__(/*! ./services/EventQueue */ "./lib/services/EventQueue.js");
 
 var SettingsFileService = __webpack_require__(/*! ./services/SettingsFileManager */ "./lib/services/SettingsFileManager.js");
@@ -235,6 +237,7 @@ function () {
       file: file
     }));
     this.UrlService = UrlService.init(config.settingsFile);
+    this.VWOFeatureFlags = VWOFeatureFlags.init(config.settingsFile);
   } // PUBLIC METHODS
 
   /**
@@ -2027,7 +2030,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.46.0"
+    version: "1.47.0"
   };
 } else {}
 
@@ -2079,6 +2082,8 @@ var Hasher = __webpack_require__(/*! murmurhash */ "./node_modules/murmurhash/mu
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
 
 var ValidateUtil = __webpack_require__(/*! ../utils/ValidateUtil */ "./lib/utils/ValidateUtil.js");
+
+var VWOFeatureFlags = __webpack_require__(/*! ../utils/VWOFeatureFlags */ "./lib/utils/VWOFeatureFlags.js");
 
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
 
@@ -2189,7 +2194,9 @@ var BucketingService = {
    * @return {Object|null} variation data into which user is bucketed in or null if not
    */
   bucketUserToVariation: function bucketUserToVariation(userId, campaign) {
+    var isNB = VWOFeatureFlags.getAll().isNB;
     var multiplier;
+    var seed;
 
     if (!ValidateUtil.isValidValue(userId)) {
       return null;
@@ -2199,11 +2206,18 @@ var BucketingService = {
       return null;
     }
 
-    if (campaign.percentTraffic) {
+    if ((!isNB || isNB && campaign.isOB) && campaign.percentTraffic) {
+      // Old bucketing logic if feature flag is OFF or
+      // Feature flag is ON and campaign is old i.e. created before feature flag was turned ON
       multiplier = Constants.MAX_TRAFFIC_VALUE / campaign.percentTraffic / 100;
+      seed = CampaignUtil.getBucketingSeed(userId, campaign);
+    } else if (isNB && !campaign.isOB) {
+      // New bucketing logic if feature flag is ON and campaign is new i.e. created after feature flag was turned ON
+      multiplier = 1;
+      seed = userId;
     }
 
-    var hashValue = BucketingService._generateHashValue(campaign.isBucketingSeedEnabled ? "".concat(campaign.id, "_").concat(userId) : userId);
+    var hashValue = BucketingService._generateHashValue(seed);
 
     var bucketValue = BucketingService._generateBucketValue(hashValue, Constants.MAX_TRAFFIC_VALUE, multiplier);
 
@@ -4300,6 +4314,8 @@ module.exports = logging;
  */
 var ValidateUtil = __webpack_require__(/*! ./ValidateUtil */ "./lib/utils/ValidateUtil.js");
 
+var VWOFeatureFlags = __webpack_require__(/*! ./VWOFeatureFlags */ "./lib/utils/VWOFeatureFlags.js");
+
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
 
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
@@ -4658,7 +4674,9 @@ var CampaignUtil = {
       return "".concat(groupId, "_").concat(userId);
     }
 
-    if (campaign && campaign.isBucketingSeedEnabled) {
+    var isNB = VWOFeatureFlags.getAll().isNB;
+
+    if (isNB || campaign && campaign.isBucketingSeedEnabled) {
       return "".concat(campaign.id, "_").concat(userId);
     } else {
       return userId;
@@ -7304,6 +7322,44 @@ var UuidUtil = {
   }
 };
 module.exports = UuidUtil;
+
+/***/ }),
+
+/***/ "./lib/utils/VWOFeatureFlags.js":
+/*!**************************************!*\
+  !*** ./lib/utils/VWOFeatureFlags.js ***!
+  \**************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var VWOFeatureFlags = {
+  init: function init(settingsFile) {
+    VWOFeatureFlags.isEventArchEnabled = settingsFile.isEventArchEnabled;
+    VWOFeatureFlags.isNB = settingsFile.isNB;
+  },
+  getAll: function getAll() {
+    return {
+      isEventArchEnabled: VWOFeatureFlags.isEventArchEnabled,
+      isNB: VWOFeatureFlags.isNB
+    };
+  }
+};
+module.exports = VWOFeatureFlags;
 
 /***/ }),
 

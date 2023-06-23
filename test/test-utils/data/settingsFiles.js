@@ -9,8 +9,16 @@ const settingsFile8 = require('./settingsFile-8');
 const settingsFile9 = require('./settingsFile-9');
 const settingsFile10 = require('./settingsFile-10');
 const settingsFile11 = require('./settingsFile-11');
+const settingsFileExtraKeyValidation = require('./settingsFile-extra-key-validation');
 const settingsFileMeg = require('./settingsFile-meg');
 const settingsFileNewMeg = require('./settingsFile-NewMeg');
+const {
+  settingsWithoutSeedAndWithoutisOB,
+  settingsWithSeedAndWithoutisOB,
+  settingsWithisNBAndWithisOB,
+  settingsWithisNBAndWithoutisOB,
+  settingsWithisNBAndWithoutisOBAndWithoutSeedFlag
+} = require('./settingsFile-bucketing');
 
 module.exports = {
   settingsFile1,
@@ -25,5 +33,11 @@ module.exports = {
   settingsFile10,
   settingsFile11,
   settingsFileMeg,
-  settingsFileNewMeg
+  settingsFileNewMeg,
+  settingsFileExtraKeyValidation,
+  settingsWithoutSeedAndWithoutisOB,
+  settingsWithSeedAndWithoutisOB,
+  settingsWithisNBAndWithisOB,
+  settingsWithisNBAndWithoutisOB,
+  settingsWithisNBAndWithoutisOBAndWithoutSeedFlag
 };

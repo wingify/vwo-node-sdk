@@ -16,7 +16,19 @@
 
 const BucketingService = require('../../lib/core/BucketingService');
 const CampaignUtil = require('../../lib/utils/CampaignUtil');
+const VWOFeatureFlags = require('../../lib/utils/VWOFeatureFlags');
 const { bucketValues, seedBucketValue } = require('../test-utils/data/bucketValues');
+const testUtil = require('../test-utils/TestUtil');
+const users = testUtil.getUsers();
+const settings = require('../test-utils/data/settingsFileAndUsersExpectation');
+
+const {
+  settingsWithoutSeedAndWithoutisOB,
+  settingsWithSeedAndWithoutisOB,
+  settingsWithisNBAndWithisOB,
+  settingsWithisNBAndWithoutisOB,
+  settingsWithisNBAndWithoutisOBAndWithoutSeedFlag
+} = require('../test-utils/data/settingsFiles');
 
 let userId;
 let dummyCampaign;
@@ -57,6 +69,10 @@ beforeEach(() => {
 
   // Assign variation-level bucketing first
   CampaignUtil.setVariationAllocation(dummyCampaign);
+
+  VWOFeatureFlags.init({
+    isNB: false
+  });
 });
 
 describe('BucketingService', () => {
@@ -117,6 +133,74 @@ describe('BucketingService', () => {
       const result = BucketingService.bucketUserToVariation(userId, dummyCampaign);
 
       expect(result.name).toBe('Variation-1');
+    });
+
+    test('should return variation with old bucketing logic and seed not enabled', () => {
+      const campaign = settingsWithoutSeedAndWithoutisOB.campaigns[0];
+      CampaignUtil.setVariationAllocation(campaign);
+
+      for (let i = 0; i < users.length; i++) {
+        const userId = users[i];
+
+        const result = BucketingService.bucketUserToVariation(userId, campaign);
+        expect(result.name).toBe(settings['BUCKET_ALGO_WITHOUT_SEED'][i].variation);
+      }
+    });
+
+    test('should return variation with old bucketing logic and seed enabled', () => {
+      const campaign = settingsWithSeedAndWithoutisOB.campaigns[0];
+      CampaignUtil.setVariationAllocation(campaign);
+
+      for (let i = 0; i < users.length; i++) {
+        const userId = users[i];
+
+        const result = BucketingService.bucketUserToVariation(userId, campaign);
+        expect(result.name).toBe(settings['BUCKET_ALGO_WITH_SEED'][i].variation);
+      }
+    });
+
+    test('should return variation having seed enabled, isNB true, and isOB true with old bucketing logic', () => {
+      const campaign = settingsWithisNBAndWithisOB.campaigns[0];
+      CampaignUtil.setVariationAllocation(campaign);
+
+      for (let i = 0; i < users.length; i++) {
+        const userId = users[i];
+
+        const result = BucketingService.bucketUserToVariation(userId, campaign);
+        expect(result.name).toBe(settings['BUCKET_ALGO_WITH_SEED_WITH_isNB_WITH_isOB'][i].variation);
+      }
+    });
+
+    test('should return variation having isNB true, isOB no present, seed enabled with new variation bucketing logic', () => {
+      const campaign = settingsWithisNBAndWithoutisOB.campaigns[0];
+      CampaignUtil.setVariationAllocation(campaign);
+
+      VWOFeatureFlags.init({
+        isNB: true
+      });
+
+      for (let i = 0; i < users.length; i++) {
+        const userId = users[i];
+
+        const result = BucketingService.bucketUserToVariation(userId, campaign);
+        expect(result.name).toBe(settings['BUCKET_ALGO_WITH_SEED_WITH_isNB_WITHOUT_isOB'][i].variation);
+      }
+    });
+
+    test('should return variation having isNB true, isOB no present, without seed flag with new variation bucketing logic', () => {
+      const campaign = settingsWithisNBAndWithoutisOBAndWithoutSeedFlag.campaigns[0];
+      CampaignUtil.setVariationAllocation(campaign);
+
+      VWOFeatureFlags.init({
+        isNB: true
+      });
+
+      for (let i = 0; i < users.length; i++) {
+        const userId = users[i];
+
+        const result = BucketingService.bucketUserToVariation(userId, campaign);
+        expect(result.name).toBe(settings['BUCKET_ALGO_WITHOUT_SEED_FLAG_WITH_isNB_WITHOUT_isOB'][i].variation);
+      }
     });
   });
 
