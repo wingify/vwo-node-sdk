@@ -187,7 +187,7 @@ export const settingsWithisNBAndWithoutisOBAndWithoutSeedFlag = {
       ],
       id: 231,
       percentTraffic: 100,
-      isBucketingSeedEnabled: true,
+      // isBucketingSeedEnabled: true,
       name: 'BUCKET_ALGO_WITHOUT_SEED_FLAG_WITH_isNB_WITHOUT_isOB',
       key: 'BUCKET_ALGO_WITHOUT_SEED_FLAG_WITH_isNB_WITHOUT_isOB',
       status: 'RUNNING',
