@@ -9,6 +9,7 @@ const settingsFile8 = require('./settingsFile-8');
 const settingsFile9 = require('./settingsFile-9');
 const settingsFile10 = require('./settingsFile-10');
 const settingsFile11 = require('./settingsFile-11');
+const settingsFileEventProperties = require('./settingsFile-eventProperties');
 const settingsFileExtraKeyValidation = require('./settingsFile-extra-key-validation');
 const settingsFileMeg = require('./settingsFile-meg');
 const settingsFileNewMeg = require('./settingsFile-NewMeg');
@@ -32,6 +33,7 @@ module.exports = {
   settingsFile9,
   settingsFile10,
   settingsFile11,
+  settingsFileEventProperties,
   settingsFileMeg,
   settingsFileNewMeg,
   settingsFileExtraKeyValidation,

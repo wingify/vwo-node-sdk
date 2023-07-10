@@ -31,7 +31,8 @@ const {
   settingsFile7,
   settingsFile8,
   settingsFile9,
-  settingsFile11
+  settingsFile11,
+  settingsFileEventProperties
 } = require('./test-utils/data/settingsFiles');
 
 const {
@@ -1137,6 +1138,50 @@ describe('Class VWO', () => {
       // calling track api without activating
       let trackResponse = vwoClientInstance.track(null, 'Ashley', 'track3', { revenueValue: 200 });
       expect(trackResponse.track1).toBe(true);
+    });
+
+    test('should return false if revenueValue is not passed in the goal', () => {
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFileEventProperties,
+        logger,
+        isDevelopmentMode: true
+      });
+      // calling track api without activating
+      let trackResponse = vwoClientInstance.track(null, 'Ashley', 'track3');
+      expect(trackResponse.track1).toBe(false);
+    });
+
+    test('should return true if revenueValue is not passed for metric of type number of times event is triggered', () => {
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFileEventProperties,
+        logger,
+        isDevelopmentMode: true
+      });
+      // calling track api without activating
+      let trackResponse = vwoClientInstance.track(null, 'Ashley', 'track4');
+      expect(trackResponse.track1).toBe(true);
+    });
+
+    test('should return true if eventProperties is passed instead of revenueValue', () => {
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFileEventProperties,
+        logger,
+        isDevelopmentMode: true
+      });
+      // calling track api without activating
+      let trackResponse = vwoClientInstance.track(null, 'Ashley', 'track3', { eventProperties: { abcd: 400 } });
+      expect(trackResponse.track1).toBe(true);
+    });
+
+    test('should return false if eventProperties do not have revenueProp and It is passed instead of revenueValue', () => {
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFileEventProperties,
+        logger,
+        isDevelopmentMode: true
+      });
+      // calling track api without activating
+      let trackResponse = vwoClientInstance.track(null, 'Ashley', 'track3', { eventProperties: { ab: 400 } });
+      expect(trackResponse.track1).toBe(false);
     });
 
     test('should return false if called before activate/isFeatureEnabled with storage service', () => {

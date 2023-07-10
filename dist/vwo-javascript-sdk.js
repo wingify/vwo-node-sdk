@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.47.0
+ * vwo-javascript-sdk - v1.50.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -1848,7 +1848,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   var events = [];
   var areGlobalGoals =  true ? false : undefined;
   campaigns.forEach(function (campaign) {
-    return result[campaign.key] = trackCampaignGoal(vwoInstance, campaign, campaign.key, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals);
+    return result[campaign.key] = trackCampaignGoal(vwoInstance, campaign, campaign.key, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals, eventProperties);
   });
 
   if (!Object.keys(result).length) {
@@ -1886,7 +1886,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   return result;
 }
 
-function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals) {
+function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals, eventProperties) {
   // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
     vwoInstance.logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_RUNNING, {
@@ -1924,13 +1924,37 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
   } else if (goalTypeToTrack !== GOAL_TYPE_TO_TRACK_DEFAULT && goal.type !== goalTypeToTrack) {
     return false;
   } else if (goal.type === GoalTypeEnum.REVENUE && !ValidateUtil.isValidValue(revenueValue)) {
-    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL, {
-      file: file,
-      userId: userId,
-      goalIdentifier: goalIdentifier,
-      campaignKey: campaignKey
-    }));
-    return false;
+    if (settingsFile.isEventArchEnabled) {
+      /* 
+      If it's a metric of type - value of an event property and calculation logic is first Value (mca != -1 )
+      */
+      if (goal.mca !== -1) {
+        /*
+        In this case it is expected that goal will have revenueProp
+        Error should be logged if eventProperties is not Defined ` OR ` eventProperties does not have revenueProp key
+        */
+        if (DataTypeUtil.isUndefined(eventProperties) || !eventProperties.hasOwnProperty(goal.revenueProp)) {
+          logIncorrectParamsForRevenueGoal(vwoInstance, userId, goalIdentifier, campaignKey);
+          return false;
+        }
+      } else {
+        /*
+        here mca == -1 so there could only be 2 scenarios, 
+        1. If revenueProp is defined then eventProperties should have revenueProp key
+        2. if revenueProp is not defined then it's a metric of type - Number of times an event has been triggered.
+        */
+        if (goal.revenueProp) {
+          // Error should be logged if eventProperties is not Defined ` OR ` eventProperties does not have revenueProp key
+          if (DataTypeUtil.isUndefined(eventProperties) || !eventProperties.hasOwnProperty(goal.revenueProp)) {
+            logIncorrectParamsForRevenueGoal(vwoInstance, userId, goalIdentifier, campaignKey);
+            return false;
+          }
+        }
+      }
+    } else {
+      logIncorrectParamsForRevenueGoal(vwoInstance, userId, goalIdentifier, campaignKey);
+      return false;
+    }
   }
 
   if (goal.type === GoalTypeEnum.REVENUE && goal.revenueProp) {
@@ -1964,7 +1988,7 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
 
 
     if (config.batchEvents) {
-      var properties = ImpressionUtil.buildBatchEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue);
+      var properties = ImpressionUtil.buildBatchEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue, eventProperties);
       vwoInstance.batchEventsQueue.enqueue(properties);
     } else if (settingsFile.isEventArchEnabled) {
       metricMap[campaign.id] = {
@@ -1994,6 +2018,15 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
   }
 
   return false;
+}
+
+function logIncorrectParamsForRevenueGoal(vwoInstance, userId, goalIdentifier, campaignKey) {
+  vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL, {
+    file: file,
+    userId: userId,
+    goalIdentifier: goalIdentifier,
+    campaignKey: campaignKey
+  }));
 }
 
 module.exports = track;
@@ -2030,7 +2063,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.47.0"
+    version: "1.50.0"
   };
 } else {}
 
@@ -6540,6 +6573,7 @@ var ImpressionUtil = {
   buildBatchEventForTrackingGoal: function buildBatchEventForTrackingGoal(configObj, campaignKey, variationId, userId) {
     var goal = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
     var revenue = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
+    var eventProperties = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
 
     if (false) { var properties; }
   },

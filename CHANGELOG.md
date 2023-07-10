@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.55.0] - 2023-07-10
+
+### Changed
+
+- Modified the revenueProp logic to read from `eventProperties` for data360 enabled accounts.
+- Updated the code to check for the existence of `eventProperties` and access the `revenueProp` property accordingly.
+
 ## [1.50.0] - 2023-06-23
 
 ### Changed
