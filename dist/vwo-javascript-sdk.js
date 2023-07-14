@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.50.0
+ * vwo-javascript-sdk - v1.55.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -2063,7 +2063,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.50.0"
+    version: "1.55.0"
   };
 } else {}
 
@@ -4762,7 +4762,9 @@ var DataTypeUtil = {
     return DataTypeUtil._toStringValue(val) === '[object Boolean]';
   },
   isUndefined: function isUndefined(val) {
-    return DataTypeUtil._toStringValue(val) === '[object Undefined]';
+    return DataTypeUtil._toStringValue(val) === '[object Undefined]' || // A third-party library sometimes overrides and returns [object Window]
+    // therefore, adding a fallback as well
+    typeof val === 'undefined';
   },
   isNull: function isNull(val) {
     return DataTypeUtil._toStringValue(val) === '[object Null]';
