@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.55.0
+ * vwo-javascript-sdk - v1.56.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -825,7 +825,10 @@ function activate(vwoInstance, campaignKey, userId) {
         userStorageData = options.userStorageData,
         shouldTrackReturningUser = options.shouldTrackReturningUser,
         metaData = options.metaData,
-        responseCallback = options.responseCallback; // Check if arguments have valid data-type
+        responseCallback = options.responseCallback,
+        userAgent = options.userAgent,
+        userIpAddress = options.userIpAddress;
+    var visitorUserAgent = userAgent; // Check if arguments have valid data-type
 
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.ACTIVATE,
@@ -836,7 +839,9 @@ function activate(vwoInstance, campaignKey, userId) {
       userStorageData: userStorageData,
       shouldTrackReturningUser: shouldTrackReturningUser,
       metaData: metaData,
-      responseCallback: responseCallback
+      responseCallback: responseCallback,
+      visitorUserAgent: visitorUserAgent,
+      userIpAddress: userIpAddress
     })) {
       areParamsValid = true;
     }
@@ -913,10 +918,10 @@ function activate(vwoInstance, campaignKey, userId) {
 
 
   if (config.batchEvents) {
-    var properties = ImpressionUtil.buildBatchEventForTrackingUser(settingsFile, campaign.id, variationId, userId);
+    var properties = ImpressionUtil.buildBatchEventForTrackingUser(settingsFile, campaign.id, variationId, userId, visitorUserAgent, userIpAddress);
     vwoInstance.batchEventsQueue.enqueue(properties);
   } else if (settingsFile.isEventArchEnabled) {
-    var _properties = ImpressionUtil.getEventsBaseProperties(settingsFile, EventEnum.VWO_VARIATION_SHOWN, vwoInstance.usageStats.getUsageStats());
+    var _properties = ImpressionUtil.getEventsBaseProperties(settingsFile, EventEnum.VWO_VARIATION_SHOWN, vwoInstance.usageStats.getUsageStats(), visitorUserAgent, userIpAddress);
 
     var payload = ImpressionUtil.getTrackUserPayloadData(settingsFile, userId, EventEnum.VWO_VARIATION_SHOWN, campaign.id, variationId);
     vwoInstance.eventQueue.process(config, _properties, vwoInstance, {
@@ -924,7 +929,7 @@ function activate(vwoInstance, campaignKey, userId) {
       responseCallback: responseCallback
     });
   } else {
-    var _properties2 = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId, vwoInstance.usageStats.getUsageStats());
+    var _properties2 = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId, vwoInstance.usageStats.getUsageStats(), visitorUserAgent, userIpAddress);
 
     vwoInstance.eventQueue.process(config, _properties2, vwoInstance, {
       responseCallback: responseCallback
@@ -1389,7 +1394,10 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
         userStorageData = options.userStorageData,
         shouldTrackReturningUser = options.shouldTrackReturningUser,
         metaData = options.metaData,
-        responseCallback = options.responseCallback; // Check if arguments have valid data-type
+        responseCallback = options.responseCallback,
+        userAgent = options.userAgent,
+        userIpAddress = options.userIpAddress;
+    var visitorUserAgent = userAgent; // Check if arguments have valid data-type
 
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.IS_FEATURE_ENABLED,
@@ -1400,7 +1408,9 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
       userStorageData: userStorageData,
       shouldTrackReturningUser: shouldTrackReturningUser,
       metaData: metaData,
-      responseCallback: responseCallback
+      responseCallback: responseCallback,
+      visitorUserAgent: visitorUserAgent,
+      userIpAddress: userIpAddress
     })) {
       areParamsValid = true;
     }
@@ -1468,10 +1478,10 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
     } else {
       // Variation found...let VWO server knows about it to show report stats
       if (config.batchEvents) {
-        var properties = ImpressionUtil.buildBatchEventForTrackingUser(settingsFile, campaign.id, variationId, userId);
+        var properties = ImpressionUtil.buildBatchEventForTrackingUser(settingsFile, campaign.id, variationId, userId, visitorUserAgent, userIpAddress);
         vwoInstance.batchEventsQueue.enqueue(properties);
       } else if (settingsFile.isEventArchEnabled) {
-        var _properties = ImpressionUtil.getEventsBaseProperties(settingsFile, EventEnum.VWO_VARIATION_SHOWN, vwoInstance.usageStats.getUsageStats());
+        var _properties = ImpressionUtil.getEventsBaseProperties(settingsFile, EventEnum.VWO_VARIATION_SHOWN, vwoInstance.usageStats.getUsageStats(), visitorUserAgent, userIpAddress);
 
         var payload = ImpressionUtil.getTrackUserPayloadData(settingsFile, userId, EventEnum.VWO_VARIATION_SHOWN, campaign.id, variationId);
         vwoInstance.eventQueue.process(config, _properties, vwoInstance, {
@@ -1479,7 +1489,7 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
           responseCallback: responseCallback
         });
       } else {
-        var _properties2 = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId, vwoInstance.usageStats.getUsageStats());
+        var _properties2 = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId, vwoInstance.usageStats.getUsageStats(), visitorUserAgent, userIpAddress);
 
         vwoInstance.eventQueue.process(config, _properties2, vwoInstance, {
           responseCallback: responseCallback
@@ -1778,7 +1788,10 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
         shouldTrackReturningUser = options.shouldTrackReturningUser,
         metaData = options.metaData,
         responseCallback = options.responseCallback,
-        eventProperties = options.eventProperties; // Check if arguments have valid data-type
+        eventProperties = options.eventProperties,
+        userAgent = options.userAgent,
+        userIpAddress = options.userIpAddress;
+    var visitorUserAgent = userAgent; // Check if arguments have valid data-type
 
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.TRACK,
@@ -1792,7 +1805,9 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
       shouldTrackReturningUser: shouldTrackReturningUser,
       metaData: metaData,
       responseCallback: responseCallback,
-      eventProperties: eventProperties
+      eventProperties: eventProperties,
+      visitorUserAgent: visitorUserAgent,
+      userIpAddress: userIpAddress
     }) && (!goalTypeToTrack || goalTypeToTrack && objectValues(GoalTypeEnum).includes(goalTypeToTrack))) {
       areParamsValid = true;
     }
@@ -1848,7 +1863,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   var events = [];
   var areGlobalGoals =  true ? false : undefined;
   campaigns.forEach(function (campaign) {
-    return result[campaign.key] = trackCampaignGoal(vwoInstance, campaign, campaign.key, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals, eventProperties);
+    return result[campaign.key] = trackCampaignGoal(vwoInstance, campaign, campaign.key, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress);
   });
 
   if (!Object.keys(result).length) {
@@ -1866,7 +1881,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   } else {}
 
   if (settingsFile.isEventArchEnabled && Object.keys(metricMap).length > 0) {
-    var properties = ImpressionUtil.getEventsBaseProperties(settingsFile, goalIdentifier);
+    var properties = ImpressionUtil.getEventsBaseProperties(settingsFile, goalIdentifier, {}, visitorUserAgent, userIpAddress);
     var payload = ImpressionUtil.getTrackGoalPayloadData(settingsFile, userId, goalIdentifier, metricMap, revenueValue, revenuePropList, eventProperties);
     vwoInstance.eventQueue.process(config, properties, vwoInstance, {
       payload: payload,
@@ -1886,7 +1901,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   return result;
 }
 
-function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals, eventProperties) {
+function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress) {
   // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
     vwoInstance.logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_RUNNING, {
@@ -1988,7 +2003,7 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
 
 
     if (config.batchEvents) {
-      var properties = ImpressionUtil.buildBatchEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue, eventProperties);
+      var properties = ImpressionUtil.buildBatchEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue, eventProperties, visitorUserAgent, userIpAddress);
       vwoInstance.batchEventsQueue.enqueue(properties);
     } else if (settingsFile.isEventArchEnabled) {
       metricMap[campaign.id] = {
@@ -2004,9 +2019,9 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
       var _properties = {};
 
       if (areGlobalGoals) {
-        _properties = ImpressionUtil.buildBatchEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue);
+        _properties = ImpressionUtil.buildBatchEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue, visitorUserAgent, userIpAddress);
       } else {
-        _properties = ImpressionUtil.buildEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue);
+        _properties = ImpressionUtil.buildEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue, visitorUserAgent, userIpAddress);
       }
 
       events.push(_properties);
@@ -2063,7 +2078,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.55.0"
+    version: "1.56.0"
   };
 } else {}
 
@@ -2784,6 +2799,7 @@ module.exports = {
   DecisionUtil: "".concat(UTIL_PATH, "/DecisionUtils"),
   HttpHandlerUtil: "".concat(UTIL_PATH, "/HttpHandlerUtil"),
   HttpImageUtil: "".concat(UTIL_PATH, "/HttpImageUtil"),
+  HttpXMLUtil: "".concat(UTIL_PATH, "/HttpXMLUtil"),
   UsageStatsUtil: "".concat(SERVICES_PATH, "/UsageStats")
 };
 
@@ -2817,6 +2833,36 @@ var GoalTypeEnum = {
   ALL: 'ALL'
 };
 module.exports = GoalTypeEnum;
+
+/***/ }),
+
+/***/ "./lib/enums/HeadersEnum.js":
+/*!**********************************!*\
+  !*** ./lib/enums/HeadersEnum.js ***!
+  \**********************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+/**
+ * Copyright 2019-2022 Wingify Software Pvt. Ltd.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+var HeadersEnum = {
+  USER_AGENT: 'X-Device-User-Agent',
+  IP: 'VWO-X-Forwarded-For'
+};
+module.exports = HeadersEnum;
 
 /***/ }),
 
@@ -3514,6 +3560,8 @@ var logging = __webpack_require__(/*! ./logging */ "./lib/services/logging/index
 
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
 
+var HeadersEnum = __webpack_require__(/*! ../enums/HeadersEnum */ "./lib/enums/HeadersEnum.js");
+
 var LogLevelEnum = logging.LogLevelEnum,
     LogMessageEnum = logging.LogMessageEnum,
     LogMessageUtil = logging.LogMessageUtil;
@@ -3537,6 +3585,18 @@ function () {
           payload = _ref.payload,
           responseCallback = _ref.responseCallback;
 
+      var customHeaders = {};
+
+      if (properties && properties.visitor_ua) {
+        customHeaders[HeadersEnum.USER_AGENT] = encodeURIComponent(properties.visitor_ua);
+        properties.visitor_ua = customHeaders[HeadersEnum.USER_AGENT];
+      }
+
+      if (properties && properties.visitor_ip) {
+        customHeaders[HeadersEnum.IP] = encodeURIComponent(properties.visitor_ip);
+        properties.visitor_ip = customHeaders[HeadersEnum.IP];
+      }
+
       if (config && config.isDevelopmentMode) {
         logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.CONFIG_DEVELOPMENT_MODE_STATUS, {
           file: file
@@ -3547,13 +3607,14 @@ function () {
       this.enqueue(properties, vwoInstance, {
         payload: payload,
         responseCallback: responseCallback
-      });
+      }, customHeaders);
     }
   }, {
     key: "enqueue",
     value: function enqueue(properties, vwoInstance, _ref2) {
       var payload = _ref2.payload,
           responseCallback = _ref2.responseCallback;
+      var customHeaders = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
       this.queue.push({
         eventName: properties.eventName,
         properties: properties,
@@ -3561,11 +3622,11 @@ function () {
           if (payload) {
             EventDispatcher.dispatchPostCall(properties, payload, {
               responseCallback: responseCallback
-            });
+            }, customHeaders);
           } else {
             EventDispatcher.dispatchGetCall(properties, {
               responseCallback: responseCallback
-            });
+            }, customHeaders);
           }
         }
       });
@@ -5721,6 +5782,7 @@ var EventDispatcher = {
     var _this = this;
 
     var responseCallback = _ref.responseCallback;
+    var customHeaders = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
     var parsedUrl;
     var queryParams = '?';
     queryParams += FunctionUtil.convertObjectKeysToString(properties, excludedProperties);
@@ -5730,9 +5792,9 @@ var EventDispatcher = {
       if (true) {
         parsedUrl = new URL(properties.url);
 
-        __webpack_require__(/*! ./HttpImageUtil */ "./lib/utils/HttpImageUtil.js").sendCall(parsedUrl, queryParams, {
+        __webpack_require__(/*! ./HttpXMLUtil */ "./lib/utils/HttpXMLUtil.js").sendCall(parsedUrl, queryParams, {
           successCallback: responseCallback
-        });
+        }, customHeaders);
       } else { var url; }
     } catch (err) {
       var endPoint = properties.url;
@@ -5783,6 +5845,7 @@ var EventDispatcher = {
     var _this2 = this;
 
     var responseCallback = _ref2.responseCallback;
+    var customHeaders = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
     var parsedUrl;
     var queryParams = '?';
     queryParams += FunctionUtil.convertObjectKeysToString(properties, excludedProperties);
@@ -5794,7 +5857,8 @@ var EventDispatcher = {
           return __webpack_require__(/*! ./FetchUtil */ "./lib/utils/FetchUtil.js").send({
             method: 'POST',
             url: "".concat(properties.url).concat(queryParams),
-            payload: payload
+            payload: payload,
+            customHeaders: customHeaders
           }).then(function () {
             _this2.handlePostResponse(properties, payload);
 
@@ -5815,7 +5879,8 @@ var EventDispatcher = {
         return __webpack_require__(/*! ./XhrUtil */ "./lib/utils/XhrUtil.js").send({
           method: 'POST',
           url: "".concat(properties.url).concat(queryParams),
-          payload: payload
+          payload: payload,
+          customHeaders: customHeaders
         }).then(function () {
           _this2.handlePostResponse(properties, payload);
 
@@ -6095,7 +6160,9 @@ var FetchUtil = {
         method = _ref.method,
         url = _ref.url,
         payload = _ref.payload,
-        userStorageService = _ref.userStorageService;
+        userStorageService = _ref.userStorageService,
+        _ref$customHeaders = _ref.customHeaders,
+        customHeaders = _ref$customHeaders === void 0 ? {} : _ref$customHeaders;
 
     if (!url || !method) {
       return;
@@ -6110,7 +6177,8 @@ var FetchUtil = {
         resolve(parsedSettings);
       } else {
         var options = {
-          method: method
+          method: method,
+          headers: customHeaders
         };
 
         if (method === 'POST') {
@@ -6245,10 +6313,10 @@ module.exports = FunctionUtil;
 
 /***/ }),
 
-/***/ "./lib/utils/HttpImageUtil.js":
-/*!************************************!*\
-  !*** ./lib/utils/HttpImageUtil.js ***!
-  \************************************/
+/***/ "./lib/utils/HttpXMLUtil.js":
+/*!**********************************!*\
+  !*** ./lib/utils/HttpXMLUtil.js ***!
+  \**********************************/
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -6275,7 +6343,7 @@ var LogLevelEnum = logging.LogLevelEnum,
     LogMessageEnum = logging.LogMessageEnum,
     LogMessageUtil = logging.LogMessageUtil;
 var logger = logging.getLogger();
-var file = FileNameEnum.HttpImageUtil;
+var file = FileNameEnum.HttpXMLUtil;
 
 var noop = function noop() {};
 
@@ -6305,17 +6373,22 @@ var printLog = function printLog(url, queryParams) {
   logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.IMPRESSION_SUCCESS, params));
 };
 
-var HttpImageUtil = {
+var HttpXMLUtil = {
   sendCall: function sendCall(url, queryParams) {
     var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    var customHeaders = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
     var endPoint = "https://".concat(url.host).concat(url.pathname).concat(queryParams);
     var successCallback = options.successCallback,
         errorCallback = options.errorCallback;
     errorCallback = errorCallback || successCallback;
     var isCallbackCalled = false;
 
-    if (typeof Image === 'undefined') {
-      fetch(endPoint).then(function () {
+    if (typeof XMLHttpRequest === 'undefined') {
+      // if (typeof Image === 'undefined') {
+      fetch(endPoint, {
+        method: 'GET',
+        headers: customHeaders
+      }).then(function () {
         if (isCallbackCalled) {
           return;
         }
@@ -6338,42 +6411,44 @@ var HttpImageUtil = {
       return;
     }
 
-    var img = new Image();
-    this.handleGetCall(url, queryParams, img, successCallback, errorCallback, endPoint, isCallbackCalled);
+    this.handleGetCall(url, queryParams, successCallback, errorCallback, endPoint, isCallbackCalled, customHeaders);
   },
-  handleGetCall: function handleGetCall(url, queryParams, img, successCallback, errorCallback, endPoint, isCallbackCalled) {
+  handleGetCall: function handleGetCall(url, queryParams, successCallback, errorCallback, endPoint, isCallbackCalled) {
+    var customHeaders = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
     successCallback = successCallback || noop;
     errorCallback = errorCallback || noop;
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', endPoint, true);
+    console.log('headers are ' + JSON.stringify(customHeaders)); // Set custom headers using setRequestHeader
 
-    img.onload = function () {
-      if (isCallbackCalled) {
-        return;
+    for (var headerName in customHeaders) {
+      if (customHeaders.hasOwnProperty(headerName)) {
+        xhr.setRequestHeader(headerName, customHeaders[headerName]);
       }
+    }
 
-      isCallbackCalled = true;
-      successCallback(null, {
-        status: 'success'
-      });
+    console.log('Headers added to the request:', xhr.getAllResponseHeaders());
+
+    xhr.onload = function () {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        var response = xhr.responseText;
+        successCallback(response);
+        printLog(url, queryParams);
+      } else {
+        errorCallback(xhr.statusText);
+        printLog(url, queryParams);
+      }
+    };
+
+    xhr.onerror = function () {
+      errorCallback(xhr.statusText);
       printLog(url, queryParams);
     };
 
-    img.onerror = function () {
-      if (isCallbackCalled) {
-        return;
-      }
-
-      isCallbackCalled = true;
-      errorCallback(null, {
-        status: 'success'
-      });
-      printLog(url, queryParams);
-    };
-
-    img.src = endPoint;
-    return img;
+    xhr.send();
   }
 };
-module.exports = HttpImageUtil;
+module.exports = HttpXMLUtil;
 
 /***/ }),
 
@@ -6500,9 +6575,13 @@ var ImpressionUtil = {
    * @return null if campaign ID or variation ID is invalid
    */
   buildEventForTrackingUser: function buildEventForTrackingUser(configObj, campaignKey, variationId, userId, usageStats) {
+    var visitorUserAgent = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : '';
+    var userIpAddress = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : '';
     var properties = Object.assign({
       experiment_id: campaignKey,
-      combination: variationId
+      combination: variationId,
+      visitor_ua: visitorUserAgent,
+      visitor_ip: userIpAddress
     }, getBaseProperties(configObj, userId), usageStats);
     properties.ed = JSON.stringify({
       p: 'server'
@@ -6521,10 +6600,15 @@ var ImpressionUtil = {
    * @param {String} userId the unique ID assigned to a user
    * @param {String} campaignKey, the Campaign ID
    * @param {Number} variationId, the Variation ID
+   * @param {String} visitorUserAgent, user agent of visitor
+   * @param {String} userIpAddress, IP of the visitor
    *
    * @return null if campaign ID or variation ID is invalid
    */
   buildBatchEventForTrackingUser: function buildBatchEventForTrackingUser(configObj, campaignKey, variationId, userId) {
+    var visitorUserAgent = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : '';
+    var userIpAddress = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : '';
+
     if (false) { var properties; }
   },
 
@@ -6542,11 +6626,15 @@ var ImpressionUtil = {
   buildEventForTrackingGoal: function buildEventForTrackingGoal(configObj, campaignKey, variationId, userId) {
     var goal = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
     var revenue = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
+    var visitorUserAgent = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : '';
+    var userIpAddress = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : '';
     var goalId = goal.id;
     var properties = Object.assign({
       experiment_id: campaignKey,
       combination: variationId
     }, getBaseProperties(configObj, userId));
+    properties.visitor_ua = visitorUserAgent;
+    properties.visitor_ip = userIpAddress;
     properties.url = Constants.HTTPS_PROTOCOL + UrlService.getBaseUrl() + UrlEnum.TRACK_GOAL;
     properties['goal_id'] = goalId;
 
@@ -6576,6 +6664,8 @@ var ImpressionUtil = {
     var goal = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
     var revenue = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : null;
     var eventProperties = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
+    var visitorUserAgent = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : '';
+    var userIpAddress = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : '';
 
     if (false) { var properties; }
   },
@@ -6600,6 +6690,8 @@ var ImpressionUtil = {
    */
   getEventsBaseProperties: function getEventsBaseProperties(config, eventName) {
     var usageStats = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    var visitorUserAgent = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
+    var userIpAddress = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : '';
     var sdkKey = config.sdkKey;
     var properties = Object.assign({
       en: eventName,
@@ -6607,7 +6699,9 @@ var ImpressionUtil = {
       env: sdkKey,
       eTime: FunctionUtil.getCurrentUnixTimestampInMillis(),
       random: FunctionUtil.getRandomNumber(),
-      p: 'FS'
+      p: 'FS',
+      visitor_ua: visitorUserAgent,
+      visitor_ip: userIpAddress
     }, usageStats);
     properties.url = Constants.HTTPS_PROTOCOL + UrlService.getBaseUrl() + UrlEnum.EVENTS;
     return properties;
@@ -7776,7 +7870,8 @@ var XhrUtil = {
         method = _ref.method,
         url = _ref.url,
         payload = _ref.payload,
-        userStorageService = _ref.userStorageService;
+        userStorageService = _ref.userStorageService,
+        customHeaders = _ref.customHeaders;
 
     if (!url || !method) {
       return;
@@ -7792,24 +7887,39 @@ var XhrUtil = {
       } else {
         var xhr = new XMLHttpRequest();
 
-        _this.xhrHandler(xhr, method, url, payload, userStorageService, resolve, reject);
+        _this.xhrHandler(xhr, method, url, payload, userStorageService, customHeaders, resolve, reject);
       }
     });
   },
-  xhrHandler: function xhrHandler(xhr, method, url, payload, userStorageService, resolve, reject) {
+  xhrHandler: function xhrHandler(xhr, method, url, payload, userStorageService) {
     var _this2 = this;
 
+    var customHeaders = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};
+    var resolve = arguments.length > 6 ? arguments[6] : undefined;
+    var reject = arguments.length > 7 ? arguments[7] : undefined;
+
     if (method === 'GET') {
-      xhr.onload = function () {
-        _this2.xhrOnLoad(xhr, userStorageService, resolve);
-      };
+      try {
+        xhr.onload = function () {
+          _this2.xhrOnLoad(xhr, userStorageService, resolve);
+        };
 
-      xhr.onerror = function () {
-        _this2.xhrOnError(xhr, reject);
-      };
+        xhr.onerror = function () {
+          _this2.xhrOnError(xhr, reject);
+        };
 
-      xhr.open(method, url);
-      xhr.send();
+        xhr.open(method, url);
+
+        for (var headerName in customHeaders) {
+          if (customHeaders.hasOwnProperty(headerName)) {
+            xhr.setRequestHeader(headerName, customHeaders[headerName]);
+          }
+        }
+
+        xhr.send();
+      } catch (e) {
+        console.log(e.message);
+      }
     } else if (method === 'POST') {
       xhr.onload = function () {
         resolve();
@@ -7820,6 +7930,13 @@ var XhrUtil = {
       };
 
       xhr.open(method, url, true);
+
+      for (var newHeaderName in customHeaders) {
+        if (customHeaders.hasOwnProperty(newHeaderName)) {
+          xhr.setRequestHeader(newHeaderName, customHeaders[newHeaderName]);
+        }
+      }
+
       xhr.send(JSON.stringify(payload));
     }
   },
