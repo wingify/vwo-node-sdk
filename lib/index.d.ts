@@ -505,5 +505,20 @@ declare module 'vwo-node-sdk' {
      * It also helps in implementing the asynchronous nature of the User Storage Service's 'get' method
      */
     userStorageData?: object;
+
+    /**
+     * Event Properties for Data360 Events.
+     */
+    eventProperties?: Record<string, any>;
+
+    /**
+     * User Agent for bot filtering and Post Segmentation
+     */
+    userAgent?: String;
+
+    /**
+     * User IPAddress for bot filtering and Post Segmentation
+     */
+    userIpAddress?: String;
   }
 }

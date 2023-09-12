@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.56.0
+ * vwo-javascript-sdk - v1.58.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -1886,10 +1886,13 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
     vwoInstance.eventQueue.process(config, properties, vwoInstance, {
       payload: payload,
       responseCallback: responseCallback
-    });
-    Object.keys(metricMap).forEach(function (key) {
-      DecisionUtil._saveUserData(config, metricMap[key].campaign, metricMap[key].variationName, metricMap[key].userId, metricMap[key].metaData, goalIdentifier);
-    });
+    }); // save to user storage if not event arch
+
+    if (!settingsFile.isEventArchEnabled) {
+      Object.keys(metricMap).forEach(function (key) {
+        DecisionUtil._saveUserData(config, metricMap[key].campaign, metricMap[key].variationName, metricMap[key].userId, metricMap[key].metaData, goalIdentifier);
+      });
+    }
   }
 
   if (config.isDevelopmentMode) {
@@ -1987,9 +1990,11 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
       var identifiers = storedGoalIdentifier.split(GOAL_IDENTIFIER_SEPERATOR);
 
       if (!identifiers.includes(goalIdentifier)) {
-        storedGoalIdentifier += GOAL_IDENTIFIER_SEPERATOR + goalIdentifier;
+        storedGoalIdentifier += GOAL_IDENTIFIER_SEPERATOR + goalIdentifier; // save to user storage if not event arch
 
-        DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, storedGoalIdentifier);
+        if (!settingsFile.isEventArchEnabled) {
+          DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, storedGoalIdentifier);
+        }
       } else if (!shouldTrackReturningUser && goal.mca !== -1) {
         vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CAMPAIGN_GOAL_ALREADY_TRACKED, {
           file: file,
@@ -2025,9 +2030,12 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
       }
 
       events.push(_properties);
-    }
+    } // save to user storage if not event arch
 
-    DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, goalIdentifier);
+
+    if (!settingsFile.isEventArchEnabled) {
+      DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, goalIdentifier);
+    }
 
     return true;
   }
@@ -2078,7 +2086,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.56.0"
+    version: "1.58.0"
   };
 } else {}
 
