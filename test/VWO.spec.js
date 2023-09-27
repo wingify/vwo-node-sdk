@@ -19,6 +19,7 @@ const ImpressionUtil = require('../lib/utils/ImpressionUtil');
 const BatchEventsDispatcher = require('../lib/utils/BatchEventsDispatcher');
 const logging = require('../lib/services/logging');
 const indexFile = require('../lib/index');
+const { MABTrueSettingsFile } = require('./test-utils/data/settingsFiles');
 require('regenerator-runtime/runtime');
 
 const {
@@ -826,6 +827,31 @@ describe('Class VWO', () => {
 
       await expect(vwoClientInstance.activate('wrong-key', users[0])).resolves.toBe(null);
       await expect(vwoClientInstance.activate(campaignKey, users[0])).resolves.toBe(settings[campaignKey][0].variation);
+    });
+
+    test('test MAB when UserStorage is Disabled', () => {
+      const campaignKey = MABTrueSettingsFile.campaigns[0].key;
+      let vwoClientInstance = new VWO({
+        settingsFile: MABTrueSettingsFile,
+        logger,
+        isDevelopmentMode: true
+      });
+
+      var variation = vwoClientInstance.activate(campaignKey, 'George');
+      expect(variation).toBe(null);
+    });
+
+    test('test MAB when UserStorage is Enabled', () => {
+      const campaignKey = MABTrueSettingsFile.campaigns[0].key;
+      let vwoClientInstance = new VWO({
+        settingsFile: MABTrueSettingsFile,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService: userStorageService1
+      });
+
+      var variation = vwoClientInstance.activate(campaignKey, 'George');
+      expect(variation).not.toBeNull();
     });
   });
 
