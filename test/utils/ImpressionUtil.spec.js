@@ -98,16 +98,11 @@ describe('ImpressionUtil', () => {
           sessionId: expect.any(Number),
           event: {
             props: {
-              sdkName: expect.any(String),
-              sdkVersion: expect.any(String),
+              vwo_sdkName: expect.any(String),
+              vwo_sdkVersion: expect.any(String),
               id: expect.any(Number),
               isFirst: expect.any(Number),
-              variation: expect.any(Number),
-              $visitor: {
-                props: {
-                  vwo_fs_environment: expect.any(String)
-                }
-              }
+              variation: expect.any(Number)
             },
             name: expect.any(String),
             time: expect.any(Number)
@@ -164,18 +159,13 @@ describe('ImpressionUtil', () => {
 
           event: {
             props: {
-              sdkName: expect.any(String),
-              sdkVersion: expect.any(String),
+              vwo_sdkName: expect.any(String),
+              vwo_sdkVersion: expect.any(String),
               vwoMeta: {
                 metric: expect.any(Object),
                 revenue: expect.any(Number)
               },
-              isCustomEvent: expect.any(Boolean),
-              $visitor: {
-                props: {
-                  vwo_fs_environment: expect.any(String)
-                }
-              }
+              isCustomEvent: expect.any(Boolean)
             },
             name: expect.any(String),
             time: expect.any(Number)
@@ -210,15 +200,9 @@ describe('ImpressionUtil', () => {
 
           event: {
             props: {
-              sdkName: expect.any(String),
-              sdkVersion: expect.any(String),
-              isCustomEvent: expect.any(Boolean),
-              $visitor: {
-                props: {
-                  vwo_fs_environment: expect.any(String),
-                  tagKey: 'tagValue'
-                }
-              }
+              vwo_sdkName: expect.any(String),
+              vwo_sdkVersion: expect.any(String),
+              isCustomEvent: expect.any(Boolean)
             },
             name: expect.any(String),
             time: expect.any(Number)
@@ -251,18 +235,9 @@ describe('ImpressionUtil', () => {
 
           event: {
             props: {
-              sdkName: expect.any(String),
-              sdkVersion: expect.any(String),
-              isCustomEvent: expect.any(Boolean),
-              $visitor: {
-                props: {
-                  vwo_fs_environment: expect.any(String),
-                  key: 'value',
-                  int: '123',
-                  bool: 'true',
-                  double: '1223.98'
-                }
-              }
+              vwo_sdkName: expect.any(String),
+              vwo_sdkVersion: expect.any(String),
+              isCustomEvent: expect.any(Boolean)
             },
             name: expect.any(String),
             time: expect.any(Number)
