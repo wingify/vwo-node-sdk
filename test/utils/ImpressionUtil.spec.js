@@ -100,6 +100,7 @@ describe('ImpressionUtil', () => {
             props: {
               vwo_sdkName: expect.any(String),
               vwo_sdkVersion: expect.any(String),
+              vwo_envKey: expect.any(String),
               id: expect.any(Number),
               isFirst: expect.any(Number),
               variation: expect.any(Number)
@@ -161,6 +162,7 @@ describe('ImpressionUtil', () => {
             props: {
               vwo_sdkName: expect.any(String),
               vwo_sdkVersion: expect.any(String),
+              vwo_envKey: expect.any(String),
               vwoMeta: {
                 metric: expect.any(Object),
                 revenue: expect.any(Number)
@@ -202,6 +204,7 @@ describe('ImpressionUtil', () => {
             props: {
               vwo_sdkName: expect.any(String),
               vwo_sdkVersion: expect.any(String),
+              vwo_envKey: expect.any(String),
               isCustomEvent: expect.any(Boolean)
             },
             name: expect.any(String),
@@ -237,6 +240,7 @@ describe('ImpressionUtil', () => {
             props: {
               vwo_sdkName: expect.any(String),
               vwo_sdkVersion: expect.any(String),
+              vwo_envKey: expect.any(String),
               isCustomEvent: expect.any(Boolean)
             },
             name: expect.any(String),

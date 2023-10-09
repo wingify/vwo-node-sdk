@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.58.0
+ * vwo-javascript-sdk - v1.60.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -865,7 +865,15 @@ function activate(vwoInstance, campaignKey, userId) {
 
   shouldTrackReturningUser = shouldTrackReturningUser || config.shouldTrackReturningUser || false; // Get the campaign settings based on campaignKey from the settings
 
-  var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey); // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
+  var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey); // check if MAB enabled, if yes, then userStorage must be defined
+
+  if (campaign && campaign.hasOwnProperty('isMAB') && campaign.isMAB === true) {
+    if (vwoInstance.userStorageService === undefined) {
+      vwoInstance.logger.log(LogLevelEnum.ERROR, '(' + file + ') This campaign: ' + campaignKey + ' has MAB configured. Please configure User Storage to proceed.');
+      return null;
+    }
+  } // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
+
 
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
     vwoInstance.logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_RUNNING, {
@@ -1434,7 +1442,14 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
 
   shouldTrackReturningUser = shouldTrackReturningUser || config.shouldTrackReturningUser || false; // Get the campaign settings based on campaignKey from the settings
 
-  var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
+  var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey); // check if MAB enabled, if yes, then userStorage must be defined
+
+  if (campaign && campaign.hasOwnProperty('isMAB') && campaign.isMAB === true) {
+    if (vwoInstance.userStorageService === undefined) {
+      vwoInstance.logger.log(LogLevelEnum.ERROR, '(' + file + ') This campaign: ' + campaignKey + ' has MAB configured. Please configure User Storage to proceed.');
+      return null;
+    }
+  }
 
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
     vwoInstance.logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_RUNNING, {
@@ -1831,6 +1846,15 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
     return null;
   }
 
+  var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey); // check if MAB enabled, if yes, then userStorage must be defined
+
+  if (campaign && campaign.hasOwnProperty('isMAB') && campaign.isMAB === true) {
+    if (vwoInstance.userStorageService === undefined) {
+      vwoInstance.logger.log(LogLevelEnum.ERROR, '(' + file + ') This campaign: ' + campaignKey + ' has MAB configured. Please configure User Storage to proceed.');
+      return null;
+    }
+  }
+
   var campaigns = [];
   goalTypeToTrack = goalTypeToTrack || config.goalTypeToTrack || GOAL_TYPE_TO_TRACK_DEFAULT; // priority order - options > launchConfig > default
 
@@ -1852,8 +1876,9 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
     }
   } else {
     // Get the campaign settings based on campaignKey from the settings
-    var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
-    campaigns.push(campaign || {
+    var _campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
+
+    campaigns.push(_campaign || {
       key: campaignKey
     });
   }
@@ -2086,7 +2111,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.58.0"
+    version: "1.60.0"
   };
 } else {}
 
@@ -3500,7 +3525,8 @@ var campaignObjectSchema = type({
   variables: optional(union([object(), array(variableObjectSchema)])),
   segments: object(),
   isForcedVariationEnabled: optional(_boolean()),
-  isUserListEnabled: optional(_boolean())
+  isUserListEnabled: optional(_boolean()),
+  isMAB: optional(_boolean())
 });
 var groupSchema = type({
   et: optional(string()),
@@ -6727,20 +6753,16 @@ var ImpressionUtil = {
     var uuid = UuidUtil.generateFor(userId, configObj.accountId);
     var sdkKey = configObj.sdkKey;
     var props = {
-      sdkName: Constants.SDK_NAME,
-      sdkVersion: Constants.SDK_VERSION,
-      $visitor: {
-        props: {
-          vwo_fs_environment: sdkKey
-        }
-      }
+      vwo_sdkName: Constants.SDK_NAME,
+      vwo_sdkVersion: Constants.SDK_VERSION,
+      vwo_envKey: sdkKey
     }; // if (usageStats) {
     //   props = Object.assign({}, props, usageStats);
     // }
 
     var properties = {
       d: {
-        msgId: "".concat(uuid, "-").concat(FunctionUtil.getCurrentUnixTimestamp()),
+        msgId: "".concat(uuid, "-").concat(FunctionUtil.getCurrentUnixTimestampInMillis()),
         visId: uuid,
         sessionId: FunctionUtil.getCurrentUnixTimestamp(),
         event: {
@@ -6839,7 +6861,6 @@ var ImpressionUtil = {
     properties.d.event.props.isCustomEvent = true;
     Object.keys(customDimensionMap).forEach(function (key) {
       var tagValue = DataTypeUtil.isString(customDimensionMap[key]) ? customDimensionMap[key] : JSON.stringify(customDimensionMap[key]);
-      properties.d.event.props.$visitor.props[key] = tagValue;
       properties.d.visitor.props[key] = tagValue;
     });
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_EVENT_ARCH_PUSH, {
