@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.60.0
+ * vwo-javascript-sdk - v1.60.1
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -2111,7 +2111,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.60.0"
+    version: "1.60.1"
   };
 } else {}
 
@@ -2274,8 +2274,9 @@ var BucketingService = {
    *
    * @return {Object|null} variation data into which user is bucketed in or null if not
    */
-  bucketUserToVariation: function bucketUserToVariation(userId, campaign) {
+  bucketUserToVariation: function bucketUserToVariation(userId, campaign, accountId) {
     var isNB = VWOFeatureFlags.getAll().isNB;
+    var isNBv2 = VWOFeatureFlags.getAll().isNBv2;
     var multiplier;
     var seed;
 
@@ -2287,15 +2288,19 @@ var BucketingService = {
       return null;
     }
 
-    if ((!isNB || isNB && campaign.isOB) && campaign.percentTraffic) {
+    if ((!isNB && !isNBv2 || isNB && campaign.isOB) && campaign.percentTraffic) {
       // Old bucketing logic if feature flag is OFF or
       // Feature flag is ON and campaign is old i.e. created before feature flag was turned ON
       multiplier = Constants.MAX_TRAFFIC_VALUE / campaign.percentTraffic / 100;
       seed = CampaignUtil.getBucketingSeed(userId, campaign);
-    } else if (isNB && !campaign.isOB) {
+    } else if (isNB && !campaign.isOB && !isNBv2 || isNBv2 && campaign.isOBv2) {
       // New bucketing logic if feature flag is ON and campaign is new i.e. created after feature flag was turned ON
       multiplier = 1;
       seed = userId;
+    } else {
+      // new bucketing V2 Logic
+      multiplier = 1;
+      seed = CampaignUtil.getBucketingSeed(accountId + '_' + userId, campaign);
     }
 
     var hashValue = BucketingService._generateHashValue(seed);
@@ -2504,7 +2509,7 @@ var VariationDecider = {
    *
    * @return {Object} Variation object allotted to User
    */
-  getVariationAllotted: function getVariationAllotted(userId, campaign) {
+  getVariationAllotted: function getVariationAllotted(userId, campaign, accountId) {
     var response = {
       variation: null,
       variationId: null,
@@ -2520,7 +2525,7 @@ var VariationDecider = {
     }
 
     if (Bucketer.isUserPartOfCampaign(userId, campaign)) {
-      var variation = VariationDecider.getVariationOfCampaignForUser(userId, campaign) || {};
+      var variation = VariationDecider.getVariationOfCampaignForUser(userId, campaign, accountId) || {};
       response.variation = variation;
       response.variationId = variation.id;
       response.variationName = variation.name;
@@ -2544,12 +2549,12 @@ var VariationDecider = {
    *
    * @return {Object|null} Variation allotted to User
    */
-  getVariationOfCampaignForUser: function getVariationOfCampaignForUser(userId, campaign) {
+  getVariationOfCampaignForUser: function getVariationOfCampaignForUser(userId, campaign, accountId) {
     if (!campaign) {
       return null;
     }
 
-    var variation = Bucketer.bucketUserToVariation(userId, campaign);
+    var variation = Bucketer.bucketUserToVariation(userId, campaign, accountId);
 
     if (variation && variation.name) {
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_VARIATION_STATUS, {
@@ -4803,8 +4808,9 @@ var CampaignUtil = {
     }
 
     var isNB = VWOFeatureFlags.getAll().isNB;
+    var isNBv2 = VWOFeatureFlags.getAll().isNBv2;
 
-    if (isNB || campaign && campaign.isBucketingSeedEnabled) {
+    if (isNB || isNBv2 || campaign && campaign.isBucketingSeedEnabled) {
       return "".concat(campaign.id, "_").concat(userId);
     } else {
       return userId;
@@ -5427,7 +5433,7 @@ var DecisionUtil = {
   evaluateTrafficAndGetVariation: function evaluateTrafficAndGetVariation(config, campaign, campaignKey, userId, metaData, newGoalIdentifier, decision) {
     var variation, variationName, variationId; // Use our core's VariationDecider utility to get the deterministic variation assigned to the userId for that campaign
 
-    var _VariationDecider$get = VariationDecider.getVariationAllotted(userId, campaign);
+    var _VariationDecider$get = VariationDecider.getVariationAllotted(userId, campaign, config.settingsFile.accountId);
 
     variation = _VariationDecider$get.variation;
     variationName = _VariationDecider$get.variationName;
@@ -7510,11 +7516,13 @@ var VWOFeatureFlags = {
   init: function init(settingsFile) {
     VWOFeatureFlags.isEventArchEnabled = settingsFile.isEventArchEnabled;
     VWOFeatureFlags.isNB = settingsFile.isNB;
+    VWOFeatureFlags.isNBv2 = settingsFile.isNBv2;
   },
   getAll: function getAll() {
     return {
       isEventArchEnabled: VWOFeatureFlags.isEventArchEnabled,
-      isNB: VWOFeatureFlags.isNB
+      isNB: VWOFeatureFlags.isNB,
+      isNBv2: VWOFeatureFlags.isNBv2
     };
   }
 };

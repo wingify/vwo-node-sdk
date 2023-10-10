@@ -27,7 +27,8 @@ const {
   settingsWithSeedAndWithoutisOB,
   settingsWithisNBAndWithisOB,
   settingsWithisNBAndWithoutisOB,
-  settingsWithisNBAndWithoutisOBAndWithoutSeedFlag
+  settingsWithisNBAndWithoutisOBAndWithoutSeedFlag,
+  settingsWithisNBAndisNBv2
 } = require('../test-utils/data/settingsFiles');
 
 let userId;
@@ -200,6 +201,41 @@ describe('BucketingService', () => {
 
         const result = BucketingService.bucketUserToVariation(userId, campaign);
         expect(result.name).toBe(settings['BUCKET_ALGO_WITHOUT_SEED_FLAG_WITH_isNB_WITHOUT_isOB'][i].variation);
+      }
+    });
+
+    test('should return same variation to a user for multiple campaigns having isNB true', () => {
+      const campaignList = [
+        settingsWithisNBAndWithoutisOB.campaigns[0],
+        settingsWithisNBAndWithoutisOB.campaigns[1],
+        settingsWithisNBAndWithoutisOB.campaigns[2]
+      ];
+
+      VWOFeatureFlags.init({
+        isNB: true
+      });
+
+      for (let i = 0; i < 3; i++) {
+        CampaignUtil.setVariationAllocation(settingsWithisNBAndWithoutisOB.campaigns[i]);
+        const result = BucketingService.bucketUserToVariation('Ashley', campaignList[i]);
+        expect(result.name).toBe('Control');
+      }
+    });
+
+    test('should return different variation to a user for multiple campaigns having isNBv2 true', () => {
+      VWOFeatureFlags.init({
+        isNB: true,
+        isNBv2: true
+      });
+
+      for (let i = 0; i < 3; i++) {
+        CampaignUtil.setVariationAllocation(settingsWithisNBAndisNBv2.campaigns[i]);
+        const result = BucketingService.bucketUserToVariation(
+          settings['SETTINGS_WITH_ISNB_WITH_ISNBv2'][i].user,
+          settingsWithisNBAndisNBv2.campaigns[i],
+          settingsWithisNBAndisNBv2.accountId
+        );
+        expect(result.name).toBe(settings['SETTINGS_WITH_ISNB_WITH_ISNBv2'][i].variation);
       }
     });
   });

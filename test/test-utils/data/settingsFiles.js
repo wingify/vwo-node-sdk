@@ -19,7 +19,8 @@ const {
   settingsWithSeedAndWithoutisOB,
   settingsWithisNBAndWithisOB,
   settingsWithisNBAndWithoutisOB,
-  settingsWithisNBAndWithoutisOBAndWithoutSeedFlag
+  settingsWithisNBAndWithoutisOBAndWithoutSeedFlag,
+  settingsWithisNBAndisNBv2
 } = require('./settingsFile-bucketing');
 
 module.exports = {
@@ -43,5 +44,6 @@ module.exports = {
   settingsWithisNBAndWithisOB,
   settingsWithisNBAndWithoutisOB,
   settingsWithisNBAndWithoutisOBAndWithoutSeedFlag,
-  MABTrueSettingsFile
+  MABTrueSettingsFile,
+  settingsWithisNBAndisNBv2
 };

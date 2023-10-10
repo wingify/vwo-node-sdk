@@ -420,6 +420,11 @@ const data = {
     { user: 'Xin', variation: 'Control' },
     { user: 'You', variation: 'Variation-1' },
     { user: 'Zeba', variation: 'Control' }
+  ],
+  SETTINGS_WITH_ISNB_WITH_ISNBv2: [
+    { user: 'Boston', campaign: 'BUCKET_ALGO_WITH_isNB_WITH_isNBv2', variation: 'Variation-1' },
+    { user: 'Boston', campaign: 'BUCKET_ALGO_WITH_isNB_WITH_isNBv2_1', variation: 'Variation-1' },
+    { user: 'Boston', campaign: 'BUCKET_ALGO_WITH_isNB_WITH_isNBv2_2', variation: 'Control' }
   ]
 };
 
