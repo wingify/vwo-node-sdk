@@ -40,8 +40,9 @@ jobs:
         yarn coverage
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2.1.0
+      uses: codecov/codecov-action@v3
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
         flags: ${{ runner.os }}
 
     - name: Notification
