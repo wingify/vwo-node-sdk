@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.62.2] - 2023-11-03
+
+### Fixed
+
+- Replace weight calculation with a rounded ceil (Merging PR by @samc : https://github.com/wingify/vwo-node-sdk/pull/52). This is a patch for a specific customer.
+
 ## [1.62.1] - 2023-10-23
 
 ### Fixed

@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.62.0
+ * vwo-javascript-sdk - v1.62.1
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -2111,7 +2111,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.62.0"
+    version: "1.62.1"
   };
 } else {}
 
@@ -5651,7 +5651,7 @@ var DecisionUtil = {
   _normalizeAndFindWinningCampaign: function _normalizeAndFindWinningCampaign(config, calledCampaign, shortlistedCampaigns, userId, groupName, groupId, metaData, newGoalIdentifier, decision) {
     // normalise the weights of all the shortlisted campaigns
     shortlistedCampaigns.forEach(function (campaign) {
-      campaign.weight = Math.floor(100 / shortlistedCampaigns.length);
+      campaign.weight = Math.ceil(100 / shortlistedCampaigns.length * 10) / 10;
     }); // re-distribute the traffic for each camapign
 
     CampaignUtil.setCampaignAllocation(shortlistedCampaigns);
