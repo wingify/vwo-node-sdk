@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.63.0] - 2023-11-13
+
+### Fixed
+
+- Fixed logic which was not affecting VWO Data360-enabled accounts where promise for different APIs was not getting resolved when `returnPromiseFor` is used while launching the SDK.
+- Fixed issue where promise was not getting resolved in case of pushing an object in `push` API instead of individual custom dimension / visitor property. Only affecting if `returnPromiseFor` was used at the time of launching the SDK.
+- Fixed issue where promise was not getting resolved in case of passing `null/undefined/Array` as campaign-key while invoking track API to track more than one same goal at a time across the campaigns. Only affecting if `returnPromiseFor` was used at the time of launching the SDK.
+
 ## [1.62.2] - 2023-11-03
 
 ### Fixed

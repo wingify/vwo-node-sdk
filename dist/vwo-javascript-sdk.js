@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.62.1
+ * vwo-javascript-sdk - v1.62.2
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -406,9 +406,14 @@ function () {
               var counter = 0;
 
               options.responseCallback = function (_error, _response) {
-                counter += 1; // In case of global goals, when all campaigns are tracked, then only resolve
+                counter += 1; // For Data360, one single call is there to track multiple metrices
+                // For global goals, we are now sending one single batch-events call
 
-                if (counter === FunctionUtil.objectValues(trackResponse).filter(Boolean).length) {
+                if (self.isEventArchEnabled || DataTypeUtil.isArray(campaignSpecifier) || (DataTypeUtil.isUndefined(campaignSpecifier) || DataTypeUtil.isNull(campaignSpecifier)) && FunctionUtil.objectValues(trackResponse).filter(Boolean).length) {
+                  resolve(trackResponse);
+                } else if (counter === FunctionUtil.objectValues(trackResponse).filter(Boolean).length) {
+                  // In case of global goals, when all campaigns are tracked, then only resolve
+                  // TODO: verify if this can be removed as we are sending batch events call always for non-Data360 accounts
                   resolve(trackResponse);
                 }
               };
@@ -628,10 +633,14 @@ function () {
               var options = {
                 responseCallback: function responseCallback(_error, _response) {
                   counter += 1; // In case of multiple custom dimensions, when all are tracked, then only resolve
+                  // if customDimensionMap is used
 
-                  if (counter === FunctionUtil.objectValues(apiResponse).filter(Boolean).length) {
+                  if (customDimensionMap && DataTypeUtil.isObject(customDimensionMap) && FunctionUtil.objectValues(customDimensionMap).filter(Boolean).length > 1) {
                     resolve(apiResponse);
-                  }
+                  } // else if custom dimensions are sent with tag key and value instead of a map
+                  else if (counter === FunctionUtil.objectValues(apiResponse).filter(Boolean).length) {
+                      resolve(apiResponse);
+                    }
                 }
               };
               apiResponse = api.push(self, tagKey, tagValue, userId, customDimensionMap, options); // If we get false from the API i.e. no tracking call was sent
@@ -2111,7 +2120,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.62.1"
+    version: "1.62.2"
   };
 } else {}
 
