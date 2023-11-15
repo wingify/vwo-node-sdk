@@ -1849,7 +1849,8 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   var config = vwoInstance.SettingsFileManager.getConfig();
   var settingsFile = vwoInstance.SettingsFileManager.getSettingsFile(api);
   config.apiName = api;
-  var revenuePropList = new Set(); // If no settings are found, simply do not track goal and return false
+  var revenuePropList = new Set();
+  var isSavedData = false; // If no settings are found, simply do not track goal and return false
 
   if (!settingsFile) {
     return null;
@@ -1897,7 +1898,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   var events = [];
   var areGlobalGoals =  true ? false : undefined;
   campaigns.forEach(function (campaign) {
-    return result[campaign.key] = trackCampaignGoal(vwoInstance, campaign, campaign.key, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress);
+    return result[campaign.key] = trackCampaignGoal(vwoInstance, campaign, campaign.key, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress, isSavedData);
   });
 
   if (!Object.keys(result).length) {
@@ -1922,7 +1923,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
       responseCallback: responseCallback
     }); // save to user storage if not event arch
 
-    if (!settingsFile.isEventArchEnabled) {
+    if (!settingsFile.isEventArchEnabled && !isSavedData) {
       Object.keys(metricMap).forEach(function (key) {
         DecisionUtil._saveUserData(config, metricMap[key].campaign, metricMap[key].variationName, metricMap[key].userId, metricMap[key].metaData, goalIdentifier);
       });
@@ -1938,7 +1939,7 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   return result;
 }
 
-function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress) {
+function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress, isSavedData) {
   // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
     vwoInstance.logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_RUNNING, {
@@ -2024,12 +2025,12 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
       var identifiers = storedGoalIdentifier.split(GOAL_IDENTIFIER_SEPERATOR);
 
       if (!identifiers.includes(goalIdentifier)) {
-        storedGoalIdentifier += GOAL_IDENTIFIER_SEPERATOR + goalIdentifier; // save to user storage if not event arch
+        storedGoalIdentifier += GOAL_IDENTIFIER_SEPERATOR + goalIdentifier;
 
-        if (!settingsFile.isEventArchEnabled) {
-          DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, storedGoalIdentifier);
-        }
-      } else if (!shouldTrackReturningUser && goal.mca !== -1) {
+        DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, storedGoalIdentifier);
+
+        isSavedData = true;
+      } else if (!shouldTrackReturningUser && goal.mca !== -1 && !goal.hasProps) {
         vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CAMPAIGN_GOAL_ALREADY_TRACKED, {
           file: file,
           userId: userId,
@@ -2053,7 +2054,6 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
         metaData: metaData,
         goal: goal
       };
-      return true;
     } else {
       var _properties = {};
 
@@ -2064,11 +2064,12 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
       }
 
       events.push(_properties);
-    } // save to user storage if not event arch
+    }
 
-
-    if (!settingsFile.isEventArchEnabled) {
-      DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, goalIdentifier);
+    if (!isSavedData) {
+      if (!storedGoalIdentifier || !storedGoalIdentifier.split(GOAL_IDENTIFIER_SEPERATOR).includes(goalIdentifier)) {
+        DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, goalIdentifier);
+      }
     }
 
     return true;
@@ -2120,7 +2121,11 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
+<<<<<<< HEAD
+    version: "1.60.0"
+=======
     version: "1.62.2"
+>>>>>>> f831dc789528f70e7f3b45e71217a38c56ee9abb
   };
 } else {}
 

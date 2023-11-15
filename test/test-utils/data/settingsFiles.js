@@ -14,6 +14,7 @@ const settingsFileExtraKeyValidation = require('./settingsFile-extra-key-validat
 const settingsFileMeg = require('./settingsFile-meg');
 const settingsFileNewMeg = require('./settingsFile-NewMeg');
 const MABTrueSettingsFile = require('./MABTrueSettingsFile');
+const settingsFileHasProps = require('./settingsFileHasProps');
 const {
   settingsWithoutSeedAndWithoutisOB,
   settingsWithSeedAndWithoutisOB,
@@ -45,5 +46,6 @@ module.exports = {
   settingsWithisNBAndWithoutisOB,
   settingsWithisNBAndWithoutisOBAndWithoutSeedFlag,
   MABTrueSettingsFile,
+  settingsFileHasProps,
   settingsWithisNBAndisNBv2
 };

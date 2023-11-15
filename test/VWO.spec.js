@@ -33,7 +33,8 @@ const {
   settingsFile8,
   settingsFile9,
   settingsFile11,
-  settingsFileEventProperties
+  settingsFileEventProperties,
+  settingsFileHasProps
 } = require('./test-utils/data/settingsFiles');
 
 const {
@@ -1768,6 +1769,60 @@ describe('Class VWO', () => {
       await expect(vwoClientInstance.track(campaignKey, users[0], goalIdentifier)).resolves.toEqual({
         [campaignKey]: true
       });
+    });
+
+    test('should test track with hasProps and userStorage', () => {
+      const campaignKey = settingsFileHasProps.campaigns[0].key;
+
+      userData = {};
+      const campaignInfo = {
+        userId: 'Ashley',
+        campaignKey: 'track',
+        variationName: 'Variation-1',
+        goalIdentifier: 'track1'
+      };
+
+      const userStorageInstance = Object.create(userStorageService1);
+
+      // Add campaignInfo to the UserStorageService
+      userStorageInstance.set(campaignInfo);
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFileHasProps,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService: userStorageInstance
+      });
+
+      var trackResponse = vwoClientInstance.track(campaignKey, 'Ashley', 'track1');
+      expect(trackResponse.track).toBe(true);
+    });
+
+    test('should test track with NoHasProps and with userStorage', () => {
+      const campaignKey = settingsFileHasProps.campaigns[0].key;
+
+      userData = {};
+      const campaignInfo = {
+        userId: 'Ashley',
+        campaignKey: 'track',
+        variationName: 'Variation-1',
+        goalIdentifier: 'track2'
+      };
+
+      const userStorageInstance = Object.create(userStorageService1);
+
+      // Add campaignInfo to the UserStorageService
+      userStorageInstance.set(campaignInfo);
+
+      vwoClientInstance = new VWO({
+        settingsFile: settingsFileHasProps,
+        logger,
+        isDevelopmentMode: true,
+        userStorageService: userStorageInstance
+      });
+
+      var trackResponse = vwoClientInstance.track(campaignKey, 'Ashley', 'track2');
+      expect(trackResponse.track).toBe(false);
     });
   });
 
