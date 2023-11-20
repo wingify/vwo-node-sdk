@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.62.2
+ * vwo-javascript-sdk - v1.63.2
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -2120,7 +2120,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.62.2"
+    version: "1.63.2"
   };
 } else {}
 
@@ -5660,7 +5660,7 @@ var DecisionUtil = {
   _normalizeAndFindWinningCampaign: function _normalizeAndFindWinningCampaign(config, calledCampaign, shortlistedCampaigns, userId, groupName, groupId, metaData, newGoalIdentifier, decision) {
     // normalise the weights of all the shortlisted campaigns
     shortlistedCampaigns.forEach(function (campaign) {
-      campaign.weight = Math.ceil(100 / shortlistedCampaigns.length * 10) / 10;
+      campaign.weight = Math.floor(100 / shortlistedCampaigns.length);
     }); // re-distribute the traffic for each camapign
 
     CampaignUtil.setCampaignAllocation(shortlistedCampaigns);
@@ -5719,44 +5719,30 @@ var DecisionUtil = {
 
       if (found === true) break;
     } // If winnerCampaign not found through Priority, then go for weighted Random distribution and for that,
-    // Store the list of campaigns (participatingCampaigns) out of shortlistedCampaigns and their corresponding weights which are present in weightage distribution array (wt) in 2 different lists
+    // Store the list of campaigns (participatingCampaigns) out of shortlistedCampaigns and their corresponding weights present in weightage distribution array (wt)
 
 
     if (winnerCampaign === null) {
-      var weights = [];
-      var partipatingCampaignList = [];
+      var participatingCampaignList = []; // iterate over shortlisted campaigns and add weights from the weight array
 
       for (var _i = 0; _i < shortlistedCampaigns.length; _i++) {
         var campaignId = shortlistedCampaigns[_i].id;
 
         if (typeof wt[campaignId] !== 'undefined') {
-          weights.push(wt[campaignId]);
-          partipatingCampaignList.push(FunctionUtil.cloneObject(shortlistedCampaigns[_i]));
+          var clonedCampaign = FunctionUtil.cloneObject(shortlistedCampaigns[_i]);
+          clonedCampaign.weight = wt[campaignId];
+          participatingCampaignList.push(clonedCampaign);
         }
       }
-      /*
-        * Finding winner campaign using weighted random distribution :
-        1. Calculate the sum of all weights
-        2. Generate a random number between 0 and the weight sum:
-        3. Iterate over the weights array and subtract each weight from the random number until the random number becomes negative. The corresponding ith value is the required value
-        4. Set the ith campaign as WinnerCampaign
-        */
+      /* Finding winner campaign using weighted Distibution :
+       1. Re-distribute the traffic by assigning range values for each camapign in particaptingCampaignList 
+       2. Calculate bucket value for the given userId and groupId
+       3. Get the winnerCampaign by checking the Start and End Bucket Allocations of each campaign
+      */
 
 
-      var weightSum = weights.reduce(function (a, b) {
-        return a + b;
-      }, 0);
-      var randomNumber = Math.random() * weightSum;
-      var sum = 0;
-
-      for (var _i2 = 0; _i2 < weights.length; _i2++) {
-        sum += weights[_i2];
-
-        if (randomNumber < sum) {
-          winnerCampaign = partipatingCampaignList[_i2];
-          break;
-        }
-      }
+      CampaignUtil.setCampaignAllocation(participatingCampaignList);
+      winnerCampaign = BucketingService._getVariation(participatingCampaignList, BucketingService.calculateBucketValue(CampaignUtil.getBucketingSeed(userId, undefined, groupId)));
     }
 
     if (winnerCampaign != null) {

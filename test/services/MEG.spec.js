@@ -525,8 +525,9 @@ describe('MEG', () => {
 
       let winners = 0;
       for (let i = 0; i < iterations; i++) {
-        var variation = vwoClientInstance.activate(campaignKey, 'George');
-        winners = variation === 'Control' ? winners + 1 : winners;
+        var userID = 'user' + i;
+        var variation = vwoClientInstance.activate(campaignKey, userID);
+        winners = variation !== null ? winners + 1 : winners;
       }
 
       const actualRatio = winners / iterations;
@@ -565,13 +566,36 @@ describe('MEG', () => {
 
       let winners = 0;
       for (let i = 0; i < iterations; i++) {
-        var variation = vwoClientInstance.activate(campaignKey, 'George');
-        winners = variation === 'Control' ? winners + 1 : winners;
+        var userID = 'user' + i;
+        var variation = vwoClientInstance.activate(campaignKey, userID);
+        winners = variation !== null ? winners + 1 : winners;
       }
 
       const actualRatio = winners / iterations;
       expect(actualRatio).toBeGreaterThan(expectedRatio - allowedError);
       expect(actualRatio).toBeLessThan(expectedRatio + allowedError);
+    });
+
+    it('same user should become part of campaign everytime when found through weightage ', () => {
+      const campaignKey = settingsFileNewMeg.campaigns[1].key;
+      let vwoClientInstance = new VWO({
+        settingsFile: settingsFileNewMeg,
+        logger,
+        isDevelopmentMode: true
+      });
+
+      vwoClientInstance.SettingsFileManager.getSettingsFile().groups['3'].p = [];
+      const iterations = 1000; // number of times to call the function
+      const expectedRatio = 1; // everytime this particular user should be the part of campaign
+
+      let winners = 0;
+      for (let i = 0; i < iterations; i++) {
+        var variation = vwoClientInstance.activate(campaignKey, 'George');
+        winners = variation === 'Control' ? winners + 1 : winners;
+      }
+
+      const actualRatio = winners / iterations;
+      expect(actualRatio).toBe(expectedRatio);
     });
   });
 });
