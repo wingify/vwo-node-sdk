@@ -5915,7 +5915,8 @@ var EventDispatcher = {
           method: 'POST',
           url: "".concat(properties.url).concat(queryParams),
           payload: payload,
-          customHeaders: customHeaders
+          customHeaders: customHeaders,
+          logger: logger
         }).then(function () {
           _this2.handlePostResponse(properties, payload);
 
@@ -7854,6 +7855,10 @@ module.exports = ValidateUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
+
+var LogLevelEnum = logging.LogLevelEnum;
+
 var _require = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUtil.js"),
     getCurrentTime = _require.getCurrentTime;
 
@@ -7903,7 +7908,8 @@ var XhrUtil = {
         url = _ref.url,
         payload = _ref.payload,
         userStorageService = _ref.userStorageService,
-        customHeaders = _ref.customHeaders;
+        customHeaders = _ref.customHeaders,
+        logger = _ref.logger;
 
     if (!url || !method) {
       return;
@@ -7919,25 +7925,71 @@ var XhrUtil = {
       } else {
         var xhr = new XMLHttpRequest();
 
-        _this.xhrHandler(xhr, method, url, payload, userStorageService, customHeaders, resolve, reject);
+        _this.xhrHandler(xhr, method, url, payload, userStorageService, customHeaders, logger, resolve, reject);
       }
     });
   },
-  xhrHandler: function xhrHandler(xhr, method, url, payload, userStorageService) {
+  // send request function definition (to allow for retries)
+  sendRequest: function sendRequest(xhr, retries, maxRetries, delay, logger, customHeaders, payload, method, url, resolve, reject) {
     var _this2 = this;
 
+    // onload event
+    xhr.onload = function () {
+      // retry if error and less than max retries
+      if (xhr.status < 200 || xhr.status >= 300) {
+        if (retries < maxRetries) {
+          retries++; // log retried times
+
+          logger.log(LogLevelEnum.ERROR, 'Retrying with Status Code :' + xhr.status);
+          logger.log(LogLevelEnum.ERROR, 'Retrying with Response :' + xhr.responseText); // call send request again, after delay
+
+          setTimeout(function () {
+            _this2.sendRequest(xhr, retries, maxRetries, delay, logger, customHeaders, payload, method, url, resolve, reject);
+          }, delay);
+        } else {
+          // log errors with status (clean up later)
+          logger.log(LogLevelEnum.ERROR, 'Request failed with Status Code :' + xhr.status);
+          logger.log(LogLevelEnum.ERROR, 'Request failed with Response :' + xhr.responseText);
+          reject("Got Error: ".concat(xhr.statusText, " and Status Code: ").concat(xhr.status));
+        }
+      } else {
+        // resolve the promise if all well
+        resolve();
+      }
+    }; // onerror event
+
+
+    xhr.onerror = function () {
+      reject("Error: ".concat(xhr.statusText, ", Status Code: ").concat(xhr.status));
+    }; // open connection and add headers if any, and then send
+
+
+    xhr.open(method, url, true);
+
+    for (var newHeaderName in customHeaders) {
+      if (customHeaders.hasOwnProperty(newHeaderName)) {
+        xhr.setRequestHeader(newHeaderName, customHeaders[newHeaderName]);
+      }
+    }
+
+    xhr.send(JSON.stringify(payload));
+  },
+  xhrHandler: function xhrHandler(xhr, method, url, payload, userStorageService) {
+    var _this3 = this;
+
     var customHeaders = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};
-    var resolve = arguments.length > 6 ? arguments[6] : undefined;
-    var reject = arguments.length > 7 ? arguments[7] : undefined;
+    var logger = arguments.length > 6 ? arguments[6] : undefined;
+    var resolve = arguments.length > 7 ? arguments[7] : undefined;
+    var reject = arguments.length > 8 ? arguments[8] : undefined;
 
     if (method === 'GET') {
       try {
         xhr.onload = function () {
-          _this2.xhrOnLoad(xhr, userStorageService, resolve);
+          _this3.xhrOnLoad(xhr, userStorageService, resolve);
         };
 
         xhr.onerror = function () {
-          _this2.xhrOnError(xhr, reject);
+          _this3.xhrOnError(xhr, reject);
         };
 
         xhr.open(method, url);
@@ -7953,23 +8005,12 @@ var XhrUtil = {
         console.log(e.message);
       }
     } else if (method === 'POST') {
-      xhr.onload = function () {
-        resolve();
-      };
+      // retry params
+      var retries = 0;
+      var maxRetries = 5;
+      var delay = 1000; // send request
 
-      xhr.onerror = function () {
-        reject("Error: ".concat(xhr.statusText, ", Status Code: ").concat(xhr.status));
-      };
-
-      xhr.open(method, url, true);
-
-      for (var newHeaderName in customHeaders) {
-        if (customHeaders.hasOwnProperty(newHeaderName)) {
-          xhr.setRequestHeader(newHeaderName, customHeaders[newHeaderName]);
-        }
-      }
-
-      xhr.send(JSON.stringify(payload));
+      this.sendRequest(xhr, retries, maxRetries, delay, logger, customHeaders, payload, method, url, resolve, reject);
     }
   },
   xhrOnLoad: function xhrOnLoad(xhr, userStorageService, resolve) {
