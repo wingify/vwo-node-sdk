@@ -1,6 +1,6 @@
 {
   "name": "vwo-node-sdk",
-  "version": "1.67.0",
+  "version": "1.68.0",
   "description": "VWO Node SDK for server-side Testing",
   "scripts": {
     "build": "yarn build:dev && yarn build:prod",
