@@ -31,7 +31,6 @@ const globalConfig = {
 const userId = 'Alice';
 let campaign = settingsFile1.campaigns[0];
 
-let spyOnGetStoredVariation;
 let spyOnVariationAllotted;
 let spyOnSaveUserProfiel;
 let output;
@@ -47,7 +46,6 @@ beforeEach(() => {
 describe('DecisionUtil', () => {
   describe('method: getVariation', () => {
     beforeEach(() => {
-      spyOnGetStoredVariation = jest.spyOn(DecisionUtil, '_getStoredVariationAndGoalIdentifiers');
       spyOnVariationAllotted = jest.spyOn(VariationDecider, 'getVariationAllotted');
       spyOnSaveUserProfiel = jest.spyOn(DecisionUtil, '_saveUserData');
 
@@ -60,10 +58,6 @@ describe('DecisionUtil', () => {
       );
     });
 
-    it('should first look into USS for fetching stored variation', () => {
-      expect(spyOnGetStoredVariation).toHaveBeenCalled();
-    });
-
     it('should use method to allot variation if USS is not provided', () => {
       expect(spyOnVariationAllotted).toHaveBeenCalled();
       expect(output).toBeDefined();
@@ -73,14 +67,6 @@ describe('DecisionUtil', () => {
 
     it('should save data into USS if provided', () => {
       expect(spyOnSaveUserProfiel).toHaveBeenCalled();
-    });
-  });
-
-  describe('method: _getStoredVariation', () => {
-    it('should return null if data not found in campaignUserDataMapping', () => {
-      expect(
-        DecisionUtil._getStoredVariation(globalConfig, SettingsFileManager.getSettingsFile(), 'DEV_TEST_1', userId)
-      ).toBe(null);
     });
   });
 

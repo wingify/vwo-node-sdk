@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.64.0
+ * vwo-javascript-sdk - v1.64.3
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -203,7 +203,15 @@ function () {
     this.userStorageService = config.userStorageService;
     this.logger = config.logger;
     this.returnPromiseFor = config.returnPromiseFor;
+    this.asyncStorageConfig = config.asyncStorageConfig;
     this.optOut = false;
+
+    if (this.userStorageService === undefined && config.asyncStorageConfig) {
+      // replace the userStorageService with the redisObject passed in asyncStorageConfig
+      this.userStorageService = config.asyncStorageConfig.redisStorage;
+      config.userStorageService = this.userStorageService;
+    }
+
     var settingsFileManager = new SettingsFileService(config); // Validate the config file i.e. check if required fields contain appropriate data
 
     if (!settingsFileManager.isSettingsFileValid()) {
@@ -259,8 +267,34 @@ function () {
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
       try {
-        var self = this; // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        var self = this;
+
+        if (self.asyncStorageConfig && DataTypeUtil.isObject(self.asyncStorageConfig)) {
+          self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_ASYNC_RETURN_PROMISE, {
+            file: file,
+            method: ApiEnum.ACTIVATE
+          }));
+          return new Promise(function (resolve) {
+            if (_this2.optOut) {
+              _this2.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+                file: file,
+                api: ApiEnum.ACTIVATE
+              }));
+
+              resolve(null);
+            } else {
+              return api.activate(self, campaignKey, userId, options).then(function (data) {
+                if (DataTypeUtil.isObject(data)) {
+                  resolve(data.variationName);
+                } else {
+                  resolve(data);
+                }
+              });
+            }
+          });
+        } // Check if returnPromiseFor is provided. If yes, return a promise instead of value
         // i.e. wait till the network call is not successful
+
 
         if (self.returnPromiseFor && (self.returnPromiseFor.activate || self.returnPromiseFor.all)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
@@ -283,7 +317,7 @@ function () {
               };
 
               variationName = api.activate(self, campaignKey, userId, options); // If we get null from the API i.e. no tracking call was sent
-              // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
+              // In this case, responseCallback will not be fired and hence we have to manually resolve the promise
 
               if (!variationName) {
                 resolve(variationName);
@@ -332,7 +366,33 @@ function () {
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
       try {
-        var self = this; // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        var self = this;
+
+        if (self.asyncStorageConfig && DataTypeUtil.isObject(self.asyncStorageConfig)) {
+          self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_ASYNC_RETURN_PROMISE, {
+            file: file,
+            method: ApiEnum.GET_VARIATION_NAME
+          }));
+          return new Promise(function (resolve) {
+            if (_this3.optOut) {
+              _this3.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+                file: file,
+                api: ApiEnum.GET_VARIATION_NAME
+              }));
+
+              resolve(null);
+            } else {
+              return api.getVariation(self, campaignKey, userId, options).then(function (data) {
+                if (DataTypeUtil.isObject(data)) {
+                  resolve(data.variationName);
+                } else {
+                  resolve(data);
+                }
+              });
+            }
+          });
+        } // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+
 
         if (self.returnPromiseFor && (self.returnPromiseFor.getVariationName || self.returnPromiseFor.all)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
@@ -385,8 +445,30 @@ function () {
       var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
       try {
-        var self = this; // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        var self = this; // In case we use any asyncStorage like redis, promisify track
+
+        if (self.asyncStorageConfig && DataTypeUtil.isObject(self.asyncStorageConfig)) {
+          self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_ASYNC_RETURN_PROMISE, {
+            file: file,
+            method: ApiEnum.TRACK
+          }));
+          return new Promise(function (resolve) {
+            if (_this4.optOut) {
+              _this4.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+                file: file,
+                api: ApiEnum.TRACK
+              }));
+
+              resolve(null);
+            } else {
+              return api.track(self, campaignSpecifier, userId, goalIdentifier, options).then(function (trackResponse) {
+                resolve(trackResponse);
+              });
+            }
+          });
+        } // Check if returnPromiseFor is provided. If yes, return a promise instead of value
         // i.e. wait till the network call is not successful
+
 
         if (self.returnPromiseFor && (self.returnPromiseFor.track || self.returnPromiseFor.all)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
@@ -464,8 +546,34 @@ function () {
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
       try {
-        var self = this; // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        var self = this;
+
+        if (self.asyncStorageConfig && DataTypeUtil.isObject(self.asyncStorageConfig)) {
+          self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_ASYNC_RETURN_PROMISE, {
+            file: file,
+            method: ApiEnum.IS_FEATURE_ENABLED
+          }));
+          return new Promise(function (resolve) {
+            if (_this5.optOut) {
+              _this5.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+                file: file,
+                api: ApiEnum.IS_FEATURE_ENABLED
+              }));
+
+              resolve(null);
+            } else {
+              return api.isFeatureEnabled(self, campaignKey, userId, options).then(function (data) {
+                if (DataTypeUtil.isObject(data)) {
+                  resolve(data.isFeatureEnabled);
+                } else {
+                  resolve(data);
+                }
+              });
+            }
+          });
+        } // Check if returnPromiseFor is provided. If yes, return a promise instead of value
         // i.e. wait till the network call is not successful
+
 
         if (self.returnPromiseFor && (self.returnPromiseFor.isFeatureEnabled || self.returnPromiseFor.all)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
@@ -541,7 +649,33 @@ function () {
       var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
       try {
-        var self = this; // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        var self = this;
+
+        if (self.asyncStorageConfig && DataTypeUtil.isObject(self.asyncStorageConfig)) {
+          self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_ASYNC_RETURN_PROMISE, {
+            file: file,
+            method: ApiEnum.GET_FEATURE_VARIABLE_VALUE
+          }));
+          return new Promise(function (resolve) {
+            if (_this6.optOut) {
+              _this6.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
+                file: file,
+                api: ApiEnum.GET_FEATURE_VARIABLE_VALUE
+              }));
+
+              resolve(null);
+            } else {
+              return api.getFeatureVariableValue(self, campaignKey, variableKey, userId, options).then(function (data) {
+                if (DataTypeUtil.isObject(data)) {
+                  resolve(data.typeCastedValue);
+                } else {
+                  resolve(data);
+                }
+              });
+            }
+          });
+        } // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+
 
         if (self.returnPromiseFor && (self.returnPromiseFor.getFeatureVariableValue || self.returnPromiseFor.all)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
@@ -905,11 +1039,21 @@ function activate(vwoInstance, campaignKey, userId) {
   } // Once the matching RUNNING campaign is found, assign the deterministic variation to the userId provided
 
 
-  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, true, undefined, api),
-      variationId = _DecisionUtil$getVari.variationId,
-      variationName = _DecisionUtil$getVari.variationName,
-      isStoredVariation = _DecisionUtil$getVari.isStoredVariation; // Check if variation-name has been assigned to the userId. If not, return no variation
+  var result = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, true, false, undefined, api);
 
+  if (DataTypeUtil.isPromise(result)) {
+    return result.then(function (data) {
+      return _validateAndReturnVariation(vwoInstance, campaignKey, userId, config, api, shouldTrackReturningUser, settingsFile, campaign, visitorUserAgent, userIpAddress, responseCallback, data);
+    });
+  }
+
+  return _validateAndReturnVariation(vwoInstance, campaignKey, userId, config, api, shouldTrackReturningUser, settingsFile, campaign, visitorUserAgent, userIpAddress, responseCallback, result);
+}
+
+function _validateAndReturnVariation(vwoInstance, campaignKey, userId, config, api, shouldTrackReturningUser, settingsFile, campaign, visitorUserAgent, userIpAddress, responseCallback, result) {
+  var variationId = result.variationId,
+      variationName = result.variationName,
+      isStoredVariation = result.isStoredVariation; // Check if variation-name has been assigned to the userId. If not, return no variation
 
   if (!ValidateUtil.isValidValue(variationName)) {
     vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.DECISION_NO_VARIATION_ALLOTED, {
@@ -1098,60 +1242,70 @@ function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) 
       return null;
     }
 
-    var variable;
+    var result = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false, false, undefined, api);
 
-    var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false, undefined, api),
-        variation = _DecisionUtil$getVari.variation,
-        variationName = _DecisionUtil$getVari.variationName;
-
-    if (!variationName) {
-      vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_STATUS, {
-        file: file,
-        campaignKey: campaignKey,
-        userId: userId,
-        status: 'disabled'
-      }));
-      return null;
+    if (DataTypeUtil.isPromise(result)) {
+      return result.then(function (data) {
+        return _validateAndReturnFeaureVariable(vwoInstance, campaignKey, variableKey, userId, campaign, data);
+      });
     }
 
-    if (CampaignUtil.isFeatureRolloutCampaign(campaign)) {
-      variable = FeatureUtil.getVariableForFeature(campaign, variableKey);
-    } else if (CampaignUtil.isFeatureTestCampaign(campaign)) {
-      variable = FeatureUtil.getVariableValueForVariation(campaign, variation, variableKey);
-
-      if (ObjectUtil.areObjectKeys(variable) && variation.isFeatureEnabled) {
-        vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_VARIABLE_VALUE, {
-          file: file,
-          variableKey: variableKey,
-          campaignKey: campaign.key,
-          variableValue: variable.value,
-          userId: userId
-        }));
-      } else if (ObjectUtil.areObjectKeys(variable) && !variation.isFeatureEnabled) {
-        vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_VARIABLE_DEFAULT_VALUE, {
-          file: file,
-          variableKey: variableKey,
-          variationName: variationName
-        }));
-      }
-    }
-
-    if (!ObjectUtil.areObjectKeys(variable)) {
-      vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.VARIABLE_NOT_FOUND, {
-        file: file,
-        variableKey: variableKey,
-        userId: userId
-      }));
-      return null;
-    }
-
-    var variableValue = variable.value;
-    var typeCastedValue = FeatureUtil.getTypeCastVariableValue(variableValue, variable.type);
-    return typeCastedValue;
+    return _validateAndReturnFeaureVariable(vwoInstance, campaignKey, variableKey, userId, campaign, result);
   } catch (err) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, err.message);
     return null;
   }
+}
+
+function _validateAndReturnFeaureVariable(vwoInstance, campaignKey, variableKey, userId, campaign, result) {
+  var variable;
+  var variation = result.variation,
+      variationName = result.variationName;
+
+  if (!variationName) {
+    vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_STATUS, {
+      file: file,
+      campaignKey: campaignKey,
+      userId: userId,
+      status: 'disabled'
+    }));
+    return null;
+  }
+
+  if (CampaignUtil.isFeatureRolloutCampaign(campaign)) {
+    variable = FeatureUtil.getVariableForFeature(campaign, variableKey);
+  } else if (CampaignUtil.isFeatureTestCampaign(campaign)) {
+    variable = FeatureUtil.getVariableValueForVariation(campaign, variation, variableKey);
+
+    if (ObjectUtil.areObjectKeys(variable) && variation.isFeatureEnabled) {
+      vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_VARIABLE_VALUE, {
+        file: file,
+        variableKey: variableKey,
+        campaignKey: campaign.key,
+        variableValue: variable.value,
+        userId: userId
+      }));
+    } else if (ObjectUtil.areObjectKeys(variable) && !variation.isFeatureEnabled) {
+      vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_VARIABLE_DEFAULT_VALUE, {
+        file: file,
+        variableKey: variableKey,
+        variationName: variationName
+      }));
+    }
+  }
+
+  if (!ObjectUtil.areObjectKeys(variable)) {
+    vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.VARIABLE_NOT_FOUND, {
+      file: file,
+      variableKey: variableKey,
+      userId: userId
+    }));
+    return null;
+  }
+
+  var variableValue = variable.value;
+  var typeCastedValue = FeatureUtil.getTypeCastVariableValue(variableValue, variable.type);
+  return typeCastedValue;
 }
 
 module.exports = getFeatureVariableValue;
@@ -1280,14 +1434,19 @@ function getVariation(vwoInstance, campaignKey, userId) {
     return null;
   }
 
-  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false, undefined, api),
-      variationName = _DecisionUtil$getVari.variationName;
+  var result = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false, false, undefined, api);
 
-  if (!variationName) {
+  if (DataTypeUtil.isPromise(result)) {
+    return result.then(function (data) {
+      return data;
+    });
+  }
+
+  if (!result.variationName) {
     return null;
   }
 
-  return variationName;
+  return result.variationName;
 }
 
 module.exports = getVariation;
@@ -1481,12 +1640,22 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
     return null;
   }
 
-  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, true, undefined, api),
-      variation = _DecisionUtil$getVari.variation,
-      variationName = _DecisionUtil$getVari.variationName,
-      variationId = _DecisionUtil$getVari.variationId,
-      isStoredVariation = _DecisionUtil$getVari.isStoredVariation;
+  var result = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, true, false, undefined, api); // check if result is a promise, if yes then wait for it untill it resolves, then only proceed further
 
+  if (DataTypeUtil.isPromise(result)) {
+    return result.then(function (data) {
+      return _validateAndReturnFeatureEnabled(vwoInstance, campaignKey, userId, config, api, shouldTrackReturningUser, settingsFile, campaign, responseCallback, visitorUserAgent, userIpAddress, data);
+    });
+  }
+
+  return _validateAndReturnFeatureEnabled(vwoInstance, campaignKey, userId, config, api, shouldTrackReturningUser, settingsFile, campaign, responseCallback, visitorUserAgent, userIpAddress, result);
+}
+
+function _validateAndReturnFeatureEnabled(vwoInstance, campaignKey, userId, config, api, shouldTrackReturningUser, settingsFile, campaign, responseCallback, visitorUserAgent, userIpAddress, result) {
+  var variation = result.variation,
+      variationId = result.variationId,
+      variationName = result.variationName,
+      isStoredVariation = result.isStoredVariation;
   var isFeatureEnabled = false;
 
   if (variationName) {
@@ -1735,6 +1904,8 @@ module.exports = push;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -1898,8 +2069,33 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   var areGlobalGoals =  true ? false : undefined;
   campaigns.forEach(function (campaign) {
     return result[campaign.key] = trackCampaignGoal(vwoInstance, campaign, campaign.key, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress);
-  });
+  }); // Check if each object in result is a promise
+  // in case of asyncStorageConfig, each object would be a promise only
+  // Check if result is a non-empty object
 
+  var areAllPromises = result && Object.keys(result).length > 0 ? Object.values(result).every(function (item) {
+    return DataTypeUtil.isPromise(item);
+  }) : false; // const areAllPromises = Object.values(result).every(item => DataTypeUtil.isPromise(item));
+
+  if (areAllPromises) {
+    // Promise.all - This method takes an array of promises and returns a new promise that resolves to an array of the resolved values when all of the input promises have resolved.
+    // If any of the promises in the array reject, the whole Promise.all is rejected.
+    return Promise.all(Object.values(result)).then(function (dataArray) {
+      dataArray.forEach(function (data, index) {
+        var campaignKey = Object.keys(result)[index];
+
+        var ans = _validateAndReturnTrackValue(vwoInstance, config, settingsFile, revenuePropList, userId, goalIdentifier, revenueValue, metricMap, events, areGlobalGoals, responseCallback, eventProperties, visitorUserAgent, userIpAddress, _defineProperty({}, campaignKey, data));
+
+        result[campaignKey] = ans[campaignKey];
+      });
+      return result;
+    });
+  }
+
+  return _validateAndReturnTrackValue(vwoInstance, config, settingsFile, revenuePropList, userId, goalIdentifier, revenueValue, metricMap, events, areGlobalGoals, responseCallback, eventProperties, visitorUserAgent, userIpAddress, result);
+}
+
+function _validateAndReturnTrackValue(vwoInstance, config, settingsFile, revenuePropList, userId, goalIdentifier, revenueValue, metricMap, events, areGlobalGoals, responseCallback, eventProperties, visitorUserAgent, userIpAddress, result) {
   if (!Object.keys(result).length) {
     return null;
   }
@@ -2013,11 +2209,25 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
     revenuePropList.add(goal.revenueProp);
   }
 
-  var _DecisionUtil$getVari = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false, goalIdentifier, api),
-      variationId = _DecisionUtil$getVari.variationId,
-      variationName = _DecisionUtil$getVari.variationName,
-      storedGoalIdentifier = _DecisionUtil$getVari.storedGoalIdentifier; // Is User is a part of Campaign and has been decided to be a part of particular variation
+  var result = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false, true, goalIdentifier, api);
 
+  if (DataTypeUtil.isPromise(result)) {
+    return result.then(function (data) {
+      if (!Object.keys(data).length) {
+        return null;
+      }
+
+      return _validateAndReturnTrackEvent(vwoInstance, campaignKey, campaignId, userId, config, goal, shouldTrackReturningUser, settingsFile, campaign, goalIdentifier, revenueValue, metaData, metricMap, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress, data);
+    });
+  }
+
+  return _validateAndReturnTrackEvent(vwoInstance, campaignKey, campaignId, userId, config, goal, shouldTrackReturningUser, settingsFile, campaign, goalIdentifier, revenueValue, metaData, metricMap, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress, result);
+}
+
+function _validateAndReturnTrackEvent(vwoInstance, campaignKey, campaignId, userId, config, goal, shouldTrackReturningUser, settingsFile, campaign, goalIdentifier, revenueValue, metaData, metricMap, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress, result) {
+  var variationId = result.variationId,
+      variationName = result.variationName,
+      storedGoalIdentifier = result.storedGoalIdentifier; // Is User is a part of Campaign and has been decided to be a part of particular variation
 
   if (variationName) {
     if (storedGoalIdentifier) {
@@ -2120,7 +2330,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.64.0"
+    version: "1.64.3"
   };
 } else {}
 
@@ -3383,6 +3593,12 @@ module.exports = {
         logError('returnPromiseFor', 'object');
       } else if (!DataTypeUtil.isUndefined(sdkConfig.returnPromiseFor)) {
         logInfo('returnPromiseFor', 'object');
+      }
+
+      if (!DataTypeUtil.isUndefined(sdkConfig.asyncStorageConfig) && !DataTypeUtil.isObject(sdkConfig.asyncStorageConfig)) {
+        logError('asyncStorageConfig', 'object');
+      } else if (!DataTypeUtil.isUndefined(sdkConfig.asyncStorageConfig)) {
+        logInfo('asyncStorageConfig', 'object');
       }
 
       if (!DataTypeUtil.isUndefined(sdkConfig.integrations) && !DataTypeUtil.isObject(sdkConfig.integrations)) {
@@ -4871,6 +5087,9 @@ var DataTypeUtil = {
   isBoolean: function isBoolean(val) {
     return DataTypeUtil._toStringValue(val) === '[object Boolean]';
   },
+  isPromise: function isPromise(val) {
+    return DataTypeUtil._toStringValue(val) === '[object Promise]';
+  },
   isUndefined: function isUndefined(val) {
     return DataTypeUtil._toStringValue(val) === '[object Undefined]' || // A third-party library sometimes overrides and returns [object Window]
     // therefore, adding a fallback as well
@@ -4976,8 +5195,9 @@ var DecisionUtil = {
     var userStorageData = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : {};
     var metaData = arguments.length > 8 ? arguments[8] : undefined;
     var isTrackUserAPI = arguments.length > 9 ? arguments[9] : undefined;
-    var newGoalIdentifier = arguments.length > 10 ? arguments[10] : undefined;
-    var api = arguments.length > 11 && arguments[11] !== undefined ? arguments[11] : '';
+    var isTrackGoalAPI = arguments.length > 10 ? arguments[10] : undefined;
+    var newGoalIdentifier = arguments.length > 11 ? arguments[11] : undefined;
+    var api = arguments.length > 12 && arguments[12] !== undefined ? arguments[12] : '';
     var vwoUserId = UuidUtil.generateFor(userId, settingsFile.accountId);
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.USER_UUID, {
       file: FileNameEnum.UuidUtil,
@@ -5024,20 +5244,50 @@ var DecisionUtil = {
       _vwoUserId: campaign.isUserListEnabled ? vwoUserId : userId
     }); // check if tbe campaign satisfies the whitelisting before checking for the group
 
-    var whitelistedVariation = DecisionUtil._checkForWhitelisting(campaign, campaignKey, userId, variationTargetingVariables, decision);
+    var whitelistedVariation = DecisionUtil._checkForWhitelisting(config, campaign, campaignKey, userId, variationTargetingVariables, decision);
 
     if (whitelistedVariation) {
-      return whitelistedVariation;
+      if (DataTypeUtil.isPromise(whitelistedVariation)) {
+        return whitelistedVariation.then(function (data) {
+          if (Object.keys(data).length > 0) {
+            return data;
+          }
+        });
+      } else {
+        return whitelistedVariation;
+      }
     } // check if the campaign is present in the storage before checking for the group
 
 
-    var storedVariation = DecisionUtil._checkForUserStorage(config, settingsFile, campaign, campaignKey, userId, userStorageData, isTrackUserAPI, decision);
+    var storedVariation; // check if asyncStorage, if yes then synchronously get the data and return promise
+
+    if (config.asyncStorageConfig) {
+      return new Promise(function (resolve) {
+        return DecisionUtil._checkForUserStorage(config, settingsFile, campaign, campaignKey, userId, userStorageData, isTrackUserAPI, decision).then(function (response) {
+          if (response && DataTypeUtil.isObject(response) && Object.keys(response).length > 0) {
+            resolve(Object.assign({}, {
+              isStoredVariation: true
+            }, response));
+          } else if (isTrackGoalAPI) {
+            resolve(Object.assign({}));
+          } else {
+            var variationWithoutStorageLookup = DecisionUtil.evaluateAndGetVariationWithoutStorage(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, isTrackUserAPI, newGoalIdentifier, decision, groupId, groupName);
+            resolve(variationWithoutStorageLookup);
+          }
+        });
+      });
+    } else {
+      storedVariation = DecisionUtil._checkForUserStorage(config, settingsFile, campaign, campaignKey, userId, userStorageData, isTrackUserAPI, decision);
+    }
 
     if (storedVariation) {
       return storedVariation;
-    } // check if the called campaign satisfies the pre-segmentatin before further proccessing.
+    }
 
-
+    return DecisionUtil.evaluateAndGetVariationWithoutStorage(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, isTrackUserAPI, newGoalIdentifier, decision, groupId, groupName);
+  },
+  evaluateAndGetVariationWithoutStorage: function evaluateAndGetVariationWithoutStorage(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, isTrackUserAPI, newGoalIdentifier, decision, groupId, groupName) {
+    // check if the called campaign satisfies the pre-segmentation before further processing.
     if (!(DecisionUtil._checkForPreSegmentation(campaign, campaignKey, userId, customVariables, decision) && BucketingService.isUserPartOfCampaign(userId, campaign, true))) {
       return {};
     }
@@ -5063,6 +5313,13 @@ var DecisionUtil = {
           file: file,
           campaignKey: campaignKey
         }));
+
+        if (DataTypeUtil.isPromise(isWhitelistedOrStoredVariation)) {
+          return new Promise(function (resolve) {
+            resolve(Object.assign({}));
+          });
+        }
+
         return {};
       } // none of the group campaigns satisfy whitelisting or user storage
       // check each campaign for pre-segmentation and traffic allocation.
@@ -5173,60 +5430,6 @@ var DecisionUtil = {
   },
 
   /**
-   * If userStorageService is provided and variation was stored, get the stored variation
-   *
-   * @param {Object} config
-   * @param {Object} settingsFile - cloned settingsFile
-   * @param {String} campaignKey
-   * @param {String} userId
-   *
-   * @return {Object|null} - if found then variation and goalIdentifier settings object otherwise null
-   */
-  _getStoredVariationAndGoalIdentifiers: function _getStoredVariationAndGoalIdentifiers(config, settingsFile, campaignKey, userId, userStorageData) {
-    var disableLogs = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : false;
-
-    var userData = DecisionUtil._getStoredUserData(config, userId, campaignKey, userStorageData, disableLogs);
-
-    var variationName = userData.variationName,
-        goalIdentifier = userData.goalIdentifier;
-
-    if (userData && userData.campaignKey && variationName) {
-      return {
-        storedVariation: CampaignUtil.getCampaignVariation(settingsFile, campaignKey, variationName),
-        goalIdentifier: goalIdentifier
-      };
-    } // Log if stored variation is not found even after implementing UserStorageService
-
-
-    logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.USER_STORAGE_SERVICE_NO_STORED_DATA, {
-      file: file,
-      campaignKey: campaignKey,
-      userId: userId
-    }), disableLogs);
-    return null;
-  },
-
-  /**
-   * If userStorageService is provided and variation was stored, get the stored variation
-   *
-   * @param {Object} config
-   * @param {Object} settingsFile - cloned settingsFile
-   * @param {String} campaignKey
-   * @param {String} userId
-   *
-   * @return {Object|null} - if found then variation settings object otherwise null
-   */
-  _getStoredVariation: function _getStoredVariation(config, settingsFile, campaignKey, userId, userStorageData) {
-    var data = DecisionUtil._getStoredVariationAndGoalIdentifiers(config, settingsFile, campaignKey, userId, userStorageData);
-
-    if (data && data.storedVariation) {
-      return data.storedVariation;
-    }
-
-    return null;
-  },
-
-  /**
    * Get the User Variation mapping by calling get method of UserStorageService being provided
    *
    * @param {Object} config
@@ -5250,22 +5453,47 @@ var DecisionUtil = {
       return userStorageMap;
     }
 
-    try {
-      var data = config.userStorageService.get(userId, campaignKey) || {}; // if data found
+    if (config.asyncStorageConfig) {
+      try {
+        return config.userStorageService.get(userId, campaignKey).then(function (data) {
+          // if data found
+          logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GETTING_DATA_USER_STORAGE_SERVICE, {
+            file: file,
+            userId: userId,
+            campaignKey: campaignKey
+          }), disableLogs);
+          var finalData = Object.assign({}, data, userStorageData);
+          return finalData;
+        })["catch"](function (_error) {
+          // TODO: add log for failed fetch
+          console.log('Failed to fetch data from Storage Service', _error);
+        });
+      } catch (err) {
+        // if no data found
+        logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.USER_STORAGE_SERVICE_GET_FAILED, {
+          file: file,
+          userId: userId,
+          error: err
+        }), disableLogs);
+      }
+    } else {
+      try {
+        var data = config.userStorageService.get(userId, campaignKey) || {}; // if data found
 
-      logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GETTING_DATA_USER_STORAGE_SERVICE, {
-        file: file,
-        userId: userId,
-        campaignKey: campaignKey
-      }), disableLogs);
-      return Object.assign({}, data, userStorageData);
-    } catch (err) {
-      // if no data found
-      logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.USER_STORAGE_SERVICE_GET_FAILED, {
-        file: file,
-        userId: userId,
-        error: err
-      }), disableLogs);
+        logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GETTING_DATA_USER_STORAGE_SERVICE, {
+          file: file,
+          userId: userId,
+          campaignKey: campaignKey
+        }), disableLogs);
+        return Object.assign({}, data, userStorageData);
+      } catch (err) {
+        // if no data found
+        logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.USER_STORAGE_SERVICE_GET_FAILED, {
+          file: file,
+          userId: userId,
+          error: err
+        }), disableLogs);
+      }
     }
   },
 
@@ -5347,25 +5575,56 @@ var DecisionUtil = {
       // checking other campaigns for whitelisting or user storage.
 
 
-      var whitelistedVariation = DecisionUtil._checkForWhitelisting(groupCampaign, groupCampaign.key, userId, variationTargetingVariables);
+      var whitelistedVariation = DecisionUtil._checkForWhitelisting(config, groupCampaign, groupCampaign.key, userId, variationTargetingVariables);
 
       if (whitelistedVariation) {
-        // other campaign satisfy the whitelisting
+        if (DataTypeUtil.isPromise(whitelistedVariation)) {
+          return whitelistedVariation.then(function (data) {
+            otherCampaignWinner = true;
+            logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE, {
+              file: file,
+              campaignKey: groupCampaign.key,
+              groupName: groupName,
+              userId: userId,
+              type: 'whitelisting'
+            }));
+            return new Promise(function (resolve) {
+              resolve(true);
+            });
+          });
+        } else {
+          // other campaign satisfy the whitelisting
+          otherCampaignWinner = true;
+          logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE, {
+            file: file,
+            campaignKey: groupCampaign.key,
+            groupName: groupName,
+            userId: userId,
+            type: 'whitelisting'
+          }));
+          return true;
+        }
+      }
+
+      var storedVariation = DecisionUtil._checkForUserStorage(config, settingsFile, groupCampaign, groupCampaign.key, userId, userStorageData, isTrackUserAPI);
+
+      if (storedVariation && DataTypeUtil.isPromise(storedVariation)) {
         otherCampaignWinner = true;
         logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE, {
           file: file,
           campaignKey: groupCampaign.key,
           groupName: groupName,
           userId: userId,
-          type: 'whitelisting'
-        }));
-        return true;
+          type: 'user storage'
+        })); // return true;
+
+        return new Promise(function (resolve) {
+          resolve(true);
+        });
       }
 
-      var storedVariation = DecisionUtil._checkForUserStorage(config, settingsFile, groupCampaign, groupCampaign.key, userId, userStorageData, isTrackUserAPI);
-
       if (storedVariation && DataTypeUtil.isObject(storedVariation) && Object.keys(storedVariation).length > 0) {
-        // other campaign sastisfy the user storage
+        // other campaign satisfy the user storage
         otherCampaignWinner = true;
         logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE, {
           file: file,
@@ -5377,6 +5636,13 @@ var DecisionUtil = {
         return true;
       }
     });
+
+    if (config.asyncStorageConfig) {
+      return new Promise(function (resolve) {
+        resolve(otherCampaignWinner);
+      });
+    }
+
     return otherCampaignWinner;
   },
 
@@ -5487,7 +5753,7 @@ var DecisionUtil = {
    *
    * @returns {Object} whitelisted variation
    */
-  _checkForWhitelisting: function _checkForWhitelisting(campaign, campaignKey, userId, variationTargetingVariables, decision) {
+  _checkForWhitelisting: function _checkForWhitelisting(config, campaign, campaignKey, userId, variationTargetingVariables, decision) {
     var status;
     var variationName, variationId;
 
@@ -5530,6 +5796,12 @@ var DecisionUtil = {
           }, decision));
         }
 
+        if (config.asyncStorageConfig) {
+          return new Promise(function (resolve) {
+            return resolve(whitelistingResult);
+          });
+        }
+
         return whitelistingResult;
       }
     } else {
@@ -5556,15 +5828,39 @@ var DecisionUtil = {
    * @returns {Object} stored variaition
    */
   _checkForUserStorage: function _checkForUserStorage(config, settingsFile, campaign, campaignKey, userId, userStorageData, isTrackUserAPI, decision) {
-    var variationName, variationId;
-    var storedVariation, goalIdentifier; // If userStorageService is used, get the variation from the stored data
+    var userData;
 
-    var _ref = DecisionUtil._getStoredVariationAndGoalIdentifiers(config, settingsFile, campaign.key, userId, userStorageData, !decision) || {};
+    if (config.asyncStorageConfig) {
+      return DecisionUtil._getStoredUserData(config, userId, campaignKey, userStorageData, !decision).then(function (userData) {
+        userData = userData || {
+          variationName: null,
+          goalIdentifier: null
+        };
+        return DecisionUtil._processAfterGettingFromStorage(config, settingsFile, campaign, campaignKey, userId, isTrackUserAPI, decision, userData);
+      });
+    } else {
+      userData = DecisionUtil._getStoredUserData(config, userId, campaignKey, userStorageData, !decision);
+      return DecisionUtil._processAfterGettingFromStorage(config, settingsFile, campaign, campaignKey, userId, isTrackUserAPI, decision, userData);
+    }
+  },
+  _processAfterGettingFromStorage: function _processAfterGettingFromStorage(config, settingsFile, campaign, campaignKey, userId, isTrackUserAPI, decision, userData) {
+    var variationName = userData.variationName,
+        goalIdentifier = userData.goalIdentifier;
+    var storedVariation;
 
-    storedVariation = _ref.storedVariation;
-    goalIdentifier = _ref.goalIdentifier;
+    if (userData && userData.campaignKey && variationName) {
+      storedVariation = CampaignUtil.getCampaignVariation(settingsFile, campaignKey, variationName);
+    } else {
+      // Log if stored variation is not found even after implementing UserStorageService
+      logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.USER_STORAGE_SERVICE_NO_STORED_DATA, {
+        file: file,
+        campaignKey: campaignKey,
+        userId: userId
+      }), !decision);
+    }
 
-    // If stored variation is found, simply return the same
+    var variationId; // If stored variation is found, simply return the same
+
     if (storedVariation) {
       variationName = storedVariation.name;
       variationId = storedVariation.id;
@@ -5572,7 +5868,7 @@ var DecisionUtil = {
         file: file,
         campaignKey: campaignKey,
         userId: userId,
-        variationName: storedVariation.name
+        variationName: variationName
       }), !decision); // Executing the callback when SDK gets the decision from user storage service
 
       if (decision) {
@@ -5589,8 +5885,8 @@ var DecisionUtil = {
 
       return {
         variation: storedVariation,
-        variationName: storedVariation.name,
-        variationId: storedVariation.id,
+        variationName: variationName,
+        variationId: variationId,
         storedGoalIdentifier: goalIdentifier,
         isStoredVariation: true
       };
@@ -6454,8 +6750,7 @@ var HttpXMLUtil = {
     successCallback = successCallback || noop;
     errorCallback = errorCallback || noop;
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', endPoint, true);
-    console.log('headers are ' + JSON.stringify(customHeaders)); // Set custom headers using setRequestHeader
+    xhr.open('GET', endPoint, true); // Set custom headers using setRequestHeader
 
     for (var headerName in customHeaders) {
       if (customHeaders.hasOwnProperty(headerName)) {
@@ -9249,10 +9544,10 @@ module.exports = JSON.parse("{\"CONFIG_PARAMETER_INVALID\":\"({file}): {paramete
 /*!******************************************************************!*\
   !*** ./node_modules/vwo-sdk-log-messages/src/info-messages.json ***!
   \******************************************************************/
-/*! exports provided: CONFIG_VALID, CONFIG_PARAMETER_USED, CONFIG_RETURN_PROMISE, SDK_INITIALIZED, POLLING_SUCCESS, POLLING_SETTINGS_FILE_UPDATED, POLLING_SETTINGS_FILE_NOT_UPDATED, DECISION_NO_VARIATION_ALLOTED, EVENT_BATCH_DEFAULTS, EVENT_QUEUE, EVENT_BATCH_After_FLUSHING, CAMPAIGN_NOT_ACTIVATED, CAMPAIGN_USER_ALREADY_TRACKED, CAMPAIGN_GOAL_ALREADY_TRACKED, GOT_STORED_VARIATION, GETTING_DATA_USER_STORAGE_SERVICE, SETTING_DATA_USER_STORAGE_SERVICE, IMPRESSION_SUCCESS, IMPRESSION_SUCCESS_FOR_EVENT_ARCH, IMPRESSION_BATCH_SUCCESS, IMPRESSION_BATCH_FAILED, MEG_ELIGIBLE_CAMPAIGNS, OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE, SEGMENTATION_STATUS, MEG_CALLED_CAMPAIGN_NOT_WINNER, MEG_GOT_WINNER_CAMPAIGN, FEATURE_STATUS, FEATURE_VARIABLE_VALUE, FEATURE_VARIABLE_DEFAULT_VALUE, USER_NOT_PART_OF_CAMPAIGN, USER_VARIATION_STATUS, USER_CAMPAIGN_ELIGIBILITY, USER_VARIATION_ALLOCATION_STATUS, OPT_OUT_API_CALLED, API_NOT_ENABLED, INITIATING_ACTIVATE, INITIATING_GET_VARIATION, INITIATING_GET_FEATURE_VARIATION, INITIATING_IS_FEATURE_ENABLED, INITIATING_PUSH_DIMENSION, default */
+/*! exports provided: CONFIG_VALID, CONFIG_PARAMETER_USED, CONFIG_RETURN_PROMISE, CONFIG_ASYNC_RETURN_PROMISE, SDK_INITIALIZED, POLLING_SUCCESS, POLLING_SETTINGS_FILE_UPDATED, POLLING_SETTINGS_FILE_NOT_UPDATED, DECISION_NO_VARIATION_ALLOTED, EVENT_BATCH_DEFAULTS, EVENT_QUEUE, EVENT_BATCH_After_FLUSHING, CAMPAIGN_NOT_ACTIVATED, CAMPAIGN_USER_ALREADY_TRACKED, CAMPAIGN_GOAL_ALREADY_TRACKED, GOT_STORED_VARIATION, GETTING_DATA_USER_STORAGE_SERVICE, SETTING_DATA_USER_STORAGE_SERVICE, IMPRESSION_SUCCESS, IMPRESSION_SUCCESS_FOR_EVENT_ARCH, IMPRESSION_BATCH_SUCCESS, IMPRESSION_BATCH_FAILED, MEG_ELIGIBLE_CAMPAIGNS, OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE, SEGMENTATION_STATUS, MEG_CALLED_CAMPAIGN_NOT_WINNER, MEG_GOT_WINNER_CAMPAIGN, FEATURE_STATUS, FEATURE_VARIABLE_VALUE, FEATURE_VARIABLE_DEFAULT_VALUE, USER_NOT_PART_OF_CAMPAIGN, USER_VARIATION_STATUS, USER_CAMPAIGN_ELIGIBILITY, USER_VARIATION_ALLOCATION_STATUS, OPT_OUT_API_CALLED, API_NOT_ENABLED, INITIATING_ACTIVATE, INITIATING_GET_VARIATION, INITIATING_GET_FEATURE_VARIATION, INITIATING_IS_FEATURE_ENABLED, INITIATING_PUSH_DIMENSION, default */
 /***/ (function(module) {
 
-module.exports = JSON.parse("{\"CONFIG_VALID\":\"({file}): SDK configuration and account settings-file are valid\",\"CONFIG_PARAMETER_USED\":\"({file}): {parameter} paased in launch API having type:{type}\",\"CONFIG_RETURN_PROMISE\":\"({file}): {method} API returns a promise as returnPromiseFor is set to true for this API\",\"SDK_INITIALIZED\":\"({file}): SDK is properly initialzed with the passed configuration\",\"POLLING_SUCCESS\":\"({file}): settings-file fetched successfully via polling for the accountId:{accountId}\",\"POLLING_SETTINGS_FILE_UPDATED\":\"({file}): SDK instance is updated with the latest settings-file for the accountId:{accountId}\",\"POLLING_SETTINGS_FILE_NOT_UPDATED\":\"{file}: settings-file fetched via polling is same as earlier fetched settings\",\"DECISION_NO_VARIATION_ALLOTED\":\"({file}): Variation was not assigned to the User ID:{userId} for Campaign:{campaignKey}\",\"EVENT_BATCH_DEFAULTS\":\"({file}): {parameter} not passed in SDK configuration, setting it default to {defaultValue}\",\"EVENT_QUEUE\":\"({file}): Event with payload:{event} pushed to the {queueType} queue\",\"EVENT_BATCH_After_FLUSHING\":\"({file}): Event queue having {length} events has been flushed {manually}\",\"CAMPAIGN_NOT_ACTIVATED\":\"({file}): Activate the campaign:{campaignKey} first for User ID:{userId} to {reason}\",\"CAMPAIGN_USER_ALREADY_TRACKED\":\"({file}): User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for \\\"{api}\\\" API. No tracking call is made to VWO server\",\"CAMPAIGN_GOAL_ALREADY_TRACKED\":\"({file}): Goal:{goalIdentifier} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. No tracking call is made to VWO server\",\"GOT_STORED_VARIATION\":\"({file}): Got stored variation from User Storage Service for User ID:{userId} for Campaign:{campaignKey} as Variation:{variationName}\",\"GETTING_DATA_USER_STORAGE_SERVICE\":\"({file}): Read data from User Storage Service for User ID:{userId} and Campaign:{campaignKey}\",\"SETTING_DATA_USER_STORAGE_SERVICE\":\"({file}): Set data into User Storage Service for User ID:{userId} and Campaign:{campaignKey}\",\"IMPRESSION_SUCCESS\":\"({file}): Impression event - {endPoint} was successfully received by VWO having main keys: Account ID:{accountId}, {mainKeys}\",\"IMPRESSION_SUCCESS_FOR_EVENT_ARCH\":\"({file}): Impression for {event} - {endPoint} was successfully received by VWO for Account ID:{accountId}\",\"IMPRESSION_BATCH_SUCCESS\":\"({file}): Impression event - {endPoint} was successfully received by VWO having Account ID:{accountId}\",\"IMPRESSION_BATCH_FAILED\":\"({file}): Batch events couldn\\\"t be received by VWO. Calling Flush Callback with error and data\",\"MEG_ELIGIBLE_CAMPAIGNS\":\"({file}): Got {noOfEligibleCampaigns} eligible winners out of {noOfGroupCampaigns} campaigns from the Group:{groupName} and for User ID:{userId}\",\"OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE\":\"({file}): Campaign:{campaignKey} of Group:{groupName} satisfies {type} for User ID:{userId}\",\"SEGMENTATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}\",\"MEG_CALLED_CAMPAIGN_NOT_WINNER\":\"({file}): Campaign:{campaignKey} does not qualify from the mutually exclusive group:{groupName} for User ID:{userId}\",\"MEG_GOT_WINNER_CAMPAIGN\":\"({file}): Campaign:{campaignKey} is selected from the mutually exclusive group:{groupName} for the User ID:{userId}\",\"FEATURE_STATUS\":\"({file}): Campaign:{campaignKey} is {status} for user ID:{userId}\",\"FEATURE_VARIABLE_VALUE\":\"({file}): For User ID:{userId}, value for variable:{variableKey} of feature:{campaignKey} is:{variableValue}\",\"FEATURE_VARIABLE_DEFAULT_VALUE\":\"({file}): Feature is not enabled for variation:{variationName}. Returning default value for the variable:{variableKey}\",\"USER_NOT_PART_OF_CAMPAIGN\":\"({file}): User ID:{userId} did not qualify for Campaign:{campaignKey}\",\"USER_VARIATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} {status}\",\"USER_CAMPAIGN_ELIGIBILITY\":\"({file}): User ID:{userId} for Campaign:{campaignKey} is {status} to become part of campaign\",\"USER_VARIATION_ALLOCATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} {status}\",\"OPT_OUT_API_CALLED\":\"({file}): You have opted out for not tracking i.e. all API calls will stop functioning and will simply early return\",\"API_NOT_ENABLED\":\"({file}): {api} API is disabled as you opted out for tracking. Reinitialize the SDK to enable the normal functioning of all APIs.\",\"INITIATING_ACTIVATE\":\"({file}): Initiating activation of user {userId} for campaign {campaignKey}.\",\"INITIATING_GET_VARIATION\":\"({file}): Initiating getVariation of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_GET_FEATURE_VARIATION\":\"({file}): Initiating getFeatureVariable for variable key '{variableKey}' of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_IS_FEATURE_ENABLED\":\"({file}): Initiating isFeatureEnabled of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_PUSH_DIMENSION\":\"({file}): Initiating push segment of user '{userId}' with tag name `{tagKey}` and tag value '{tagValue}'.\"}");
+module.exports = JSON.parse("{\"CONFIG_VALID\":\"({file}): SDK configuration and account settings-file are valid\",\"CONFIG_PARAMETER_USED\":\"({file}): {parameter} paased in launch API having type:{type}\",\"CONFIG_RETURN_PROMISE\":\"({file}): {method} API returns a promise as returnPromiseFor is set to true for this API\",\"CONFIG_ASYNC_RETURN_PROMISE\":\"({file}): {method} API returns a promise as asyncStorageConfig is passed to this API\",\"SDK_INITIALIZED\":\"({file}): SDK is properly initialzed with the passed configuration\",\"POLLING_SUCCESS\":\"({file}): settings-file fetched successfully via polling for the accountId:{accountId}\",\"POLLING_SETTINGS_FILE_UPDATED\":\"({file}): SDK instance is updated with the latest settings-file for the accountId:{accountId}\",\"POLLING_SETTINGS_FILE_NOT_UPDATED\":\"{file}: settings-file fetched via polling is same as earlier fetched settings\",\"DECISION_NO_VARIATION_ALLOTED\":\"({file}): Variation was not assigned to the User ID:{userId} for Campaign:{campaignKey}\",\"EVENT_BATCH_DEFAULTS\":\"({file}): {parameter} not passed in SDK configuration, setting it default to {defaultValue}\",\"EVENT_QUEUE\":\"({file}): Event with payload:{event} pushed to the {queueType} queue\",\"EVENT_BATCH_After_FLUSHING\":\"({file}): Event queue having {length} events has been flushed {manually}\",\"CAMPAIGN_NOT_ACTIVATED\":\"({file}): Activate the campaign:{campaignKey} first for User ID:{userId} to {reason}\",\"CAMPAIGN_USER_ALREADY_TRACKED\":\"({file}): User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for \\\"{api}\\\" API. No tracking call is made to VWO server\",\"CAMPAIGN_GOAL_ALREADY_TRACKED\":\"({file}): Goal:{goalIdentifier} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. No tracking call is made to VWO server\",\"GOT_STORED_VARIATION\":\"({file}): Got stored variation from User Storage Service for User ID:{userId} for Campaign:{campaignKey} as Variation:{variationName}\",\"GETTING_DATA_USER_STORAGE_SERVICE\":\"({file}): Read data from User Storage Service for User ID:{userId} and Campaign:{campaignKey}\",\"SETTING_DATA_USER_STORAGE_SERVICE\":\"({file}): Set data into User Storage Service for User ID:{userId} and Campaign:{campaignKey}\",\"IMPRESSION_SUCCESS\":\"({file}): Impression event - {endPoint} was successfully received by VWO having main keys: Account ID:{accountId}, {mainKeys}\",\"IMPRESSION_SUCCESS_FOR_EVENT_ARCH\":\"({file}): Impression for {event} - {endPoint} was successfully received by VWO for Account ID:{accountId}\",\"IMPRESSION_BATCH_SUCCESS\":\"({file}): Impression event - {endPoint} was successfully received by VWO having Account ID:{accountId}\",\"IMPRESSION_BATCH_FAILED\":\"({file}): Batch events couldn\\\"t be received by VWO. Calling Flush Callback with error and data\",\"MEG_ELIGIBLE_CAMPAIGNS\":\"({file}): Got {noOfEligibleCampaigns} eligible winners out of {noOfGroupCampaigns} campaigns from the Group:{groupName} and for User ID:{userId}\",\"OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE\":\"({file}): Campaign:{campaignKey} of Group:{groupName} satisfies {type} for User ID:{userId}\",\"SEGMENTATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}\",\"MEG_CALLED_CAMPAIGN_NOT_WINNER\":\"({file}): Campaign:{campaignKey} does not qualify from the mutually exclusive group:{groupName} for User ID:{userId}\",\"MEG_GOT_WINNER_CAMPAIGN\":\"({file}): Campaign:{campaignKey} is selected from the mutually exclusive group:{groupName} for the User ID:{userId}\",\"FEATURE_STATUS\":\"({file}): Campaign:{campaignKey} is {status} for user ID:{userId}\",\"FEATURE_VARIABLE_VALUE\":\"({file}): For User ID:{userId}, value for variable:{variableKey} of feature:{campaignKey} is:{variableValue}\",\"FEATURE_VARIABLE_DEFAULT_VALUE\":\"({file}): Feature is not enabled for variation:{variationName}. Returning default value for the variable:{variableKey}\",\"USER_NOT_PART_OF_CAMPAIGN\":\"({file}): User ID:{userId} did not qualify for Campaign:{campaignKey}\",\"USER_VARIATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} {status}\",\"USER_CAMPAIGN_ELIGIBILITY\":\"({file}): User ID:{userId} for Campaign:{campaignKey} is {status} to become part of campaign\",\"USER_VARIATION_ALLOCATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} {status}\",\"OPT_OUT_API_CALLED\":\"({file}): You have opted out for not tracking i.e. all API calls will stop functioning and will simply early return\",\"API_NOT_ENABLED\":\"({file}): {api} API is disabled as you opted out for tracking. Reinitialize the SDK to enable the normal functioning of all APIs.\",\"INITIATING_ACTIVATE\":\"({file}): Initiating activation of user {userId} for campaign {campaignKey}.\",\"INITIATING_GET_VARIATION\":\"({file}): Initiating getVariation of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_GET_FEATURE_VARIATION\":\"({file}): Initiating getFeatureVariable for variable key '{variableKey}' of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_IS_FEATURE_ENABLED\":\"({file}): Initiating isFeatureEnabled of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_PUSH_DIMENSION\":\"({file}): Initiating push segment of user '{userId}' with tag name `{tagKey}` and tag value '{tagValue}'.\"}");
 
 /***/ }),
 
