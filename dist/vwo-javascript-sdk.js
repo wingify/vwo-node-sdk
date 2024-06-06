@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.64.3
+ * vwo-javascript-sdk - v1.68.1
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -20,7 +20,7 @@
  *  1. murmurhash - ^0.0.2
  *  2. superstruct - ^0.10.12
  *  3. uuid - ^3.3.2
- *  4. vwo-sdk-log-messages - ^0.5.0
+ *  4. vwo-sdk-log-messages - ^0.12.0
  */
 (function webpackUniversalModuleDefinition(root, factory) {
 	// CommonJS2
@@ -131,12 +131,12 @@ return /******/ (function(modules) { // webpackBootstrap
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
+function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -152,81 +152,61 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var api = __webpack_require__(/*! ./api */ "./lib/api/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ./enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var ApiEnum = __webpack_require__(/*! ./enums/ApiEnum */ "./lib/enums/ApiEnum.js");
-
 var DataTypeUtil = __webpack_require__(/*! ./utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var FunctionUtil = __webpack_require__(/*! ./utils/FunctionUtil */ "./lib/utils/FunctionUtil.js");
-
 var VWOFeatureFlags = __webpack_require__(/*! ./utils/VWOFeatureFlags */ "./lib/utils/VWOFeatureFlags.js");
-
 var EventQueue = __webpack_require__(/*! ./services/EventQueue */ "./lib/services/EventQueue.js");
-
 var SettingsFileService = __webpack_require__(/*! ./services/SettingsFileManager */ "./lib/services/SettingsFileManager.js");
-
 var logging = __webpack_require__(/*! ./services/logging */ "./lib/services/logging/index.js");
-
 var HooksManager = __webpack_require__(/*! ./services/HooksManager */ "./lib/services/HooksManager.js");
-
 var UrlService = __webpack_require__(/*! ./services/UrlService */ "./lib/services/UrlService.js");
-
 var UsageStats = __webpack_require__(/*! ./services/UsageStats */ "./lib/services/UsageStats.js");
-
 var BatchEventsDispatcher;
 var customEventUtil;
 var BatchEventsQueue;
-
 if (false) {}
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var file = FileNameEnum.VWO;
-
-var VWO =
-/*#__PURE__*/
-function () {
+var VWO = /*#__PURE__*/function () {
   // Setting various services on the instance to be accessible by its member functions
   function VWO() {
     var _this = this;
-
     var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
     _classCallCheck(this, VWO);
-
     this.getVariation = this.getVariationName; // to be backward compatible
-
     this.userStorageService = config.userStorageService;
     this.logger = config.logger;
     this.returnPromiseFor = config.returnPromiseFor;
     this.asyncStorageConfig = config.asyncStorageConfig;
     this.optOut = false;
-
     if (this.userStorageService === undefined && config.asyncStorageConfig) {
       // replace the userStorageService with the redisObject passed in asyncStorageConfig
       this.userStorageService = config.asyncStorageConfig.redisStorage;
       config.userStorageService = this.userStorageService;
     }
+    var settingsFileManager = new SettingsFileService(config);
 
-    var settingsFileManager = new SettingsFileService(config); // Validate the config file i.e. check if required fields contain appropriate data
-
+    // Validate the config file i.e. check if required fields contain appropriate data
     if (!settingsFileManager.isSettingsFileValid()) {
       this.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SETTINGS_FILE_INVALID, {
         file: file
       }));
       return;
     }
-
     this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_VALID, {
       file: file
-    })); // Initialize Hooks manager so that callbacks can be invoked
+    }));
 
-    HooksManager.init(config); // Setup event quque for sending impressions to VWO server
+    // Initialize Hooks manager so that callbacks can be invoked
+    HooksManager.init(config);
 
+    // Setup event quque for sending impressions to VWO server
     this.eventQueue = new EventQueue();
     this.usageStats = new UsageStats();
     this.SettingsFileManager = settingsFileManager;
@@ -234,19 +214,21 @@ function () {
 
     if (!config.isDevelopmentMode) {
       this.usageStats.collectUsageStats(settingsFileManager.getConfig());
-    } // Only for Node.js SDK
+    }
 
+    // Only for Node.js SDK
+    if (false) { var sdkKey, accountId; }
 
-    if (false) { var sdkKey, accountId; } // Process settingsFile for various things. For eg: assign bucket range to variation, etc.
-
-
+    // Process settingsFile for various things. For eg: assign bucket range to variation, etc.
     this.SettingsFileManager.processSettingsFile();
     this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SDK_INITIALIZED, {
       file: file
     }));
     this.UrlService = UrlService.init(config.settingsFile);
     this.VWOFeatureFlags = VWOFeatureFlags.init(config.settingsFile);
-  } // PUBLIC METHODS
+  }
+
+  // PUBLIC METHODS
 
   /**
    * This API method: Gets the variation assigned for the user for the campaign and send the metrics to VWO server
@@ -257,18 +239,13 @@ function () {
    *
    * @return {String|null}             If variation is assigned then variation-name otherwise null in case of user not becoming part
    */
-
-
   _createClass(VWO, [{
     key: "activate",
     value: function activate(campaignKey, userId) {
       var _this2 = this;
-
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
       try {
         var self = this;
-
         if (self.asyncStorageConfig && DataTypeUtil.isObject(self.asyncStorageConfig)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_ASYNC_RETURN_PROMISE, {
             file: file,
@@ -280,7 +257,6 @@ function () {
                 file: file,
                 api: ApiEnum.ACTIVATE
               }));
-
               resolve(null);
             } else {
               return api.activate(self, campaignKey, userId, options).then(function (data) {
@@ -292,10 +268,10 @@ function () {
               });
             }
           });
-        } // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        }
+
+        // Check if returnPromiseFor is provided. If yes, return a promise instead of value
         // i.e. wait till the network call is not successful
-
-
         if (self.returnPromiseFor && (self.returnPromiseFor.activate || self.returnPromiseFor.all)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
             file: file,
@@ -307,18 +283,16 @@ function () {
                 file: file,
                 api: ApiEnum.ACTIVATE
               }));
-
               resolve(null);
             } else {
               var variationName;
-
               options.responseCallback = function (_error, _response) {
                 resolve(variationName);
               };
+              variationName = api.activate(self, campaignKey, userId, options);
 
-              variationName = api.activate(self, campaignKey, userId, options); // If we get null from the API i.e. no tracking call was sent
+              // If we get null from the API i.e. no tracking call was sent
               // In this case, responseCallback will not be fired and hence we have to manually resolve the promise
-
               if (!variationName) {
                 resolve(variationName);
               } else if (DataTypeUtil.isObject(variationName)) {
@@ -327,7 +301,6 @@ function () {
             }
           });
         }
-
         if (this.optOut) {
           this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
             file: file,
@@ -335,13 +308,10 @@ function () {
           }));
           return null;
         }
-
         var apiResponse = api.activate(self, campaignKey, userId, options);
-
         if (DataTypeUtil.isObject(apiResponse)) {
           return apiResponse.variationName;
         }
-
         return apiResponse;
       } catch (err) {
         this.logger.log(LogLevelEnum.ERROR, err.message);
@@ -357,17 +327,13 @@ function () {
      *
      * @return {String|null}             If variation is assigned then variation-name otherwise null in case of user not becoming part
      */
-
   }, {
     key: "getVariationName",
     value: function getVariationName(campaignKey, userId) {
       var _this3 = this;
-
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
       try {
         var self = this;
-
         if (self.asyncStorageConfig && DataTypeUtil.isObject(self.asyncStorageConfig)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_ASYNC_RETURN_PROMISE, {
             file: file,
@@ -379,7 +345,6 @@ function () {
                 file: file,
                 api: ApiEnum.GET_VARIATION_NAME
               }));
-
               resolve(null);
             } else {
               return api.getVariation(self, campaignKey, userId, options).then(function (data) {
@@ -391,9 +356,9 @@ function () {
               });
             }
           });
-        } // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        }
 
-
+        // Check if returnPromiseFor is provided. If yes, return a promise instead of value
         if (self.returnPromiseFor && (self.returnPromiseFor.getVariationName || self.returnPromiseFor.all)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
             file: file,
@@ -405,7 +370,6 @@ function () {
                 file: file,
                 api: ApiEnum.GET_VARIATION_NAME
               }));
-
               resolve(null);
             } else {
               // since this API does not send any async call, we can simply resolve the returned value
@@ -413,7 +377,6 @@ function () {
             }
           });
         }
-
         if (this.optOut) {
           this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
             file: file,
@@ -421,7 +384,6 @@ function () {
           }));
           return null;
         }
-
         return api.getVariation(self, campaignKey, userId, options);
       } catch (err) {
         this.logger.log(LogLevelEnum.ERROR, err.message);
@@ -436,17 +398,15 @@ function () {
      * @param {String} goalIdentifier         unique campaign's goal identifier
      * @param {Object} options               optional params - customVariables, variationTargetingVariables, revenueValue
      */
-
   }, {
     key: "track",
     value: function track(campaignSpecifier, userId, goalIdentifier) {
       var _this4 = this;
-
       var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
-
       try {
-        var self = this; // In case we use any asyncStorage like redis, promisify track
+        var self = this;
 
+        // In case we use any asyncStorage like redis, promisify track
         if (self.asyncStorageConfig && DataTypeUtil.isObject(self.asyncStorageConfig)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_ASYNC_RETURN_PROMISE, {
             file: file,
@@ -458,7 +418,6 @@ function () {
                 file: file,
                 api: ApiEnum.TRACK
               }));
-
               resolve(null);
             } else {
               return api.track(self, campaignSpecifier, userId, goalIdentifier, options).then(function (trackResponse) {
@@ -466,10 +425,10 @@ function () {
               });
             }
           });
-        } // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        }
+
+        // Check if returnPromiseFor is provided. If yes, return a promise instead of value
         // i.e. wait till the network call is not successful
-
-
         if (self.returnPromiseFor && (self.returnPromiseFor.track || self.returnPromiseFor.all)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
             file: file,
@@ -481,16 +440,14 @@ function () {
                 file: file,
                 api: ApiEnum.TRACK
               }));
-
               resolve(null);
             } else {
               var trackResponse;
               var counter = 0;
-
               options.responseCallback = function (_error, _response) {
-                counter += 1; // For Data360, one single call is there to track multiple metrices
+                counter += 1;
+                // For Data360, one single call is there to track multiple metrices
                 // For global goals, we are now sending one single batch-events call
-
                 if (self.isEventArchEnabled || DataTypeUtil.isArray(campaignSpecifier) || (DataTypeUtil.isUndefined(campaignSpecifier) || DataTypeUtil.isNull(campaignSpecifier)) && FunctionUtil.objectValues(trackResponse).filter(Boolean).length) {
                   resolve(trackResponse);
                 } else if (counter === FunctionUtil.objectValues(trackResponse).filter(Boolean).length) {
@@ -499,11 +456,10 @@ function () {
                   resolve(trackResponse);
                 }
               };
-
-              trackResponse = api.track(self, campaignSpecifier, userId, goalIdentifier, options); // If we get null/false from the API i.e. no tracking call was sent
+              trackResponse = api.track(self, campaignSpecifier, userId, goalIdentifier, options);
+              // If we get null/false from the API i.e. no tracking call was sent
               // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
               // Or, in case of global goals, if none campaign got success, manually resolve
-
               if (!trackResponse || !FunctionUtil.objectValues(trackResponse).some(Boolean)) {
                 resolve(trackResponse);
               } else if (trackResponse && trackResponse.isDevelopmentMode) {
@@ -513,7 +469,6 @@ function () {
             }
           });
         }
-
         if (this.optOut) {
           this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
             file: file,
@@ -521,7 +476,6 @@ function () {
           }));
           return null;
         }
-
         return api.track(self, campaignSpecifier, userId, goalIdentifier, options);
       } catch (err) {
         this.logger.log(LogLevelEnum.ERROR, err.message);
@@ -537,17 +491,13 @@ function () {
      *
      * @return {Boolean}                 true if feature enabled, false otherwise
      */
-
   }, {
     key: "isFeatureEnabled",
     value: function isFeatureEnabled(campaignKey, userId) {
       var _this5 = this;
-
       var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-
       try {
         var self = this;
-
         if (self.asyncStorageConfig && DataTypeUtil.isObject(self.asyncStorageConfig)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_ASYNC_RETURN_PROMISE, {
             file: file,
@@ -559,7 +509,6 @@ function () {
                 file: file,
                 api: ApiEnum.IS_FEATURE_ENABLED
               }));
-
               resolve(null);
             } else {
               return api.isFeatureEnabled(self, campaignKey, userId, options).then(function (data) {
@@ -571,10 +520,10 @@ function () {
               });
             }
           });
-        } // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        }
+
+        // Check if returnPromiseFor is provided. If yes, return a promise instead of value
         // i.e. wait till the network call is not successful
-
-
         if (self.returnPromiseFor && (self.returnPromiseFor.isFeatureEnabled || self.returnPromiseFor.all)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
             file: file,
@@ -586,18 +535,15 @@ function () {
                 file: file,
                 api: ApiEnum.IS_FEATURE_ENABLED
               }));
-
               resolve(false);
             } else {
               var isFeatureEnabledApiResponse;
-
               options.responseCallback = function (_error, _response) {
                 resolve(!!isFeatureEnabledApiResponse);
               };
-
-              isFeatureEnabledApiResponse = api.isFeatureEnabled(self, campaignKey, userId, options); // If we get null from the API i.e. no tracking call was sent
+              isFeatureEnabledApiResponse = api.isFeatureEnabled(self, campaignKey, userId, options);
+              // If we get null from the API i.e. no tracking call was sent
               // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
-
               if (DataTypeUtil.isNull(isFeatureEnabledApiResponse)) {
                 resolve(false);
               } else if (DataTypeUtil.isObject(isFeatureEnabledApiResponse)) {
@@ -606,7 +552,6 @@ function () {
             }
           });
         }
-
         if (this.optOut) {
           this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
             file: file,
@@ -614,13 +559,10 @@ function () {
           }));
           return false;
         }
-
         var apiResponse = api.isFeatureEnabled(self, campaignKey, userId, options);
-
         if (DataTypeUtil.isObject(apiResponse)) {
           return !!apiResponse.isFeatureEnabled;
         }
-
         return !!apiResponse;
       } catch (err) {
         this.logger.log(LogLevelEnum.ERROR, err.message);
@@ -640,17 +582,13 @@ function () {
      *                                             maintaining the data-type,
      *                                             null if anything fails like campaign / variable not found
      */
-
   }, {
     key: "getFeatureVariableValue",
     value: function getFeatureVariableValue(campaignKey, variableKey, userId) {
       var _this6 = this;
-
       var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
-
       try {
         var self = this;
-
         if (self.asyncStorageConfig && DataTypeUtil.isObject(self.asyncStorageConfig)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_ASYNC_RETURN_PROMISE, {
             file: file,
@@ -662,7 +600,6 @@ function () {
                 file: file,
                 api: ApiEnum.GET_FEATURE_VARIABLE_VALUE
               }));
-
               resolve(null);
             } else {
               return api.getFeatureVariableValue(self, campaignKey, variableKey, userId, options).then(function (data) {
@@ -674,9 +611,9 @@ function () {
               });
             }
           });
-        } // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        }
 
-
+        // Check if returnPromiseFor is provided. If yes, return a promise instead of value
         if (self.returnPromiseFor && (self.returnPromiseFor.getFeatureVariableValue || self.returnPromiseFor.all)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
             file: file,
@@ -688,7 +625,6 @@ function () {
                 file: file,
                 api: ApiEnum.GET_FEATURE_VARIABLE_VALUE
               }));
-
               resolve(null);
             } else {
               // since this API does not send any async call, we can simply resolve the returned value
@@ -696,7 +632,6 @@ function () {
             }
           });
         }
-
         if (this.optOut) {
           this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
             file: file,
@@ -704,7 +639,6 @@ function () {
           }));
           return null;
         }
-
         return api.getFeatureVariableValue(self, campaignKey, variableKey, userId, options);
       } catch (err) {
         this.logger.log(LogLevelEnum.ERROR, err.message);
@@ -720,16 +654,13 @@ function () {
      *
      * @return {Boolean}                    true if request is pushed to eventQueue, false if params are invalid or settings file is unavailable
      */
-
   }, {
     key: "push",
     value: function push(tagKey, tagValue, userId) {
       var _this7 = this;
-
       try {
         var self = this;
         var customDimensionMap;
-
         if (arguments.length === 2) {
           // Argument reshuffling.
           customDimensionMap = tagKey;
@@ -744,10 +675,10 @@ function () {
             api: ApiEnum.PUSH
           }));
           return false;
-        } // Check if returnPromiseFor is provided. If yes, return a promise instead of value
+        }
+
+        // Check if returnPromiseFor is provided. If yes, return a promise instead of value
         // i.e. wait till the network call is not successful
-
-
         if (self.returnPromiseFor && (self.returnPromiseFor.push || self.returnPromiseFor.all)) {
           self.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CONFIG_RETURN_PROMISE, {
             file: file,
@@ -759,27 +690,27 @@ function () {
                 file: file,
                 api: ApiEnum.PUSH
               }));
-
               resolve(null);
             } else {
               var apiResponse;
               var counter = 0;
               var options = {
                 responseCallback: function responseCallback(_error, _response) {
-                  counter += 1; // In case of multiple custom dimensions, when all are tracked, then only resolve
+                  counter += 1;
+                  // In case of multiple custom dimensions, when all are tracked, then only resolve
                   // if customDimensionMap is used
-
                   if (customDimensionMap && DataTypeUtil.isObject(customDimensionMap) && FunctionUtil.objectValues(customDimensionMap).filter(Boolean).length > 1) {
                     resolve(apiResponse);
-                  } // else if custom dimensions are sent with tag key and value instead of a map
+                  }
+                  // else if custom dimensions are sent with tag key and value instead of a map
                   else if (counter === FunctionUtil.objectValues(apiResponse).filter(Boolean).length) {
-                      resolve(apiResponse);
-                    }
+                    resolve(apiResponse);
+                  }
                 }
               };
-              apiResponse = api.push(self, tagKey, tagValue, userId, customDimensionMap, options); // If we get false from the API i.e. no tracking call was sent
+              apiResponse = api.push(self, tagKey, tagValue, userId, customDimensionMap, options);
+              // If we get false from the API i.e. no tracking call was sent
               // In this case, respponseCallback will not be fired and hence we have to manually resolve the promise
-
               if (!apiResponse) {
                 resolve(false);
               } else if (apiResponse && apiResponse.isDevelopmentMode) {
@@ -789,7 +720,6 @@ function () {
             }
           });
         }
-
         if (this.optOut) {
           this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.API_NOT_ENABLED, {
             file: file,
@@ -797,7 +727,6 @@ function () {
           }));
           return null;
         }
-
         return api.push(self, tagKey, tagValue, userId, customDimensionMap);
       } catch (err) {
         this.logger.log(LogLevelEnum.ERROR, err.message);
@@ -808,15 +737,12 @@ function () {
     key: "setOptOut",
     value: function setOptOut() {
       var _this8 = this;
-
       this.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.OPT_OUT_API_CALLED, {
         file: file
       }));
-
       if (this.returnPromiseFor && (this.returnPromiseFor.optOut || this.returnPromiseFor.all)) {
         return new Promise(function (resolve) {
           _this8._destroyInstanceVariables();
-
           if (_this8.batchEventsQueue) {
             _this8.flushEvents().then(function () {
               _this8.batchEventsQueue = undefined;
@@ -827,28 +753,22 @@ function () {
           }
         });
       }
-
       if (this.batchEventsQueue) {
         this.flushEvents().then(function () {
           _this8.batchEventsQueue = undefined;
         });
       }
-
       this._destroyInstanceVariables();
-
       return true;
     }
     /**
      * Manually flush impression events to VWO which are queued in batch queue as per batchEvents config
      */
-
   }, {
     key: "flushEvents",
     value: function flushEvents() {
       var _this9 = this;
-
       var accountId = this.SettingsFileManager.getSettingsFile().accountId;
-
       if (false) {}
     }
     /**
@@ -860,7 +780,6 @@ function () {
      *
      * @return {Promise}
      */
-
   }, {
     key: "getAndUpdateSettingsFile",
     value: function getAndUpdateSettingsFile(accountId, sdkKey) {
@@ -873,7 +792,6 @@ function () {
           resolve(null);
         });
       }
-
       return this.SettingsFileManager.getAndUpdateSettingsFile(accountId, sdkKey);
     }
   }, {
@@ -886,10 +804,8 @@ function () {
       this.optOut = true;
     }
   }]);
-
   return VWO;
 }();
-
 module.exports = VWO;
 
 /***/ }),
@@ -916,30 +832,22 @@ module.exports = VWO;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
-
 var ApiEnum = __webpack_require__(/*! ../enums/ApiEnum */ "./lib/enums/ApiEnum.js");
-
 var DecisionUtil = __webpack_require__(/*! ../utils/DecisionUtil */ "./lib/utils/DecisionUtil.js");
-
 var CampaignUtil = __webpack_require__(/*! ../utils/CampaignUtil */ "./lib/utils/CampaignUtil.js");
-
 var ImpressionUtil = __webpack_require__(/*! ../utils/ImpressionUtil */ "./lib/utils/ImpressionUtil.js");
-
 var ValidateUtil = __webpack_require__(/*! ../utils/ValidateUtil */ "./lib/utils/ValidateUtil.js");
-
 var DataTypeUtil = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var EventEnum = __webpack_require__(/*! ../enums/EventEnum */ "./lib/enums/EventEnum.js");
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var file = FileNameEnum.Activate;
+
 /**
  * This API method: Gets the variation assigned for the user for the campaign and send the metrics to VWO server
  *
@@ -956,23 +864,22 @@ var file = FileNameEnum.Activate;
  *
  * @return {String|null}             If variation is assigned then variation-name otherwise null in case of user not becoming part
  */
-
 function activate(vwoInstance, campaignKey, userId) {
   var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
   var api = ApiEnum.ACTIVATE;
   var areParamsValid = false;
-
   if (DataTypeUtil.isObject(options)) {
     var customVariables = options.customVariables,
-        variationTargetingVariables = options.variationTargetingVariables,
-        userStorageData = options.userStorageData,
-        shouldTrackReturningUser = options.shouldTrackReturningUser,
-        metaData = options.metaData,
-        responseCallback = options.responseCallback,
-        userAgent = options.userAgent,
-        userIpAddress = options.userIpAddress;
-    var visitorUserAgent = userAgent; // Check if arguments have valid data-type
+      variationTargetingVariables = options.variationTargetingVariables,
+      userStorageData = options.userStorageData,
+      shouldTrackReturningUser = options.shouldTrackReturningUser,
+      metaData = options.metaData,
+      responseCallback = options.responseCallback,
+      userAgent = options.userAgent,
+      userIpAddress = options.userIpAddress;
+    var visitorUserAgent = userAgent;
 
+    // Check if arguments have valid data-type
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.ACTIVATE,
       campaignKey: campaignKey,
@@ -989,35 +896,36 @@ function activate(vwoInstance, campaignKey, userId) {
       areParamsValid = true;
     }
   }
-
   if (areParamsValid === false) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_BAD_PARAMETERS, {
       file: file,
       api: ApiEnum.ACTIVATE
     }));
     return null;
-  } // Get the cached configuration
+  }
 
-
+  // Get the cached configuration
   var config = vwoInstance.SettingsFileManager.getConfig();
-  var settingsFile = vwoInstance.SettingsFileManager.getSettingsFile(api); // If no settings are found, simply return no variation
+  var settingsFile = vwoInstance.SettingsFileManager.getSettingsFile(api);
 
+  // If no settings are found, simply return no variation
   if (!settingsFile) {
     return null;
   }
+  shouldTrackReturningUser = shouldTrackReturningUser || config.shouldTrackReturningUser || false;
 
-  shouldTrackReturningUser = shouldTrackReturningUser || config.shouldTrackReturningUser || false; // Get the campaign settings based on campaignKey from the settings
+  // Get the campaign settings based on campaignKey from the settings
+  var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
 
-  var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey); // check if MAB enabled, if yes, then userStorage must be defined
-
+  // check if MAB enabled, if yes, then userStorage must be defined
   if (campaign && campaign.hasOwnProperty('isMAB') && campaign.isMAB === true) {
     if (vwoInstance.userStorageService === undefined) {
       vwoInstance.logger.log(LogLevelEnum.ERROR, '(' + file + ') This campaign: ' + campaignKey + ' has MAB configured. Please configure User Storage to proceed.');
       return null;
     }
-  } // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
+  }
 
-
+  // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
     vwoInstance.logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_RUNNING, {
       file: file,
@@ -1026,7 +934,6 @@ function activate(vwoInstance, campaignKey, userId) {
     }));
     return null;
   }
-
   if (!CampaignUtil.isAbCampaign(campaign)) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_NOT_APPLICABLE, {
       file: file,
@@ -1036,25 +943,21 @@ function activate(vwoInstance, campaignKey, userId) {
       api: api
     }));
     return null;
-  } // Once the matching RUNNING campaign is found, assign the deterministic variation to the userId provided
+  }
 
-
+  // Once the matching RUNNING campaign is found, assign the deterministic variation to the userId provided
   var result = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, true, false, undefined, api);
-
   if (DataTypeUtil.isPromise(result)) {
     return result.then(function (data) {
       return _validateAndReturnVariation(vwoInstance, campaignKey, userId, config, api, shouldTrackReturningUser, settingsFile, campaign, visitorUserAgent, userIpAddress, responseCallback, data);
     });
   }
-
   return _validateAndReturnVariation(vwoInstance, campaignKey, userId, config, api, shouldTrackReturningUser, settingsFile, campaign, visitorUserAgent, userIpAddress, responseCallback, result);
 }
-
 function _validateAndReturnVariation(vwoInstance, campaignKey, userId, config, api, shouldTrackReturningUser, settingsFile, campaign, visitorUserAgent, userIpAddress, responseCallback, result) {
   var variationId = result.variationId,
-      variationName = result.variationName,
-      isStoredVariation = result.isStoredVariation; // Check if variation-name has been assigned to the userId. If not, return no variation
-
+    variationName = result.variationName,
+    isStoredVariation = result.isStoredVariation; // Check if variation-name has been assigned to the userId. If not, return no variation
   if (!ValidateUtil.isValidValue(variationName)) {
     vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.DECISION_NO_VARIATION_ALLOTED, {
       file: file,
@@ -1062,9 +965,9 @@ function _validateAndReturnVariation(vwoInstance, campaignKey, userId, config, a
       campaignKey: campaignKey
     }));
     return null;
-  } // check if variation found from storage. return it without sending a call to VWO server
+  }
 
-
+  // check if variation found from storage. return it without sending a call to VWO server
   if (isStoredVariation && !shouldTrackReturningUser) {
     vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CAMPAIGN_USER_ALREADY_TRACKED, {
       file: file,
@@ -1075,15 +978,14 @@ function _validateAndReturnVariation(vwoInstance, campaignKey, userId, config, a
     return {
       variationName: variationName
     };
-  } // Variation found...let VWO server knows about it to show report stats
+  }
 
-
+  // Variation found...let VWO server knows about it to show report stats
   if (config.batchEvents) {
     var properties = ImpressionUtil.buildBatchEventForTrackingUser(settingsFile, campaign.id, variationId, userId, visitorUserAgent, userIpAddress);
     vwoInstance.batchEventsQueue.enqueue(properties);
   } else if (settingsFile.isEventArchEnabled) {
     var _properties = ImpressionUtil.getEventsBaseProperties(settingsFile, EventEnum.VWO_VARIATION_SHOWN, vwoInstance.usageStats.getUsageStats(), visitorUserAgent, userIpAddress);
-
     var payload = ImpressionUtil.getTrackUserPayloadData(settingsFile, userId, EventEnum.VWO_VARIATION_SHOWN, campaign.id, variationId);
     vwoInstance.eventQueue.process(config, _properties, vwoInstance, {
       payload: payload,
@@ -1091,21 +993,17 @@ function _validateAndReturnVariation(vwoInstance, campaignKey, userId, config, a
     });
   } else {
     var _properties2 = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId, vwoInstance.usageStats.getUsageStats(), visitorUserAgent, userIpAddress);
-
     vwoInstance.eventQueue.process(config, _properties2, vwoInstance, {
       responseCallback: responseCallback
     });
   }
-
   if (config.isDevelopmentMode) {
     return {
       variationName: variationName
     };
   }
-
   return variationName;
 }
-
 module.exports = activate;
 
 /***/ }),
@@ -1132,30 +1030,22 @@ module.exports = activate;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
-
 var ApiEnum = __webpack_require__(/*! ../enums/ApiEnum */ "./lib/enums/ApiEnum.js");
-
 var DecisionUtil = __webpack_require__(/*! ../utils/DecisionUtil */ "./lib/utils/DecisionUtil.js");
-
 var CampaignUtil = __webpack_require__(/*! ../utils/CampaignUtil */ "./lib/utils/CampaignUtil.js");
-
 var ValidateUtil = __webpack_require__(/*! ../utils/ValidateUtil */ "./lib/utils/ValidateUtil.js");
-
 var FeatureUtil = __webpack_require__(/*! ../utils/FeatureUtil */ "./lib/utils/FeatureUtil.js");
-
 var DataTypeUtil = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var ObjectUtil = __webpack_require__(/*! ../utils/ObjectUtil */ "./lib/utils/ObjectUtil.js");
-
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var file = FileNameEnum.GetFeatureVariableValue;
+
 /**
  * This API method:
  *
@@ -1174,20 +1064,16 @@ var file = FileNameEnum.GetFeatureVariableValue;
  *                                             maintaining the data-type,
  *                                             null if anything fails like campaign / variable not found
  */
-
 function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) {
   var options = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
-
   try {
     var api = ApiEnum.GET_FEATURE_VARIABLE_VALUE;
     var areParamsValid = false;
-
     if (DataTypeUtil.isObject(options)) {
       var customVariables = options.customVariables,
-          variationTargetingVariables = options.variationTargetingVariables,
-          userStorageData = options.userStorageData,
-          metaData = options.metaData; // Check if arguments have valid data-type
-
+        variationTargetingVariables = options.variationTargetingVariables,
+        userStorageData = options.userStorageData,
+        metaData = options.metaData; // Check if arguments have valid data-type
       if (ValidateUtil.areValidParamsForAPIMethod({
         method: ApiEnum.GET_FEATURE_VARIABLE_VALUE,
         campaignKey: campaignKey,
@@ -1201,26 +1087,24 @@ function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) 
         areParamsValid = true;
       }
     }
-
     if (areParamsValid === false) {
       vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_BAD_PARAMETERS, {
         file: file,
         api: ApiEnum.GetFeatureVariableValue
       }));
       return null;
-    } // Get the cached configuration
+    }
 
-
+    // Get the cached configuration
     var config = vwoInstance.SettingsFileManager.getConfig();
     var settingsFile = vwoInstance.SettingsFileManager.getSettingsFile(api);
-    config.apiName = api; // If no settings are found, simply return no variation
+    config.apiName = api;
 
+    // If no settings are found, simply return no variation
     if (!settingsFile) {
       return null;
     }
-
     var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
-
     if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
       vwoInstance.logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_RUNNING, {
         file: file,
@@ -1229,7 +1113,6 @@ function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) 
       }));
       return null;
     }
-
     if (CampaignUtil.isAbCampaign(campaign)) {
       // API not allowed for full-stack AB campaigns
       vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_NOT_APPLICABLE, {
@@ -1241,27 +1124,22 @@ function getFeatureVariableValue(vwoInstance, campaignKey, variableKey, userId) 
       }));
       return null;
     }
-
     var result = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false, false, undefined, api);
-
     if (DataTypeUtil.isPromise(result)) {
       return result.then(function (data) {
         return _validateAndReturnFeaureVariable(vwoInstance, campaignKey, variableKey, userId, campaign, data);
       });
     }
-
     return _validateAndReturnFeaureVariable(vwoInstance, campaignKey, variableKey, userId, campaign, result);
   } catch (err) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, err.message);
     return null;
   }
 }
-
 function _validateAndReturnFeaureVariable(vwoInstance, campaignKey, variableKey, userId, campaign, result) {
   var variable;
   var variation = result.variation,
-      variationName = result.variationName;
-
+    variationName = result.variationName;
   if (!variationName) {
     vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_STATUS, {
       file: file,
@@ -1271,12 +1149,10 @@ function _validateAndReturnFeaureVariable(vwoInstance, campaignKey, variableKey,
     }));
     return null;
   }
-
   if (CampaignUtil.isFeatureRolloutCampaign(campaign)) {
     variable = FeatureUtil.getVariableForFeature(campaign, variableKey);
   } else if (CampaignUtil.isFeatureTestCampaign(campaign)) {
     variable = FeatureUtil.getVariableValueForVariation(campaign, variation, variableKey);
-
     if (ObjectUtil.areObjectKeys(variable) && variation.isFeatureEnabled) {
       vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_VARIABLE_VALUE, {
         file: file,
@@ -1293,7 +1169,6 @@ function _validateAndReturnFeaureVariable(vwoInstance, campaignKey, variableKey,
       }));
     }
   }
-
   if (!ObjectUtil.areObjectKeys(variable)) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.VARIABLE_NOT_FOUND, {
       file: file,
@@ -1302,12 +1177,10 @@ function _validateAndReturnFeaureVariable(vwoInstance, campaignKey, variableKey,
     }));
     return null;
   }
-
   var variableValue = variable.value;
   var typeCastedValue = FeatureUtil.getTypeCastVariableValue(variableValue, variable.type);
   return typeCastedValue;
 }
-
 module.exports = getFeatureVariableValue;
 
 /***/ }),
@@ -1334,26 +1207,20 @@ module.exports = getFeatureVariableValue;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
-
 var ApiEnum = __webpack_require__(/*! ../enums/ApiEnum */ "./lib/enums/ApiEnum.js");
-
 var DecisionUtil = __webpack_require__(/*! ../utils/DecisionUtil */ "./lib/utils/DecisionUtil.js");
-
 var CampaignUtil = __webpack_require__(/*! ../utils/CampaignUtil */ "./lib/utils/CampaignUtil.js");
-
 var ValidateUtil = __webpack_require__(/*! ../utils/ValidateUtil */ "./lib/utils/ValidateUtil.js");
-
 var DataTypeUtil = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var file = FileNameEnum.GetVariation;
+
 /**
  * This API method: Gets the variation assigned for the user for the campaign
  *
@@ -1369,18 +1236,15 @@ var file = FileNameEnum.GetVariation;
  *
  * @return {String|null}             If variation is assigned then variation-name otherwise null in case of user not becoming part
  */
-
 function getVariation(vwoInstance, campaignKey, userId) {
   var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
   var api = ApiEnum.GET_VARIATION_NAME;
   var areParamsValid = false;
-
   if (DataTypeUtil.isObject(options)) {
     var customVariables = options.customVariables,
-        variationTargetingVariables = options.variationTargetingVariables,
-        userStorageData = options.userStorageData,
-        metaData = options.metaData; // Check if arguments have valid data-type
-
+      variationTargetingVariables = options.variationTargetingVariables,
+      userStorageData = options.userStorageData,
+      metaData = options.metaData; // Check if arguments have valid data-type
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.GET_VARIATION_NAME,
       campaignKey: campaignKey,
@@ -1393,27 +1257,28 @@ function getVariation(vwoInstance, campaignKey, userId) {
       areParamsValid = true;
     }
   }
-
   if (areParamsValid === false) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_BAD_PARAMETERS, {
       file: file,
       api: ApiEnum.GET_VARIATION_NAME
     }));
     return null;
-  } // Get the cached configuration
+  }
 
-
+  // Get the cached configuration
   var config = vwoInstance.SettingsFileManager.getConfig();
   var settingsFile = vwoInstance.SettingsFileManager.getSettingsFile(api);
-  config.apiName = api; // If no settings are found, simply return no variation
+  config.apiName = api;
 
+  // If no settings are found, simply return no variation
   if (!settingsFile) {
     return null;
-  } // Get the campaign settings based on campaignKey from the settings
+  }
 
+  // Get the campaign settings based on campaignKey from the settings
+  var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
 
-  var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey); // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
-
+  // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
     vwoInstance.logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_RUNNING, {
       file: file,
@@ -1422,7 +1287,6 @@ function getVariation(vwoInstance, campaignKey, userId) {
     }));
     return null;
   }
-
   if (CampaignUtil.isFeatureRolloutCampaign(campaign)) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_NOT_APPLICABLE, {
       file: file,
@@ -1433,22 +1297,17 @@ function getVariation(vwoInstance, campaignKey, userId) {
     }));
     return null;
   }
-
   var result = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false, false, undefined, api);
-
   if (DataTypeUtil.isPromise(result)) {
     return result.then(function (data) {
       return data;
     });
   }
-
   if (!result.variationName) {
     return null;
   }
-
   return result.variationName;
 }
-
 module.exports = getVariation;
 
 /***/ }),
@@ -1475,18 +1334,13 @@ module.exports = getVariation;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var activate = __webpack_require__(/*! ./activate */ "./lib/api/activate.js");
-
 var getVariation = __webpack_require__(/*! ./getVariation */ "./lib/api/getVariation.js");
-
 var track = __webpack_require__(/*! ./track */ "./lib/api/track.js");
-
 var isFeatureEnabled = __webpack_require__(/*! ./isFeatureEnabled */ "./lib/api/isFeatureEnabled.js");
-
 var getFeatureVariableValue = __webpack_require__(/*! ./getFeatureVariableValue */ "./lib/api/getFeatureVariableValue.js");
-
 var push = __webpack_require__(/*! ./push */ "./lib/api/push.js");
-
 module.exports = {
   activate: activate,
   getVariation: getVariation,
@@ -1520,30 +1374,22 @@ module.exports = {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
-
 var ApiEnum = __webpack_require__(/*! ../enums/ApiEnum */ "./lib/enums/ApiEnum.js");
-
 var DecisionUtil = __webpack_require__(/*! ../utils/DecisionUtil */ "./lib/utils/DecisionUtil.js");
-
 var CampaignUtil = __webpack_require__(/*! ../utils/CampaignUtil */ "./lib/utils/CampaignUtil.js");
-
 var ImpressionUtil = __webpack_require__(/*! ../utils/ImpressionUtil */ "./lib/utils/ImpressionUtil.js");
-
 var ValidateUtil = __webpack_require__(/*! ../utils/ValidateUtil */ "./lib/utils/ValidateUtil.js");
-
 var DataTypeUtil = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var EventEnum = __webpack_require__(/*! ../enums/EventEnum */ "./lib/enums/EventEnum.js");
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var file = FileNameEnum.IsFeatureEnabled;
+
 /**
  * This API checks: Whether a feature is enabled or not for the given user
  *
@@ -1558,23 +1404,21 @@ var file = FileNameEnum.IsFeatureEnabled;
  *
  * @return {Boolean}                 true if feature enabled, false otherwise
  */
-
 function isFeatureEnabled(vwoInstance, campaignKey, userId) {
   var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
   var api = ApiEnum.IS_FEATURE_ENABLED;
   var areParamsValid = false;
-
   if (DataTypeUtil.isObject(options)) {
     var customVariables = options.customVariables,
-        variationTargetingVariables = options.variationTargetingVariables,
-        userStorageData = options.userStorageData,
-        shouldTrackReturningUser = options.shouldTrackReturningUser,
-        metaData = options.metaData,
-        responseCallback = options.responseCallback,
-        userAgent = options.userAgent,
-        userIpAddress = options.userIpAddress;
-    var visitorUserAgent = userAgent; // Check if arguments have valid data-type
-
+      variationTargetingVariables = options.variationTargetingVariables,
+      userStorageData = options.userStorageData,
+      shouldTrackReturningUser = options.shouldTrackReturningUser,
+      metaData = options.metaData,
+      responseCallback = options.responseCallback,
+      userAgent = options.userAgent,
+      userIpAddress = options.userIpAddress;
+    var visitorUserAgent = userAgent;
+    // Check if arguments have valid data-type
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.IS_FEATURE_ENABLED,
       campaignKey: campaignKey,
@@ -1591,34 +1435,34 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
       areParamsValid = true;
     }
   }
-
   if (areParamsValid === false) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_BAD_PARAMETERS, {
       file: file,
       api: ApiEnum.isFeatureEnabled
     }));
     return null;
-  } // Get the cached configuration
+  }
 
-
+  // Get the cached configuration
   var config = vwoInstance.SettingsFileManager.getConfig();
-  var settingsFile = vwoInstance.SettingsFileManager.getSettingsFile(api); // If no settings are found, simply log and return false
+  var settingsFile = vwoInstance.SettingsFileManager.getSettingsFile(api);
 
+  // If no settings are found, simply log and return false
   if (!settingsFile) {
     return null;
   }
+  shouldTrackReturningUser = shouldTrackReturningUser || config.shouldTrackReturningUser || false;
 
-  shouldTrackReturningUser = shouldTrackReturningUser || config.shouldTrackReturningUser || false; // Get the campaign settings based on campaignKey from the settings
+  // Get the campaign settings based on campaignKey from the settings
+  var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
 
-  var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey); // check if MAB enabled, if yes, then userStorage must be defined
-
+  // check if MAB enabled, if yes, then userStorage must be defined
   if (campaign && campaign.hasOwnProperty('isMAB') && campaign.isMAB === true) {
     if (vwoInstance.userStorageService === undefined) {
       vwoInstance.logger.log(LogLevelEnum.ERROR, '(' + file + ') This campaign: ' + campaignKey + ' has MAB configured. Please configure User Storage to proceed.');
       return null;
     }
   }
-
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
     vwoInstance.logger.log(LogLevelEnum.WARN, LogMessageUtil.build(LogMessageEnum.WARNING_MESSAGES.CAMPAIGN_NOT_RUNNING, {
       file: file,
@@ -1627,7 +1471,6 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
     }));
     return null;
   }
-
   if (CampaignUtil.isAbCampaign(campaign)) {
     // API not allowed for full-stack AB campaigns
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_NOT_APPLICABLE, {
@@ -1639,28 +1482,24 @@ function isFeatureEnabled(vwoInstance, campaignKey, userId) {
     }));
     return null;
   }
+  var result = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, true, false, undefined, api);
 
-  var result = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, true, false, undefined, api); // check if result is a promise, if yes then wait for it untill it resolves, then only proceed further
-
+  // check if result is a promise, if yes then wait for it untill it resolves, then only proceed further
   if (DataTypeUtil.isPromise(result)) {
     return result.then(function (data) {
       return _validateAndReturnFeatureEnabled(vwoInstance, campaignKey, userId, config, api, shouldTrackReturningUser, settingsFile, campaign, responseCallback, visitorUserAgent, userIpAddress, data);
     });
   }
-
   return _validateAndReturnFeatureEnabled(vwoInstance, campaignKey, userId, config, api, shouldTrackReturningUser, settingsFile, campaign, responseCallback, visitorUserAgent, userIpAddress, result);
 }
-
 function _validateAndReturnFeatureEnabled(vwoInstance, campaignKey, userId, config, api, shouldTrackReturningUser, settingsFile, campaign, responseCallback, visitorUserAgent, userIpAddress, result) {
   var variation = result.variation,
-      variationId = result.variationId,
-      variationName = result.variationName,
-      isStoredVariation = result.isStoredVariation;
+    variationId = result.variationId,
+    variationName = result.variationName,
+    isStoredVariation = result.isStoredVariation;
   var isFeatureEnabled = false;
-
   if (variationName) {
     isFeatureEnabled = CampaignUtil.isFeatureRolloutCampaign(campaign) || variation.isFeatureEnabled;
-
     if (isStoredVariation && !shouldTrackReturningUser) {
       vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.CAMPAIGN_USER_ALREADY_TRACKED, {
         file: file,
@@ -1675,7 +1514,6 @@ function _validateAndReturnFeatureEnabled(vwoInstance, campaignKey, userId, conf
         vwoInstance.batchEventsQueue.enqueue(properties);
       } else if (settingsFile.isEventArchEnabled) {
         var _properties = ImpressionUtil.getEventsBaseProperties(settingsFile, EventEnum.VWO_VARIATION_SHOWN, vwoInstance.usageStats.getUsageStats(), visitorUserAgent, userIpAddress);
-
         var payload = ImpressionUtil.getTrackUserPayloadData(settingsFile, userId, EventEnum.VWO_VARIATION_SHOWN, campaign.id, variationId);
         vwoInstance.eventQueue.process(config, _properties, vwoInstance, {
           payload: payload,
@@ -1683,47 +1521,39 @@ function _validateAndReturnFeatureEnabled(vwoInstance, campaignKey, userId, conf
         });
       } else {
         var _properties2 = ImpressionUtil.buildEventForTrackingUser(settingsFile, campaign.id, variationId, userId, vwoInstance.usageStats.getUsageStats(), visitorUserAgent, userIpAddress);
-
         vwoInstance.eventQueue.process(config, _properties2, vwoInstance, {
           responseCallback: responseCallback
         });
       }
-
       vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_STATUS, {
         file: file,
         campaignKey: campaignKey,
         userId: userId,
         status: isFeatureEnabled ? 'enabled' : 'disabled'
       }));
-
       if (config.isDevelopmentMode) {
         return {
           isFeatureEnabled: isFeatureEnabled
         };
       }
-
       return isFeatureEnabled;
     }
   }
-
   vwoInstance.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.FEATURE_STATUS, {
     file: file,
     campaignKey: campaignKey,
     userId: userId,
     status: isFeatureEnabled ? 'enabled' : 'disabled'
   }));
-
   if (isStoredVariation || config.isDevelopmentMode) {
     return {
       isFeatureEnabled: isFeatureEnabled
     };
   }
-
   return {
     isFeatureEnabled: isFeatureEnabled
   };
 }
-
 module.exports = isFeatureEnabled;
 
 /***/ }),
@@ -1750,28 +1580,21 @@ module.exports = isFeatureEnabled;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var ApiEnum = __webpack_require__(/*! ../enums/ApiEnum */ "./lib/enums/ApiEnum.js");
-
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var EventEnum = __webpack_require__(/*! ../enums/EventEnum */ "./lib/enums/EventEnum.js");
-
 var ValidateUtil = __webpack_require__(/*! ../utils/ValidateUtil */ "./lib/utils/ValidateUtil.js");
-
 var ImpressionUtil = __webpack_require__(/*! ../utils/ImpressionUtil */ "./lib/utils/ImpressionUtil.js");
-
 var DataTypeUtil = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var BatchEventsDispatcher;
-
 if (false) {}
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var file = FileNameEnum.Push;
+
 /**
  * This API method: Pushes the key-value tag pair for a particular user
  *
@@ -1785,13 +1608,10 @@ var file = FileNameEnum.Push;
  *
  * @return {Boolean}                         true if request is pushed to eventQueue, false if params are invalid or settings file is unavailable
  */
-
 function push(vwoInstance, tagKey, tagValue, userId, customDimensionMap) {
   var _ref = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {},
-      responseCallback = _ref.responseCallback;
-
+    responseCallback = _ref.responseCallback;
   var api = ApiEnum.PUSH;
-
   if (!ValidateUtil.areValidParamsForAPIMethod({
     method: ApiEnum.PUSH,
     tagKey: tagKey,
@@ -1806,7 +1626,6 @@ function push(vwoInstance, tagKey, tagValue, userId, customDimensionMap) {
     }));
     return false;
   }
-
   if (tagKey.length > 255) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.TAG_KEY_LENGTH_EXCEEDED, {
       file: file,
@@ -1815,7 +1634,6 @@ function push(vwoInstance, tagKey, tagValue, userId, customDimensionMap) {
     }));
     return false;
   }
-
   if (tagValue.length > 255) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.TAG_VALUE_LENGTH_EXCEEDED, {
       file: file,
@@ -1825,7 +1643,6 @@ function push(vwoInstance, tagKey, tagValue, userId, customDimensionMap) {
     }));
     return false;
   }
-
   if (tagKey === ' ' && tagValue === ' ' && (!customDimensionMap || Object.keys(customDimensionMap).length === 0)) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.PUSH_INVALID_PARAMS, {
       file: file,
@@ -1833,21 +1650,19 @@ function push(vwoInstance, tagKey, tagValue, userId, customDimensionMap) {
     }));
     return false;
   }
-
   if (tagKey !== ' ' && tagValue !== ' ') {
     customDimensionMap[tagKey] = tagValue;
-  } // Get the cached configuration
+  }
 
-
+  // Get the cached configuration
   var config = vwoInstance.SettingsFileManager.getConfig();
-  var settingsFile = vwoInstance.SettingsFileManager.getSettingsFile(api); // If no settings are found, simply false
+  var settingsFile = vwoInstance.SettingsFileManager.getSettingsFile(api);
 
+  // If no settings are found, simply false
   if (!settingsFile) {
     return false;
   }
-
   var result = {};
-
   if (config.batchEvents) {
     Object.keys(customDimensionMap).forEach(function (key) {
       var tagValue = DataTypeUtil.isString(customDimensionMap[key]) ? customDimensionMap[key] : JSON.stringify(customDimensionMap[key]);
@@ -1869,30 +1684,24 @@ function push(vwoInstance, tagKey, tagValue, userId, customDimensionMap) {
     customDimensionKeys.forEach(function (key) {
       var properties;
       var tagValue = DataTypeUtil.isString(customDimensionMap[key]) ? customDimensionMap[key] : JSON.stringify(customDimensionMap[key]);
-
       if (true) {
         properties = ImpressionUtil.buildEventForPushing(settingsFile, key, tagValue, userId);
         vwoInstance.eventQueue.process(config, properties, vwoInstance, {
           responseCallback: responseCallback
         });
       } else {}
-
       events.push(properties);
       result[key] = true;
     });
-
     if (false) {}
   }
-
   if (config.isDevelopmentMode) {
     return Object.assign({}, result, {
       isDevelopmentMode: config.isDevelopmentMode
     });
   }
-
   return result;
 }
-
 module.exports = push;
 
 /***/ }),
@@ -1904,8 +1713,10 @@ module.exports = push;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -1921,39 +1732,29 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
-
 var GoalTypeEnum = __webpack_require__(/*! ../enums/GoalTypeEnum */ "./lib/enums/GoalTypeEnum.js");
-
 var ApiEnum = __webpack_require__(/*! ../enums/ApiEnum */ "./lib/enums/ApiEnum.js");
-
 var DecisionUtil = __webpack_require__(/*! ../utils/DecisionUtil */ "./lib/utils/DecisionUtil.js");
-
 var CampaignUtil = __webpack_require__(/*! ../utils/CampaignUtil */ "./lib/utils/CampaignUtil.js");
-
 var _require = __webpack_require__(/*! ../utils/ObjectUtil */ "./lib/utils/ObjectUtil.js"),
-    objectValues = _require.objectValues;
-
+  objectValues = _require.objectValues;
 var ImpressionUtil = __webpack_require__(/*! ../utils/ImpressionUtil */ "./lib/utils/ImpressionUtil.js");
-
 var ValidateUtil = __webpack_require__(/*! ../utils/ValidateUtil */ "./lib/utils/ValidateUtil.js");
-
 var DataTypeUtil = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var file = FileNameEnum.Track;
 var GOAL_TYPE_TO_TRACK_DEFAULT = GoalTypeEnum.ALL;
 var GOAL_IDENTIFIER_SEPERATOR = '_vwo_';
 var api = ApiEnum.TRACK;
 var BatchEventsDispatcher;
-
 if (false) {}
+
 /**
  * This API method: Marks the conversion of the campaign for a particular goal
  *
@@ -1968,26 +1769,23 @@ if (false) {}
  * @param {String} goalIdentifier             unique campaign's goal identifier
  * @param {Object} options                   Optional params
  */
-
-
 function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   var options = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : {};
   var areParamsValid = false;
-
   if (DataTypeUtil.isObject(options)) {
     var revenueValue = options.revenueValue,
-        customVariables = options.customVariables,
-        variationTargetingVariables = options.variationTargetingVariables,
-        userStorageData = options.userStorageData,
-        goalTypeToTrack = options.goalTypeToTrack,
-        shouldTrackReturningUser = options.shouldTrackReturningUser,
-        metaData = options.metaData,
-        responseCallback = options.responseCallback,
-        eventProperties = options.eventProperties,
-        userAgent = options.userAgent,
-        userIpAddress = options.userIpAddress;
-    var visitorUserAgent = userAgent; // Check if arguments have valid data-type
-
+      customVariables = options.customVariables,
+      variationTargetingVariables = options.variationTargetingVariables,
+      userStorageData = options.userStorageData,
+      goalTypeToTrack = options.goalTypeToTrack,
+      shouldTrackReturningUser = options.shouldTrackReturningUser,
+      metaData = options.metaData,
+      responseCallback = options.responseCallback,
+      eventProperties = options.eventProperties,
+      userAgent = options.userAgent,
+      userIpAddress = options.userIpAddress;
+    var visitorUserAgent = userAgent;
+    // Check if arguments have valid data-type
     if (ValidateUtil.areValidParamsForAPIMethod({
       method: ApiEnum.TRACK,
       campaignKey: campaignKey,
@@ -2007,37 +1805,34 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
       areParamsValid = true;
     }
   }
-
   if (areParamsValid === false) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_BAD_PARAMETERS, {
       file: file,
       api: ApiEnum.TRACK
     }));
     return null;
-  } // Get the cached configuration
+  }
 
-
+  // Get the cached configuration
   var config = vwoInstance.SettingsFileManager.getConfig();
   var settingsFile = vwoInstance.SettingsFileManager.getSettingsFile(api);
   config.apiName = api;
-  var revenuePropList = new Set(); // If no settings are found, simply do not track goal and return false
+  var revenuePropList = new Set();
 
+  // If no settings are found, simply do not track goal and return false
   if (!settingsFile) {
     return null;
   }
-
-  var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey); // check if MAB enabled, if yes, then userStorage must be defined
-
+  var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
+  // check if MAB enabled, if yes, then userStorage must be defined
   if (campaign && campaign.hasOwnProperty('isMAB') && campaign.isMAB === true) {
     if (vwoInstance.userStorageService === undefined) {
       vwoInstance.logger.log(LogLevelEnum.ERROR, '(' + file + ') This campaign: ' + campaignKey + ' has MAB configured. Please configure User Storage to proceed.');
       return null;
     }
   }
-
   var campaigns = [];
   goalTypeToTrack = goalTypeToTrack || config.goalTypeToTrack || GOAL_TYPE_TO_TRACK_DEFAULT; // priority order - options > launchConfig > default
-
   if (DataTypeUtil.isUndefined(shouldTrackReturningUser)) {
     // if shouldTrackReturningUser is not given in options
     if (DataTypeUtil.isBoolean(config.shouldTrackReturningUser)) {
@@ -2047,7 +1842,6 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
       shouldTrackReturningUser = false;
     }
   }
-
   if (!DataTypeUtil.isString(campaignKey)) {
     if (DataTypeUtil.isArray(campaignKey)) {
       campaigns = CampaignUtil.getCampaignsForKeys(settingsFile, campaignKey);
@@ -2057,25 +1851,25 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
   } else {
     // Get the campaign settings based on campaignKey from the settings
     var _campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
-
     campaigns.push(_campaign || {
       key: campaignKey
     });
   }
-
   var result = {};
   var metricMap = {};
   var events = [];
   var areGlobalGoals =  true ? false : undefined;
   campaigns.forEach(function (campaign) {
     return result[campaign.key] = trackCampaignGoal(vwoInstance, campaign, campaign.key, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress);
-  }); // Check if each object in result is a promise
+  });
+
+  // Check if each object in result is a promise
   // in case of asyncStorageConfig, each object would be a promise only
   // Check if result is a non-empty object
-
   var areAllPromises = result && Object.keys(result).length > 0 ? Object.values(result).every(function (item) {
     return DataTypeUtil.isPromise(item);
-  }) : false; // const areAllPromises = Object.values(result).every(item => DataTypeUtil.isPromise(item));
+  }) : false;
+  // const areAllPromises = Object.values(result).every(item => DataTypeUtil.isPromise(item));
 
   if (areAllPromises) {
     // Promise.all - This method takes an array of promises and returns a new promise that resolves to an array of the resolved values when all of the input promises have resolved.
@@ -2083,23 +1877,18 @@ function track(vwoInstance, campaignKey, userId, goalIdentifier) {
     return Promise.all(Object.values(result)).then(function (dataArray) {
       dataArray.forEach(function (data, index) {
         var campaignKey = Object.keys(result)[index];
-
         var ans = _validateAndReturnTrackValue(vwoInstance, config, settingsFile, revenuePropList, userId, goalIdentifier, revenueValue, metricMap, events, areGlobalGoals, responseCallback, eventProperties, visitorUserAgent, userIpAddress, _defineProperty({}, campaignKey, data));
-
         result[campaignKey] = ans[campaignKey];
       });
       return result;
     });
   }
-
   return _validateAndReturnTrackValue(vwoInstance, config, settingsFile, revenuePropList, userId, goalIdentifier, revenueValue, metricMap, events, areGlobalGoals, responseCallback, eventProperties, visitorUserAgent, userIpAddress, result);
 }
-
 function _validateAndReturnTrackValue(vwoInstance, config, settingsFile, revenuePropList, userId, goalIdentifier, revenueValue, metricMap, events, areGlobalGoals, responseCallback, eventProperties, visitorUserAgent, userIpAddress, result) {
   if (!Object.keys(result).length) {
     return null;
   }
-
   if (true) {
     if (events && events.length) {
       for (var k = 0; k < events.length; k++) {
@@ -2109,31 +1898,28 @@ function _validateAndReturnTrackValue(vwoInstance, config, settingsFile, revenue
       }
     }
   } else {}
-
   if (settingsFile.isEventArchEnabled && Object.keys(metricMap).length > 0) {
     var properties = ImpressionUtil.getEventsBaseProperties(settingsFile, goalIdentifier, {}, visitorUserAgent, userIpAddress);
     var payload = ImpressionUtil.getTrackGoalPayloadData(settingsFile, userId, goalIdentifier, metricMap, revenueValue, revenuePropList, eventProperties);
     vwoInstance.eventQueue.process(config, properties, vwoInstance, {
       payload: payload,
       responseCallback: responseCallback
-    }); // save to user storage if not event arch
+    });
 
+    // save to user storage if not event arch
     if (!settingsFile.isEventArchEnabled) {
       Object.keys(metricMap).forEach(function (key) {
         DecisionUtil._saveUserData(config, metricMap[key].campaign, metricMap[key].variationName, metricMap[key].userId, metricMap[key].metaData, goalIdentifier);
       });
     }
   }
-
   if (config.isDevelopmentMode) {
     return Object.assign({}, result, {
       isDevelopmentMode: config.isDevelopmentMode
     });
   }
-
   return result;
 }
-
 function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsFile, goalIdentifier, revenueValue, config, customVariables, variationTargetingVariables, userStorageData, goalTypeToTrack, shouldTrackReturningUser, metaData, metricMap, revenuePropList, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress) {
   // If matching campaign is not found with campaignKey or if found but is in not RUNNING state, simply return no variation
   if (!campaign || campaign.status !== Constants.STATUS_RUNNING) {
@@ -2144,7 +1930,6 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
     }));
     return false;
   }
-
   if (CampaignUtil.isFeatureRolloutCampaign(campaign)) {
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.API_NOT_APPLICABLE, {
       file: file,
@@ -2155,11 +1940,10 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
     }));
     return false;
   }
+  var campaignId = campaign.id;
 
-  var campaignId = campaign.id; // Get the campaign goal settings based on goalIdentifier
-
+  // Get the campaign goal settings based on goalIdentifier
   var goal = CampaignUtil.getCampaignGoal(settingsFile, campaign.key, goalIdentifier);
-
   if (!goal) {
     // If no goal is found, something is wrong with the goalIdentifier
     vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.TRACK_API_GOAL_NOT_FOUND, {
@@ -2204,38 +1988,31 @@ function trackCampaignGoal(vwoInstance, campaign, campaignKey, userId, settingsF
       return false;
     }
   }
-
   if (goal.type === GoalTypeEnum.REVENUE && goal.revenueProp) {
     revenuePropList.add(goal.revenueProp);
   }
-
   var result = DecisionUtil.getVariation(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, false, true, goalIdentifier, api);
-
   if (DataTypeUtil.isPromise(result)) {
     return result.then(function (data) {
       if (!Object.keys(data).length) {
         return null;
       }
-
       return _validateAndReturnTrackEvent(vwoInstance, campaignKey, campaignId, userId, config, goal, shouldTrackReturningUser, settingsFile, campaign, goalIdentifier, revenueValue, metaData, metricMap, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress, data);
     });
   }
-
   return _validateAndReturnTrackEvent(vwoInstance, campaignKey, campaignId, userId, config, goal, shouldTrackReturningUser, settingsFile, campaign, goalIdentifier, revenueValue, metaData, metricMap, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress, result);
 }
-
 function _validateAndReturnTrackEvent(vwoInstance, campaignKey, campaignId, userId, config, goal, shouldTrackReturningUser, settingsFile, campaign, goalIdentifier, revenueValue, metaData, metricMap, events, areGlobalGoals, eventProperties, visitorUserAgent, userIpAddress, result) {
   var variationId = result.variationId,
-      variationName = result.variationName,
-      storedGoalIdentifier = result.storedGoalIdentifier; // Is User is a part of Campaign and has been decided to be a part of particular variation
-
+    variationName = result.variationName,
+    storedGoalIdentifier = result.storedGoalIdentifier; // Is User is a part of Campaign and has been decided to be a part of particular variation
   if (variationName) {
     if (storedGoalIdentifier) {
       var identifiers = storedGoalIdentifier.split(GOAL_IDENTIFIER_SEPERATOR);
-
       if (!identifiers.includes(goalIdentifier)) {
-        storedGoalIdentifier += GOAL_IDENTIFIER_SEPERATOR + goalIdentifier; // save to user storage if not event arch
+        storedGoalIdentifier += GOAL_IDENTIFIER_SEPERATOR + goalIdentifier;
 
+        // save to user storage if not event arch
         if (!settingsFile.isEventArchEnabled) {
           DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, storedGoalIdentifier);
         }
@@ -2248,9 +2025,8 @@ function _validateAndReturnTrackEvent(vwoInstance, campaignKey, campaignId, user
         }));
         return false;
       }
-    } // If goal is found, send an impression to VWO server for report stats
-
-
+    }
+    // If goal is found, send an impression to VWO server for report stats
     if (config.batchEvents) {
       var properties = ImpressionUtil.buildBatchEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue, eventProperties, visitorUserAgent, userIpAddress);
       vwoInstance.batchEventsQueue.enqueue(properties);
@@ -2266,27 +2042,22 @@ function _validateAndReturnTrackEvent(vwoInstance, campaignKey, campaignId, user
       return true;
     } else {
       var _properties = {};
-
       if (areGlobalGoals) {
         _properties = ImpressionUtil.buildBatchEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue, visitorUserAgent, userIpAddress);
       } else {
         _properties = ImpressionUtil.buildEventForTrackingGoal(settingsFile, campaignId, variationId, userId, goal, revenueValue, visitorUserAgent, userIpAddress);
       }
-
       events.push(_properties);
-    } // save to user storage if not event arch
+    }
 
-
+    // save to user storage if not event arch
     if (!settingsFile.isEventArchEnabled) {
       DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, goalIdentifier);
     }
-
     return true;
   }
-
   return false;
 }
-
 function logIncorrectParamsForRevenueGoal(vwoInstance, userId, goalIdentifier, campaignKey) {
   vwoInstance.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL, {
     file: file,
@@ -2295,7 +2066,6 @@ function logIncorrectParamsForRevenueGoal(vwoInstance, userId, goalIdentifier, c
     campaignKey: campaignKey
   }));
 }
-
 module.exports = track;
 
 /***/ }),
@@ -2322,18 +2092,18 @@ module.exports = track;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /* global SDK_NAME, SDK_VERSION */
-var packageFile = {}; // For javascript-sdk, to keep the build size low
-// avoid adding the whole package file in the file
 
+var packageFile = {};
+
+// For javascript-sdk, to keep the build size low
+// avoid adding the whole package file in the file
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.64.3"
+    version: "1.68.1"
   };
 } else {}
-
 module.exports = {
   SDK_NAME: packageFile.name,
   SDK_VERSION: packageFile.version,
@@ -2345,6 +2115,7 @@ module.exports = {
   DEFAULT_EVENTS_PER_REQUEST: 100,
   DEFAULT_REQUEST_TIME_INTERVAL: 600,
   // 10 * 60(secs) = 600 secs i.e. 10 minutes
+
   STATUS_RUNNING: 'RUNNING',
   SEED_URL: 'https://vwo.com',
   HTTP_PROTOCOL: 'http://',
@@ -2377,23 +2148,17 @@ module.exports = {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var Hasher = __webpack_require__(/*! murmurhash */ "./node_modules/murmurhash/murmurhash.js");
-
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
-
 var ValidateUtil = __webpack_require__(/*! ../utils/ValidateUtil */ "./lib/utils/ValidateUtil.js");
-
 var VWOFeatureFlags = __webpack_require__(/*! ../utils/VWOFeatureFlags */ "./lib/utils/VWOFeatureFlags.js");
-
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var CampaignUtil = __webpack_require__(/*! ../utils/CampaignUtil */ "./lib/utils/CampaignUtil.js");
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var logger = logging.getLogger();
 var file = FileNameEnum.BucketingService;
 var BucketingService = {
@@ -2414,7 +2179,6 @@ var BucketingService = {
     var value = Math.floor(multipliedValue);
     return value;
   },
-
   /**
    * Returns the Variation by checking the Start and End Bucket Allocations of each Variation
    *
@@ -2426,15 +2190,12 @@ var BucketingService = {
   _getVariation: function _getVariation(variations, bucketValue) {
     for (var i = 0; i < Object.keys(variations).length; i++) {
       var variation = variations[i];
-
       if (bucketValue >= variation.startVariationAllocation && bucketValue <= variation.endVariationAllocation) {
         return variation;
       }
     }
-
     return null;
   },
-
   /**
    * Validates the User ID and generates Bucket Value of the User by hashing the userId by murmurHash and scaling it down.
    *
@@ -2444,9 +2205,7 @@ var BucketingService = {
    */
   _getBucketValueForUser: function _getBucketValueForUser(seed, userId, disableLog) {
     var hashValue = Hasher.v3(seed, Constants.SEED_VALUE);
-
     var bucketValue = BucketingService._generateBucketValue(hashValue, Constants.MAX_TRAFFIC_PERCENT);
-
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.USER_HASH_BUCKET_VALUE, {
       file: file,
       hashValue: hashValue,
@@ -2455,7 +2214,6 @@ var BucketingService = {
     }), disableLog);
     return bucketValue;
   },
-
   /**
    * Calculate if this user should become part of the campaign or not
    *
@@ -2466,15 +2224,11 @@ var BucketingService = {
    */
   isUserPartOfCampaign: function isUserPartOfCampaign(userId, campaign) {
     var disableLog = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-
     if (!campaign) {
       return false;
     }
-
     var trafficAllocation = campaign.percentTraffic;
-
     var valueAssignedToUser = BucketingService._getBucketValueForUser(CampaignUtil.getBucketingSeed(userId, campaign), userId, disableLog);
-
     var isUserPart = valueAssignedToUser !== 0 && valueAssignedToUser <= trafficAllocation;
     logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_CAMPAIGN_ELIGIBILITY, {
       file: file,
@@ -2484,7 +2238,6 @@ var BucketingService = {
     }), disableLog);
     return isUserPart;
   },
-
   /**
    * Validates the User ID and generates Variation into which the User is bucketed in.
    *
@@ -2498,15 +2251,12 @@ var BucketingService = {
     var isNBv2 = VWOFeatureFlags.getAll().isNBv2;
     var multiplier;
     var seed;
-
     if (!ValidateUtil.isValidValue(userId)) {
       return null;
     }
-
     if (!campaign) {
       return null;
     }
-
     if ((!isNB && !isNBv2 || isNB && campaign.isOB) && campaign.percentTraffic) {
       // Old bucketing logic if feature flag is OFF or
       // Feature flag is ON and campaign is old i.e. created before feature flag was turned ON
@@ -2521,11 +2271,8 @@ var BucketingService = {
       multiplier = 1;
       seed = CampaignUtil.getBucketingSeed(accountId + '_' + userId, campaign);
     }
-
     var hashValue = BucketingService._generateHashValue(seed);
-
     var bucketValue = BucketingService._generateBucketValue(hashValue, Constants.MAX_TRAFFIC_VALUE, multiplier);
-
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.USER_CAMPAIGN_BUCKET_VALUES, {
       file: file,
       userId: userId,
@@ -2538,9 +2285,7 @@ var BucketingService = {
   },
   calculateBucketValue: function calculateBucketValue(seed) {
     var multiplier = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 1;
-
     var hashValue = BucketingService._generateHashValue(seed);
-
     return BucketingService._generateBucketValue(hashValue, Constants.MAX_TRAFFIC_VALUE, multiplier);
   },
   _generateHashValue: function _generateHashValue(userId) {
@@ -2573,31 +2318,26 @@ module.exports = BucketingService;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var SegmentEnum = __webpack_require__(/*! ../enums/segment */ "./lib/enums/segment/index.js");
-
 var _require = __webpack_require__(/*! ../utils/ObjectUtil */ "./lib/utils/ObjectUtil.js"),
-    getKeyValue = _require.getKeyValue;
-
+  getKeyValue = _require.getKeyValue;
 var _require2 = __webpack_require__(/*! ../utils/SegmentUtil */ "./lib/utils/SegmentUtil.js"),
-    operandCustomVariablesParser = _require2.operandCustomVariablesParser,
-    operandUserParser = _require2.operandUserParser;
-
+  operandCustomVariablesParser = _require2.operandCustomVariablesParser,
+  operandUserParser = _require2.operandUserParser;
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var DataTypeUtil = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var _SegmentEnum$SegmentO = SegmentEnum.SegmentOperatorTypes,
-    AND = _SegmentEnum$SegmentO.AND,
-    OR = _SegmentEnum$SegmentO.OR,
-    NOT = _SegmentEnum$SegmentO.NOT;
+  AND = _SegmentEnum$SegmentO.AND,
+  OR = _SegmentEnum$SegmentO.OR,
+  NOT = _SegmentEnum$SegmentO.NOT;
 var _SegmentEnum$SegmentO2 = SegmentEnum.SegmentOperandTypes,
-    CUSTOM_VARIABLE = _SegmentEnum$SegmentO2.CUSTOM_VARIABLE,
-    USER = _SegmentEnum$SegmentO2.USER;
+  CUSTOM_VARIABLE = _SegmentEnum$SegmentO2.CUSTOM_VARIABLE,
+  USER = _SegmentEnum$SegmentO2.USER;
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var file = FileNameEnum.SegmentEvaluator;
 var logger = logging.getLogger();
 module.exports = SegmentEvaluator;
@@ -2609,34 +2349,27 @@ module.exports = SegmentEvaluator;
  *
  * @return {Boolean}                       true if user is to be made part of campaign, else false
  */
-
 function evaluator(dsl, customVariables) {
   var _getKeyValue = getKeyValue(dsl),
-      key = _getKeyValue.key,
-      value = _getKeyValue.value;
-
+    key = _getKeyValue.key,
+    value = _getKeyValue.value;
   var operator = key;
   var subDsl = value;
-
   if (operator === NOT) {
     return !evaluator(subDsl, customVariables);
   } else if (operator === AND) {
     var list = [];
-
     for (var i = 0; i < subDsl.length; i++) {
       list.push(evaluator(subDsl[i], customVariables));
     }
-
     return list.every(function (val) {
       return val;
     });
   } else if (operator === OR) {
     var _list = [];
-
     for (var _i = 0; _i < subDsl.length; _i++) {
       _list.push(evaluator(subDsl[_i], customVariables));
     }
-
     return _list.some(function (val) {
       return val;
     });
@@ -2646,14 +2379,12 @@ function evaluator(dsl, customVariables) {
     return operandUserParser(subDsl, customVariables);
   }
 }
-
 function SegmentEvaluator(dsl) {
   var customVariables = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
   var campaignKey = arguments.length > 2 ? arguments[2] : undefined;
   var userId = arguments.length > 3 ? arguments[3] : undefined;
   var variation = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : '';
   var disableLogs = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : false;
-
   try {
     if (DataTypeUtil.isObject(dsl) && !Object.keys(dsl).length) {
       logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.SEGMENTATION_SKIPPED, {
@@ -2663,11 +2394,9 @@ function SegmentEvaluator(dsl) {
       }), disableLogs);
       return true;
     }
-
     if (DataTypeUtil.isObject(dsl) && Object.keys(dsl).length) {
       return evaluator(dsl, customVariables);
     }
-
     return true;
   } catch (err) {
     logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SEGMENTATION_ERROR, {
@@ -2706,17 +2435,14 @@ function SegmentEvaluator(dsl) {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var ValidateUtil = __webpack_require__(/*! ../utils/ValidateUtil */ "./lib/utils/ValidateUtil.js");
-
 var Bucketer = __webpack_require__(/*! ./BucketingService */ "./lib/core/BucketingService.js");
-
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var logger = logging.getLogger();
 var file = FileNameEnum.VariationDecider;
 var VariationDecider = {
@@ -2734,7 +2460,6 @@ var VariationDecider = {
       variationId: null,
       variationName: null
     };
-
     if (!ValidateUtil.isValidValue(userId)) {
       logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.USER_ID_INVALID, {
         file: file,
@@ -2742,7 +2467,6 @@ var VariationDecider = {
       }));
       return response;
     }
-
     if (Bucketer.isUserPartOfCampaign(userId, campaign)) {
       var variation = VariationDecider.getVariationOfCampaignForUser(userId, campaign, accountId) || {};
       response.variation = variation;
@@ -2755,10 +2479,8 @@ var VariationDecider = {
         campaignKey: campaign.key
       }));
     }
-
     return response;
   },
-
   /**
    * Assigns random variation ID to a particular user depending on the PercentTraffic.
    * Makes user a part of campaign if user's included in Traffic.
@@ -2772,9 +2494,7 @@ var VariationDecider = {
     if (!campaign) {
       return null;
     }
-
     var variation = Bucketer.bucketUserToVariation(userId, campaign, accountId);
-
     if (variation && variation.name) {
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_VARIATION_STATUS, {
         file: file,
@@ -2788,7 +2508,6 @@ var VariationDecider = {
         id: variation.id
       };
     }
-
     logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.USER_VARIATION_STATUS, {
       file: file,
       userId: userId,
@@ -2824,6 +2543,7 @@ module.exports = VariationDecider;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var AnsiColorEnum = {
   BOLD: '\x1b[1m',
   CYAN: '\x1b[36m',
@@ -2860,6 +2580,7 @@ module.exports = AnsiColorEnum;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var ApiEnum = {
   LAUNCH: 'launch',
   ACTIVATE: 'activate',
@@ -2895,6 +2616,7 @@ module.exports = ApiEnum;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var CampaignTypeEnum = {
   FEATURE_TEST: 'FEATURE_TEST',
   FEATURE_ROLLOUT: 'FEATURE_ROLLOUT',
@@ -2926,6 +2648,7 @@ module.exports = CampaignTypeEnum;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var DataTypeEnum = {
   NUMBER: 'number',
   STRING: 'string',
@@ -2959,6 +2682,7 @@ module.exports = DataTypeEnum;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var EventEnum = {
   VWO_VARIATION_SHOWN: 'vwo_variationShown',
   VWO_SYNC_VISITOR_PROP: 'vwo_syncVisitorProp'
@@ -2989,6 +2713,7 @@ module.exports = EventEnum;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var FeatureVariableTypeEnum = {
   BOOLEAN: 'boolean',
   DOUBLE: 'double',
@@ -3022,6 +2747,7 @@ module.exports = FeatureVariableTypeEnum;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var LIB_PATH = 'lib';
 var CORE_PATH = 'lib/core';
 var UTIL_PATH = 'lib/util';
@@ -3084,6 +2810,7 @@ module.exports = {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var GoalTypeEnum = {
   REVENUE: 'REVENUE_TRACKING',
   CUSTOM: 'CUSTOM_GOAL',
@@ -3115,6 +2842,7 @@ module.exports = GoalTypeEnum;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var HeadersEnum = {
   USER_AGENT: 'X-Device-User-Agent',
   IP: 'VWO-X-Forwarded-For'
@@ -3145,6 +2873,7 @@ module.exports = HeadersEnum;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var HooksEnum = {
   DECISION_TYPES: {
     CAMPAIGN_DECISION: 'CAMPAIGN_DECISION'
@@ -3162,9 +2891,10 @@ module.exports = HooksEnum;
 /***/ (function(module, exports, __webpack_require__) {
 
 var _LogLevelColorInfoEnu, _LogLevelInfoEnum;
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -3180,8 +2910,8 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var AnsiColorEnum = __webpack_require__(/*! ./AnsiColorEnum */ "./lib/enums/AnsiColorEnum.js");
 
+var AnsiColorEnum = __webpack_require__(/*! ./AnsiColorEnum */ "./lib/enums/AnsiColorEnum.js");
 var LogNumberLevel = {
   _0: 'NOTSET',
   _1: 'DEBUG',
@@ -3229,6 +2959,7 @@ module.exports = {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 module.exports = {
   PASSED: 'passed',
   FAILED: 'failed'
@@ -3258,6 +2989,7 @@ module.exports = {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var UrlEnum = {
   BASE_URL: 'dev.visualwebsiteoptimizer.com',
   SETTINGS_URL: '/server-side/settings',
@@ -3294,6 +3026,7 @@ module.exports = UrlEnum;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 module.exports = {
   CUSTOM_VARIABLE: 'custom_variable',
   USER: 'user'
@@ -3323,6 +3056,7 @@ module.exports = {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 module.exports = {
   LOWER: /^lower/,
   LOWER_MATCH: /^lower\((.*)\)/,
@@ -3362,6 +3096,7 @@ module.exports = {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 module.exports = {
   LOWER_VALUE: 1,
   STARTING_ENDING_STAR_VALUE: 2,
@@ -3399,6 +3134,7 @@ module.exports = {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 module.exports = {
   AND: 'and',
   NOT: 'not',
@@ -3429,14 +3165,11 @@ module.exports = {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var SegmentOperandTypes = __webpack_require__(/*! ./SegmentOperandTypesEnum */ "./lib/enums/segment/SegmentOperandTypesEnum.js");
-
 var SegmentOperatorTypes = __webpack_require__(/*! ./SegmentOperatorTypesEnum */ "./lib/enums/segment/SegmentOperatorTypesEnum.js");
-
 var SegmentOperandValueTypeRegexes = __webpack_require__(/*! ./SegmentOperandValueTypeRegexesEnum */ "./lib/enums/segment/SegmentOperandValueTypeRegexesEnum.js");
-
 var SegmentOperandValues = __webpack_require__(/*! ./SegmentOperandValuesEnum */ "./lib/enums/segment/SegmentOperandValuesEnum.js");
-
 var SegmentEnum = {
   SegmentOperandTypes: SegmentOperandTypes,
   SegmentOperatorTypes: SegmentOperatorTypes,
@@ -3469,39 +3202,30 @@ module.exports = SegmentEnum;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var VWO = __webpack_require__(/*! ./VWO */ "./lib/VWO.js");
-
 var DataTypeUtil = __webpack_require__(/*! ./utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var FunctionUtil = __webpack_require__(/*! ./utils/FunctionUtil */ "./lib/utils/FunctionUtil.js");
-
 var _require = __webpack_require__(/*! ./utils/ObjectUtil */ "./lib/utils/ObjectUtil.js"),
-    objectValues = _require.objectValues;
-
+  objectValues = _require.objectValues;
 var SettingsFileUtil = __webpack_require__(/*! ./utils/SettingsFileUtil */ "./lib/utils/SettingsFileUtil.js");
-
 var GoalTypeEnum = __webpack_require__(/*! ./enums/GoalTypeEnum */ "./lib/enums/GoalTypeEnum.js");
-
 var _require2 = __webpack_require__(/*! ./constants */ "./lib/constants/index.js"),
-    MAX_EVENTS_PER_REQUEST = _require2.MAX_EVENTS_PER_REQUEST;
-
+  MAX_EVENTS_PER_REQUEST = _require2.MAX_EVENTS_PER_REQUEST;
 var logging = __webpack_require__(/*! ./services/logging */ "./lib/services/logging/index.js");
-
 var ApiEnum = __webpack_require__(/*! ./enums/ApiEnum */ "./lib/enums/ApiEnum.js");
-
 var FileNameEnum = __webpack_require__(/*! ./enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var file = FileNameEnum.INDEX;
 var setLogHandler = logging.setLogHandler,
-    setLogLevel = logging.setLogLevel,
-    LogLevelEnum = logging.LogLevelEnum,
-    LogNumberLevel = logging.LogNumberLevel,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
-var logger = logging.getLogger(); // By default, all ERRORS should be logged
+  setLogLevel = logging.setLogLevel,
+  LogLevelEnum = logging.LogLevelEnum,
+  LogNumberLevel = logging.LogNumberLevel,
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
+var logger = logging.getLogger();
 
+// By default, all ERRORS should be logged
 logging.setLogLevel(LogLevelEnum.ERROR);
-
 function logError() {
   var parameter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
   var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
@@ -3513,7 +3237,6 @@ function logError() {
   });
   throw new Error(logger.log(LogLevelEnum.ERROR, log));
 }
-
 function logInfo() {
   var parameter = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : '';
   var type = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
@@ -3524,7 +3247,6 @@ function logInfo() {
   });
   console.info("VWO-SDK - [INFO]:   ".concat(FunctionUtil.getCurrentTime(), " ").concat(log));
 }
-
 module.exports = {
   logging: logging,
   setLogger: setLogHandler,
@@ -3532,7 +3254,6 @@ module.exports = {
   getSettingsFile: SettingsFileUtil.get,
   GoalTypeEnum: GoalTypeEnum,
   LogLevelEnum: LogLevelEnum,
-
   /**
    * Initializes the SDK and parses the settingsfile
    *
@@ -3540,87 +3261,73 @@ module.exports = {
    */
   launch: function launch(sdkConfig) {
     var config = {};
-
     try {
       // validating config schema
       FunctionUtil.cloneObject(sdkConfig);
-
       if (!DataTypeUtil.isUndefined(sdkConfig.shouldTrackReturningUser) && !DataTypeUtil.isBoolean(sdkConfig.shouldTrackReturningUser)) {
         logError('shouldTrackReturningUser', 'boolean');
       } else if (!DataTypeUtil.isUndefined(sdkConfig.shouldTrackReturningUser)) {
         logInfo('shouldTrackReturningUser', 'boolean');
       }
-
       if (!DataTypeUtil.isUndefined(sdkConfig.isDevelopmentMode) && !DataTypeUtil.isBoolean(sdkConfig.isDevelopmentMode)) {
         logError('isDevelopmentMode', 'boolean');
       } else if (!DataTypeUtil.isUndefined(sdkConfig.isDevelopmentMode)) {
         logInfo('isDevelopmentMode', 'boolean');
       }
-
       if (sdkConfig.goalTypeToTrack && !objectValues(GoalTypeEnum).includes(sdkConfig.goalTypeToTrack)) {
         logError('goalTypeToTrack', 'string(REVENUE_TRACKING, CUSTOM_GOAL, ALL)');
       } else if (sdkConfig.goalTypeToTrack) {
         logInfo('goalTypeToTrack', 'string(REVENUE_TRACKING, CUSTOM_GOAL, ALL)');
       }
-
       if (sdkConfig.logging && sdkConfig.logging.level && !objectValues(LogLevelEnum).includes(sdkConfig.logging.level)) {
         logError('logLevel', 'number(1,2,3,4)');
       } else if (sdkConfig.logging && sdkConfig.logging.level) {
         logInfo('logLevel', 'number(1,2,3,4)');
       }
-
       if (sdkConfig.pollingInterval && !DataTypeUtil.isNumber(sdkConfig.pollingInterval)) {
         logError('pollingInterval', 'number(in miliiseconds)');
       } else if (sdkConfig.pollingInterval) {
         logInfo('pollingInterval', 'number(in miliiseconds)');
       }
-
       if (sdkConfig.pollingInterval && DataTypeUtil.isUndefined(sdkConfig.sdkKey)) {
         logError('sdkKey(required for polling)', 'string');
       }
-
       if (sdkConfig.pollingInterval && !DataTypeUtil.isString(sdkConfig.sdkKey)) {
         logError('sdkKey', 'string');
       }
-
       if (!DataTypeUtil.isUndefined(sdkConfig.batchEvents) && !DataTypeUtil.isObject(sdkConfig.batchEvents)) {
         logError('batchEvents', 'object');
       } else if (!DataTypeUtil.isUndefined(sdkConfig.batchEvents)) {
         logInfo('batchEvents', 'object');
       }
-
       if (!DataTypeUtil.isUndefined(sdkConfig.returnPromiseFor) && !DataTypeUtil.isObject(sdkConfig.returnPromiseFor)) {
         logError('returnPromiseFor', 'object');
       } else if (!DataTypeUtil.isUndefined(sdkConfig.returnPromiseFor)) {
         logInfo('returnPromiseFor', 'object');
       }
-
       if (!DataTypeUtil.isUndefined(sdkConfig.asyncStorageConfig) && !DataTypeUtil.isObject(sdkConfig.asyncStorageConfig)) {
         logError('asyncStorageConfig', 'object');
       } else if (!DataTypeUtil.isUndefined(sdkConfig.asyncStorageConfig)) {
         logInfo('asyncStorageConfig', 'object');
       }
-
       if (!DataTypeUtil.isUndefined(sdkConfig.integrations) && !DataTypeUtil.isObject(sdkConfig.integrations)) {
         logError('integrations', 'object');
       } else if (!DataTypeUtil.isUndefined(sdkConfig.integrations)) {
         logInfo('integrations', 'object');
       }
-
       if (!DataTypeUtil.isUndefined(sdkConfig.userStorageService) && !DataTypeUtil.isObject(sdkConfig.userStorageService)) {
         logError('userStorageService', 'object');
       } else if (!DataTypeUtil.isUndefined(sdkConfig.userStorageService)) {
         logInfo('userStorageService', 'object');
-      } // For JavaScript SDK, batching is not required and is not available
+      }
 
-
+      // For JavaScript SDK, batching is not required and is not available
       if (DataTypeUtil.isObject(sdkConfig.batchEvents) && "undefined" === 'undefined') {
         sdkConfig.batchEvents = null;
-      } // For Node.js SDK
+      }
 
-
+      // For Node.js SDK
       if (false) {}
-
       config = sdkConfig;
     } catch (err) {
       logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CONFIG_CORRUPTED, {
@@ -3628,19 +3335,18 @@ module.exports = {
         api: ApiEnum.LAUNCH
       }));
       config = {};
-    } // If DEV mode, set colorful logs to true
+    }
 
-
+    // If DEV mode, set colorful logs to true
     if (config.isDevelopmentMode) {
       logging.setLogColorMode(true);
-    } // If logging is enabled, use the logger and logLevel defined by the client
+    }
 
-
+    // If logging is enabled, use the logger and logLevel defined by the client
     if (config.logging && DataTypeUtil.isObject(config.logging)) {
       if (config.logging.haveColoredLogs !== undefined) {
         logging.setLogColorMode(config.logging.haveColoredLogs);
       }
-
       if (config.logging.logger && DataTypeUtil.isObject(config.logging.logger) && DataTypeUtil.isFunction(config.logging.logger.log)) {
         logging.setLogHandler(config.logging.logger);
         logging.setLogLevel(logging.LogLevelEnum.NOTSET);
@@ -3650,7 +3356,6 @@ module.exports = {
       } else if (config.logging.logger) {
         logError('logging.logger', 'object');
       }
-
       if (config.logging.level !== undefined) {
         logging.setLogLevel(config.logging.level);
         logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.CONFIG_LOG_LEVEL_SET, {
@@ -3658,18 +3363,19 @@ module.exports = {
           level: LogNumberLevel['_' + config.logging.level]
         }));
       }
-    } // DEBUG log for knowing whether it's DEV mode
+    }
 
-
+    // DEBUG log for knowing whether it's DEV mode
     if (config.isDevelopmentMode) {
       logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.CONFIG_DEVELOPMENT_MODE_STATUS, {
         file: file
       }));
-    } // Set logger on config Obkect, to be required later
+    }
 
+    // Set logger on config Obkect, to be required later
+    config.logger = config.logging && config.logging.logger || logger;
 
-    config.logger = config.logging && config.logging.logger || logger; // Create an instance of VWO class which exposes API methods
-
+    // Create an instance of VWO class which exposes API methods
     return new VWO(config);
   }
 };
@@ -3683,14 +3389,12 @@ module.exports = {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
-
-function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
-
-function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
-
-function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
-
+function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) { n[e] = r[e]; } return n; }
+function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0) { ; } } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
+function _arrayWithHoles(r) { if (Array.isArray(r)) return r; }
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -3707,17 +3411,16 @@ function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
  * limitations under the License.
  */
 var _require = __webpack_require__(/*! superstruct */ "./node_modules/superstruct/lib/index.es.js"),
-    validate = _require.validate,
-    number = _require.number,
-    string = _require.string,
-    _boolean = _require["boolean"],
-    array = _require.array,
-    object = _require.object,
-    optional = _require.optional,
-    union = _require.union,
-    type = _require.type,
-    record = _require.record;
-
+  validate = _require.validate,
+  number = _require.number,
+  string = _require.string,
+  _boolean = _require["boolean"],
+  array = _require.array,
+  object = _require.object,
+  optional = _require.optional,
+  union = _require.union,
+  type = _require.type,
+  record = _require.record;
 var campaignGoalSchema = type({
   id: union([number(), string()]),
   identifier: string(),
@@ -3775,15 +3478,12 @@ var settingsFileSchema = type({
   collectionPrefix: optional(string()),
   groups: optional(union([object(), record(string(), groupSchema)]))
 });
-
 var validateSettingsFile = function validateSettingsFile(settings) {
   var _validate = validate(settings, settingsFileSchema),
-      _validate2 = _slicedToArray(_validate, 1),
-      error = _validate2[0];
-
+    _validate2 = _slicedToArray(_validate, 1),
+    error = _validate2[0];
   return !error;
 };
-
 module.exports = validateSettingsFile;
 
 /***/ }),
@@ -3795,12 +3495,12 @@ module.exports = validateSettingsFile;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
+function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -3816,58 +3516,44 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var DataTypeUtil = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var EventDispatcher = __webpack_require__(/*! ../utils/EventDispatcherUtil */ "./lib/utils/EventDispatcherUtil.js");
-
 var logging = __webpack_require__(/*! ./logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var HeadersEnum = __webpack_require__(/*! ../enums/HeadersEnum */ "./lib/enums/HeadersEnum.js");
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var logger = logging.getLogger();
 var file = FileNameEnum.EventQueue;
-
-var EventQueue =
-/*#__PURE__*/
-function () {
+var EventQueue = /*#__PURE__*/function () {
   function EventQueue() {
     _classCallCheck(this, EventQueue);
-
     this.running = false;
     this.queue = [];
   }
-
   _createClass(EventQueue, [{
     key: "process",
     value: function process(config, properties, vwoInstance) {
       var _ref = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {},
-          payload = _ref.payload,
-          responseCallback = _ref.responseCallback;
-
+        payload = _ref.payload,
+        responseCallback = _ref.responseCallback;
       var customHeaders = {};
-
       if (properties && properties.visitor_ua) {
         customHeaders[HeadersEnum.USER_AGENT] = encodeURIComponent(properties.visitor_ua);
         properties.visitor_ua = customHeaders[HeadersEnum.USER_AGENT];
       }
-
       if (properties && properties.visitor_ip) {
         customHeaders[HeadersEnum.IP] = encodeURIComponent(properties.visitor_ip);
         properties.visitor_ip = customHeaders[HeadersEnum.IP];
       }
-
       if (config && config.isDevelopmentMode) {
         logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.CONFIG_DEVELOPMENT_MODE_STATUS, {
           file: file
         }));
         return;
       }
-
       this.enqueue(properties, vwoInstance, {
         payload: payload,
         responseCallback: responseCallback
@@ -3877,7 +3563,7 @@ function () {
     key: "enqueue",
     value: function enqueue(properties, vwoInstance, _ref2) {
       var payload = _ref2.payload,
-          responseCallback = _ref2.responseCallback;
+        responseCallback = _ref2.responseCallback;
       var customHeaders = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
       this.queue.push({
         eventName: properties.eventName,
@@ -3900,25 +3586,22 @@ function () {
         event: 'VWO_MASKED_PAYLOAD'
       }));
       vwoInstance.eventQueue.executeNext(properties);
-
       if (!this.running) {
         // if nothing is running, then start the engines!
         this.executeNext(properties);
       }
-
       return this;
     }
   }, {
     key: "executeNext",
     value: function executeNext(properties) {
-      this.running = false; // get the first element off the queue
+      this.running = false;
 
+      // get the first element off the queue
       if (this.queue && this.queue.length) {
         var event = this.queue.shift();
-
         if (event) {
           this.running = true;
-
           if (event.callback && DataTypeUtil.isFunction(event.callback)) {
             event.callback(properties);
           }
@@ -3926,10 +3609,8 @@ function () {
       }
     }
   }]);
-
   return EventQueue;
 }();
-
 module.exports = EventQueue;
 
 /***/ }),
@@ -3956,13 +3637,13 @@ module.exports = EventQueue;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var DataTypeUtil = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
+
 /**
  * Hooks Manager is responsible for triggering callbacks useful to the end-user based on certain lifecycle events.
  * Possible use with integrations when the user intends to send an event when a visitor is part of the experiment.
  */
-
-
 var HooksManager = {
   /**
    * Initializes with configuration from VWO Object.
@@ -3972,7 +3653,6 @@ var HooksManager = {
     var config = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
     this.callback = config.integrations && config.integrations.callback;
   },
-
   /**
    * Executes the callback
    * @param {Object} properties Properties from the callback
@@ -3994,12 +3674,12 @@ module.exports = HooksManager;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
+function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -4015,38 +3695,28 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var CampaignUtil = __webpack_require__(/*! ../utils/CampaignUtil */ "./lib/utils/CampaignUtil.js");
-
 var FunctionUtil = __webpack_require__(/*! ../utils/FunctionUtil */ "./lib/utils/FunctionUtil.js");
-
 var SettingsFileUtil = __webpack_require__(/*! ../utils/SettingsFileUtil */ "./lib/utils/SettingsFileUtil.js");
-
 var logging = __webpack_require__(/*! ./logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var validateSettingsFile = __webpack_require__(/*! ../schemas/SettingsFileSchema */ "./lib/schemas/SettingsFileSchema.js");
-
 var _require = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js"),
-    isObject = _require.isObject;
-
+  isObject = _require.isObject;
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var file = FileNameEnum.SettingsFileManager;
-
-var SettingsFileManager =
-/*#__PURE__*/
-function () {
+var SettingsFileManager = /*#__PURE__*/function () {
   // PRIVATE METHODS
+
   function SettingsFileManager(config) {
     _classCallCheck(this, SettingsFileManager);
-
     if (config) {
       if (config.settingsFile && isObject(config.settingsFile.campaigns) || config.settingsFile && !config.settingsFile.campaigns) {
         config.settingsFile.campaigns = [];
       }
-
       this._configObj = config;
       this._clonedSettingsFile = config.settingsFile ? FunctionUtil.cloneObject(config.settingsFile) : null;
     } else {
@@ -4054,41 +3724,33 @@ function () {
       this._clonedSettingsFile = null;
     }
   }
-
   _createClass(SettingsFileManager, [{
     key: "_setVariationBucketing",
     value: function _setVariationBucketing(campaign) {
       CampaignUtil.setVariationAllocation(campaign);
     } // PUBLIC METHODS
-
   }, {
     key: "isSettingsFileValid",
     value: function isSettingsFileValid() {
       if (!this._configObj || !this._clonedSettingsFile) {
         return false;
       }
-
       var isValidSettingsFile = validateSettingsFile(this._clonedSettingsFile);
-
       if (!isValidSettingsFile) {
         this._configObj.logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SETTINGS_FILE_CORRUPTED, {
           file: file
         }));
-
         return false;
       }
-
       return true;
     }
   }, {
     key: "checkAndPoll",
     value: function checkAndPoll() {
       var _this = this;
-
       if (!this._configObj.pollingInterval || !this._configObj.sdkKey) {
         return;
       }
-
       var lastSettingsFile = JSON.stringify(this._clonedSettingsFile);
       setInterval(function () {
         SettingsFileUtil.get(_this._clonedSettingsFile.accountId, _this._configObj.sdkKey).then(function (latestSettingsFile) {
@@ -4096,14 +3758,10 @@ function () {
             file: file,
             accountId: _this._clonedSettingsFile.accountId
           }));
-
           var stringifiedLatestSettingsFile = JSON.stringify(latestSettingsFile);
-
           if (stringifiedLatestSettingsFile !== lastSettingsFile) {
             lastSettingsFile = stringifiedLatestSettingsFile;
-
             _this.updateSettingsFile(latestSettingsFile);
-
             _this._configObj.logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.POLLING_SETTINGS_FILE_UPDATED, {
               file: file,
               accountId: _this._clonedSettingsFile.accountId
@@ -4121,7 +3779,6 @@ function () {
           }));
         });
       }, this._configObj.pollingInterval);
-
       this._configObj.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.POLLING_SETTINGS_FILE_REGISTERED, {
         file: file,
         pollingInterval: this._configObj.pollingInterval
@@ -4131,18 +3788,14 @@ function () {
     key: "processSettingsFile",
     value: function processSettingsFile() {
       var settingsFile = this._clonedSettingsFile;
-
       for (var i = 0; i < settingsFile.campaigns.length; i++) {
         var campaign = settingsFile.campaigns[i];
-
         this._setVariationBucketing(campaign);
       }
-
       this._configObj.logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.SETTINGS_FILE_PROCESSED, {
         file: file,
         accountId: this._clonedSettingsFile.accountId
       }));
-
       return settingsFile;
     }
     /**
@@ -4154,12 +3807,10 @@ function () {
      *
      * @return {Promise}
      */
-
   }, {
     key: "getAndUpdateSettingsFile",
     value: function getAndUpdateSettingsFile() {
       var _this2 = this;
-
       var accountId = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this._clonedSettingsFile.accountId;
       var sdkKey = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this._clonedSettingsFile.sdkKey;
       return new Promise(function (resolve, _reject) {
@@ -4167,7 +3818,6 @@ function () {
           isViaWebhook: true
         }).then(function (settings) {
           _this2.updateSettingsFile(settings);
-
           resolve(settings);
         })["catch"](function (_err) {});
       });
@@ -4176,7 +3826,6 @@ function () {
      * Update the settings-file on the instance so that latest settings could be used from next hit onwards
      * @param {Object} settings
      */
-
   }, {
     key: "updateSettingsFile",
     value: function updateSettingsFile(settings) {
@@ -4197,14 +3846,11 @@ function () {
           api: api
         }));
       }
-
       return this._clonedSettingsFile;
     }
   }]);
-
   return SettingsFileManager;
 }();
-
 module.exports = SettingsFileManager;
 
 /***/ }),
@@ -4231,29 +3877,24 @@ module.exports = SettingsFileManager;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var UrlEnum = __webpack_require__(/*! ../enums/UrlEnum */ "./lib/enums/UrlEnum.js");
-
 var _require = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js"),
-    isString = _require.isString;
-
+  isString = _require.isString;
 var UrlService = {
   init: function init() {
     var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-        collectionPrefix = _ref.collectionPrefix;
-
+      collectionPrefix = _ref.collectionPrefix;
     if (collectionPrefix && isString(collectionPrefix)) {
       UrlService.collectionPrefix = collectionPrefix;
     }
-
     return UrlService;
   },
   getBaseUrl: function getBaseUrl() {
     var baseUrl = UrlEnum.BASE_URL;
-
     if (UrlService.collectionPrefix) {
       return "".concat(baseUrl, "/").concat(UrlService.collectionPrefix);
     }
-
     return baseUrl;
   }
 };
@@ -4268,12 +3909,12 @@ module.exports = UrlService;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
+function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -4290,22 +3931,17 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  * limitations under the License.
  */
 var _require = __webpack_require__(/*! ./logging */ "./lib/services/logging/index.js"),
-    LogManager = _require.LogManager;
-
-var UsageStats =
-/*#__PURE__*/
-function () {
+  LogManager = _require.LogManager;
+var UsageStats = /*#__PURE__*/function () {
   function UsageStats() {
     _classCallCheck(this, UsageStats);
-
     this.data = {};
   }
+
   /**
    * Collect the usage stats from the params passed at the time of instantiating VWO and send them to VWO Server
    * @param {Object} config    config passed at the time of instantiation.
    */
-
-
   _createClass(UsageStats, [{
     key: "collectUsageStats",
     value: function collectUsageStats(config) {
@@ -4327,21 +3963,17 @@ function () {
      * Get the collected usage stats.
      * @returns     collected usage stats data
      */
-
   }, {
     key: "getUsageStats",
     value: function getUsageStats() {
       if (Object.keys(this.data).length > 0) {
         this.data['_l'] = 1;
       }
-
       return this.data;
     }
   }]);
-
   return UsageStats;
 }();
-
 module.exports = UsageStats;
 
 /***/ }),
@@ -4353,12 +3985,12 @@ module.exports = UsageStats;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
+function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -4375,39 +4007,30 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  * limitations under the License.
  */
 var _require = __webpack_require__(/*! ../../utils/FunctionUtil */ "./lib/utils/FunctionUtil.js"),
-    getCurrentTime = _require.getCurrentTime;
-
+  getCurrentTime = _require.getCurrentTime;
 var _require2 = __webpack_require__(/*! ../../enums/LogLevelEnum */ "./lib/enums/LogLevelEnum.js"),
-    LogLevelEnum = _require2.LogLevelEnum,
-    LogLevelInfoEnum = _require2.LogLevelInfoEnum,
-    LogLevelColorInfoEnum = _require2.LogLevelColorInfoEnum;
-
-var ConsoleLogManager =
-/*#__PURE__*/
-function () {
+  LogLevelEnum = _require2.LogLevelEnum,
+  LogLevelInfoEnum = _require2.LogLevelInfoEnum,
+  LogLevelColorInfoEnum = _require2.LogLevelColorInfoEnum;
+var ConsoleLogManager = /*#__PURE__*/function () {
   function ConsoleLogManager() {
     _classCallCheck(this, ConsoleLogManager);
-
     this.logLevel = LogLevelEnum.NOTSET;
     this.prefix = "VWO-SDK";
     this.isColoredLogEnabled = false;
   }
-
   _createClass(ConsoleLogManager, [{
     key: "log",
     value: function log(level, message) {
       if (!this.shouldLog(level)) {
         return;
       }
-
       var logMessage;
-
       if (this.isColoredLogEnabled) {
         logMessage = "".concat(this.prefix, " - ").concat(LogLevelColorInfoEnum[level], " ").concat(getCurrentTime(), " ").concat(message);
       } else {
         logMessage = "".concat(this.prefix, " - ").concat(LogLevelInfoEnum[level], " ").concat(getCurrentTime(), " ").concat(message);
       }
-
       this.consoleLog(level, [logMessage]);
     }
   }, {
@@ -4431,25 +4054,20 @@ function () {
         case LogLevelEnum.INFO:
           console.info.apply(console, logArguments);
           break;
-
         case LogLevelEnum.WARN:
           console.warn.apply(console, logArguments);
           break;
-
         case LogLevelEnum.ERROR:
           console.error.apply(console, logArguments);
           break;
-
         default:
           console.log.apply(console, logArguments);
           break;
       }
     }
   }]);
-
   return ConsoleLogManager;
 }();
-
 module.exports = ConsoleLogManager;
 
 /***/ }),
@@ -4461,12 +4079,12 @@ module.exports = ConsoleLogManager;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
-
-function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
-
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _classCallCheck(a, n) { if (!(a instanceof n)) throw new TypeError("Cannot call a class as a function"); }
+function _defineProperties(e, r) { for (var t = 0; t < r.length; t++) { var o = r[t]; o.enumerable = o.enumerable || !1, o.configurable = !0, "value" in o && (o.writable = !0), Object.defineProperty(e, _toPropertyKey(o.key), o); } }
+function _createClass(e, r, t) { return r && _defineProperties(e.prototype, r), t && _defineProperties(e, t), Object.defineProperty(e, "prototype", { writable: !1 }), e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -4495,6 +4113,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
  * Local Modifications: This library is not used as a dependency. Source code was referenced and is modified as per requirements.
  *
  */
+
 // TODO: change path
 var LogMessageEnum = {
   DEBUG_MESSAGES: __webpack_require__(/*! vwo-sdk-log-messages/src/debug-messages.json */ "./node_modules/vwo-sdk-log-messages/src/debug-messages.json"),
@@ -4502,47 +4121,35 @@ var LogMessageEnum = {
   WARNING_MESSAGES: __webpack_require__(/*! vwo-sdk-log-messages/src/warning-messages.json */ "./node_modules/vwo-sdk-log-messages/src/warning-messages.json"),
   ERROR_MESSAGES: __webpack_require__(/*! vwo-sdk-log-messages/src/error-messages.json */ "./node_modules/vwo-sdk-log-messages/src/error-messages.json")
 };
-
 var _require = __webpack_require__(/*! ../../enums/LogLevelEnum */ "./lib/enums/LogLevelEnum.js"),
-    LogLevelEnum = _require.LogLevelEnum,
-    LogNumberLevel = _require.LogNumberLevel;
-
+  LogLevelEnum = _require.LogLevelEnum,
+  LogNumberLevel = _require.LogNumberLevel;
 var LogMessageUtil = __webpack_require__(/*! ../../utils/LogMessageUtil */ "./lib/utils/LogMessageUtil.js");
-
 var ConsoleLogManager = __webpack_require__(/*! ./ConsoleLogManager */ "./lib/services/logging/ConsoleLogManager.js");
-
 var globalLogLevel = LogLevelEnum.NOTSET;
 var isColoredLogEnabled = false;
 var globalLogHandler = new ConsoleLogManager();
-
-var LogManager =
-/*#__PURE__*/
-function () {
+var LogManager = /*#__PURE__*/function () {
   function LogManager(name) {
     _classCallCheck(this, LogManager);
-
     this.name = name;
     this.isColoredLogEnabled = isColoredLogEnabled;
   }
-
   _createClass(LogManager, [{
     key: "_customLog",
     value: function _customLog(level, message) {
       if (level < globalLogLevel) {
         return;
       }
-
       globalLogHandler.log(level, message);
     }
   }, {
     key: "log",
     value: function log(level, message) {
       var disableLogs = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
-
       if (disableLogs) {
         return;
       }
-
       try {
         this._customLog(level, message);
       } catch (err) {
@@ -4570,18 +4177,14 @@ function () {
       this._customLog(LogLevelEnum.ERROR, message);
     }
   }]);
-
   return LogManager;
 }();
-
 function getLogger(name) {
   return new LogManager(name);
 }
-
 function setLogHandler(logger) {
   globalLogHandler = logger;
 }
-
 function setLogLevel(level) {
   if (level === undefined) {
     globalLogLevel = LogLevelEnum.ERROR;
@@ -4589,20 +4192,16 @@ function setLogLevel(level) {
     globalLogLevel = level;
   }
 }
-
 function getLogLevel() {
   return globalLogLevel;
 }
-
 function setLogColorMode(value) {
   isColoredLogEnabled = value;
   globalLogHandler.isColoredLogEnabled = isColoredLogEnabled;
 }
-
 function getLogColorMode() {
   return isColoredLogEnabled;
 }
-
 module.exports = {
   LogLevelEnum: LogLevelEnum,
   LogNumberLevel: LogNumberLevel,
@@ -4642,8 +4241,8 @@ module.exports = {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var logging = __webpack_require__(/*! ./LoggingManager */ "./lib/services/logging/LoggingManager.js");
 
+var logging = __webpack_require__(/*! ./LoggingManager */ "./lib/services/logging/LoggingManager.js");
 module.exports = logging;
 
 /***/ }),
@@ -4670,23 +4269,17 @@ module.exports = logging;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var ValidateUtil = __webpack_require__(/*! ./ValidateUtil */ "./lib/utils/ValidateUtil.js");
-
 var VWOFeatureFlags = __webpack_require__(/*! ./VWOFeatureFlags */ "./lib/utils/VWOFeatureFlags.js");
-
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
-
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var GoalTypeEnum = __webpack_require__(/*! ../enums/GoalTypeEnum */ "./lib/enums/GoalTypeEnum.js");
-
 var CampaignTypeEnum = __webpack_require__(/*! ../enums/CampaignTypeEnum */ "./lib/enums/CampaignTypeEnum.js");
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var logger = logging.getLogger();
 var CampaignUtil = {
   /**
@@ -4700,11 +4293,9 @@ var CampaignUtil = {
     if (!variationWeight || variationWeight === 0) {
       return 0;
     }
-
     var startRange = Math.ceil(variationWeight * 100);
     return Math.min(startRange, Constants.MAX_TRAFFIC_VALUE);
   },
-
   /**
    * Get the campaign on the basis of campaign id
    *
@@ -4715,17 +4306,14 @@ var CampaignUtil = {
    */
   getCampaignBasedOnId: function getCampaignBasedOnId(settingsFile, campaignId) {
     var campaign;
-
     for (var i = 0; i < settingsFile.campaigns.length; i++) {
       if (parseInt(settingsFile.campaigns[i].id, 10) === parseInt(campaignId, 10)) {
         campaign = settingsFile.campaigns[i];
         break;
       }
     }
-
     return campaign;
   },
-
   /**
    * It extracts the weights from all the variations inside the campaign
       and scales them so that the total sum of eligible variations' weights become 100%
@@ -4735,7 +4323,6 @@ var CampaignUtil = {
     var totalWeight = variations.reduce(function (acc, variation) {
       return acc + variation.weight;
     }, 0);
-
     if (!totalWeight) {
       var weight = 100 / variations.length;
       variations.forEach(function (variation) {
@@ -4749,17 +4336,14 @@ var CampaignUtil = {
   },
   getCampaign: function getCampaign(settingsFile, campaignKey) {
     var campaign;
-
     for (var i = 0; i < settingsFile.campaigns.length; i++) {
       if (settingsFile.campaigns[i].key === campaignKey) {
         campaign = settingsFile.campaigns[i];
         break;
       }
     }
-
     return campaign;
   },
-
   /**
    * Gets campaigns for corresponding campaignKeys
    *
@@ -4772,7 +4356,6 @@ var CampaignUtil = {
     var campaigns = [];
     campaignKeys.forEach(function (key) {
       var campaign = CampaignUtil.getCampaign(settingsFile, key);
-
       if (campaign) {
         campaigns.push(campaign);
       } else {
@@ -4783,7 +4366,6 @@ var CampaignUtil = {
     });
     return campaigns;
   },
-
   /**
    * Gets campaigns which have the goalIdentifier present
    *
@@ -4797,35 +4379,29 @@ var CampaignUtil = {
     var campaigns = [];
     settingsFile.campaigns.forEach(function (campaign) {
       var goal = CampaignUtil.getCampaignGoal(settingsFile, campaign.key, goalIdentifier);
-
       if (goal && (goalTypeToTrack === GoalTypeEnum.ALL || goal.type === goalTypeToTrack)) {
         campaigns.push(campaign);
       }
     });
-
     if (!campaigns.length) {
       logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.CAMPAIGN_NOT_FOUND_FOR_GOAL, {
         file: FileNameEnum.CampaignUtil,
         goalIdentifier: goalIdentifier
       }));
     }
-
     return campaigns;
   },
   getCampaignStatus: function getCampaignStatus(settingsFile, campaignKey) {
     var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
-
     if (!campaign || !campaign.status) {
       // log error
       return '';
     }
-
     return campaign.status.toLowerCase();
   },
   isCampaignRunning: function isCampaignRunning(settingsFile, campaignKey) {
     return CampaignUtil.getCampaignStatus(settingsFile, campaignKey) === 'running';
   },
-
   /**
    * Validates the campaign
    *
@@ -4836,7 +4412,6 @@ var CampaignUtil = {
   validateCampaign: function validateCampaign(campaign) {
     return ValidateUtil.isValidValue(campaign) && campaign.variations && Object.keys(campaign.variations).length > 0;
   },
-
   /**
    * Assigns the buckets to the Variations of the campaign
    * depending on the traffic allocation
@@ -4846,7 +4421,6 @@ var CampaignUtil = {
   setVariationAllocation: function setVariationAllocation(campaign) {
     var numberOfVariations = campaign.variations.length;
     var stepFactor = 0;
-
     for (var i = 0, currentAllocation = 0; i < numberOfVariations; i++) {
       var variation = campaign.variations[i];
       stepFactor = CampaignUtil.assignRangeValues(variation, currentAllocation);
@@ -4861,7 +4435,6 @@ var CampaignUtil = {
       }));
     }
   },
-
   /**
    * Assign range allocation to the campaigns in the list to decide which campaign to choose out of the Mutually Exclusive group
    *
@@ -4869,7 +4442,6 @@ var CampaignUtil = {
    */
   setCampaignAllocation: function setCampaignAllocation(campaigns) {
     var stepFactor = 0;
-
     for (var i = 0, currentAllocation = 0; i < campaigns.length; i++) {
       var campaign = campaigns[i];
       stepFactor = CampaignUtil.assignRangeValues(campaign, currentAllocation);
@@ -4879,7 +4451,6 @@ var CampaignUtil = {
   assignRangeValues: function assignRangeValues(variation, currentAllocation) {
     var stepFactor;
     stepFactor = CampaignUtil._getVariationBucketRange(variation.weight);
-
     if (stepFactor) {
       variation.startVariationAllocation = currentAllocation + 1;
       variation.endVariationAllocation = currentAllocation + stepFactor;
@@ -4887,95 +4458,75 @@ var CampaignUtil = {
       variation.startVariationAllocation = -1;
       variation.endVariationAllocation = -1;
     }
-
     return stepFactor;
   },
   getCampaignGoal: function getCampaignGoal(settingsFile, campaignKey, goalIdentifier) {
     var desiredCampaignGoal = null;
-
     if (!settingsFile || !campaignKey || !goalIdentifier) {
       return desiredCampaignGoal;
     }
-
     var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
-
     if (!campaign) {
       return desiredCampaignGoal;
     }
-
     for (var i = 0; i < campaign.goals.length; i++) {
       var goal = campaign.goals[i];
-
       if (goal.identifier === goalIdentifier) {
         desiredCampaignGoal = goal;
         break;
       }
     }
-
     return desiredCampaignGoal;
   },
   getCampaignVariation: function getCampaignVariation(settingsFile, campaignKey, variationName) {
     var desiredVariation = null;
-
     if (!settingsFile || !campaignKey || !variationName) {
       return desiredVariation;
     }
-
     var campaign = CampaignUtil.getCampaign(settingsFile, campaignKey);
-
     if (!campaign) {
       return desiredVariation;
     }
-
     for (var i = 0; i < campaign.variations.length; i++) {
       var variation = campaign.variations[i];
-
       if (variation.name === variationName) {
         desiredVariation = variation;
         break;
       }
     }
-
     return desiredVariation;
   },
   getControlForCampaign: function getControlForCampaign(campaign) {
     var control = {};
-
     if (!campaign || !campaign.variations) {
       return control;
     }
-
     for (var i = 0; i < campaign.variations.length; i++) {
       if (campaign.variations[i].id === 1) {
         control = campaign.variations[i];
         break;
       }
     }
-
     return control;
   },
   isFeatureTestCampaign: function isFeatureTestCampaign(campaign) {
     if (campaign && campaign.type === CampaignTypeEnum.FEATURE_TEST) {
       return true;
     }
-
     return false;
   },
   isFeatureRolloutCampaign: function isFeatureRolloutCampaign(campaign) {
     if (campaign && campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT) {
       return true;
     }
-
     return false;
   },
   isAbCampaign: function isAbCampaign(campaign) {
     if (campaign && campaign.type === CampaignTypeEnum.AB) {
       return true;
     }
-
     return false;
   },
-
   /**
    * Check if the campaign is a part of mutually exclusive group
    *
@@ -4991,10 +4542,8 @@ var CampaignUtil = {
         groupName: settingsFile.groups[settingsFile.campaignGroups[campaignId]].name
       };
     }
-
     return {};
   },
-
   /**
    * Get the list of campaigns on the basis of their id
    *
@@ -5005,20 +4554,16 @@ var CampaignUtil = {
    */
   getGroupCampaigns: function getGroupCampaigns(settingsFile, groupId) {
     var campaigns = [];
-
     if (Object.prototype.hasOwnProperty.call(settingsFile.groups, groupId)) {
       settingsFile.groups[groupId].campaigns.forEach(function (campaignId) {
         var campaign = CampaignUtil.getCampaignBasedOnId(settingsFile, campaignId);
-
         if (campaign) {
           campaigns.push(campaign);
         }
       });
     }
-
     return campaigns;
   },
-
   /**
    * Decide the Seed for murmurhash to bucket user.
    * @param {string} userId
@@ -5031,10 +4576,8 @@ var CampaignUtil = {
     if (groupId) {
       return "".concat(groupId, "_").concat(userId);
     }
-
     var isNB = VWOFeatureFlags.getAll().isNB;
     var isNBv2 = VWOFeatureFlags.getAll().isNBv2;
-
     if (isNB || isNBv2 || campaign && campaign.isBucketingSeedEnabled) {
       return "".concat(campaign.id, "_").concat(userId);
     } else {
@@ -5068,6 +4611,7 @@ module.exports = CampaignUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var DataTypeUtil = {
   _toStringValue: function _toStringValue(val) {
     return Object.prototype.toString.call(val);
@@ -5091,7 +4635,8 @@ var DataTypeUtil = {
     return DataTypeUtil._toStringValue(val) === '[object Promise]';
   },
   isUndefined: function isUndefined(val) {
-    return DataTypeUtil._toStringValue(val) === '[object Undefined]' || // A third-party library sometimes overrides and returns [object Window]
+    return DataTypeUtil._toStringValue(val) === '[object Undefined]' ||
+    // A third-party library sometimes overrides and returns [object Window]
     // therefore, adding a fallback as well
     typeof val === 'undefined';
   },
@@ -5128,41 +4673,26 @@ module.exports = DataTypeUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var VariationDecider = __webpack_require__(/*! ../core/VariationDecider */ "./lib/core/VariationDecider.js");
-
 var BucketingService = __webpack_require__(/*! ../core/BucketingService */ "./lib/core/BucketingService.js");
-
 var CampaignUtil = __webpack_require__(/*! ./CampaignUtil */ "./lib/utils/CampaignUtil.js");
-
 var DataTypeUtil = __webpack_require__(/*! ./DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var FunctionUtil = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUtil.js");
-
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var StatusEnum = __webpack_require__(/*! ../enums/StatusEnum */ "./lib/enums/StatusEnum.js");
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var logger = logging.getLogger();
-
 var SegmentEvaluator = __webpack_require__(/*! ../core/SegmentEvaluator */ "./lib/core/SegmentEvaluator.js");
-
 var HooksManager = __webpack_require__(/*! ../services/HooksManager */ "./lib/services/HooksManager.js");
-
 var HooksEnum = __webpack_require__(/*! ../enums/HooksEnum */ "./lib/enums/HooksEnum.js");
-
 var UuidUtil = __webpack_require__(/*! ./UuidUtil */ "./lib/utils/UuidUtil.js");
-
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
-
 var CampaignTypeEnum = __webpack_require__(/*! ../enums/CampaignTypeEnum */ "./lib/enums/CampaignTypeEnum.js");
-
 var ApiEnum = __webpack_require__(/*! ../enums/ApiEnum */ "./lib/enums/ApiEnum.js");
-
 var RandomAlgo = 1;
 var file = FileNameEnum.DecisionUtil;
 var SegmentationTypeEnum = {
@@ -5171,7 +4701,6 @@ var SegmentationTypeEnum = {
 };
 var DecisionUtil = {
   // PUBLIC METHODS
-
   /**
    *  1. Checks if there is a variation stored in userStorage, returns it
    *  2. If Whitelisting is applicable, evaluate it, if any eligible variation is found, store it in User Storage service and return, otherwise skip it.
@@ -5228,24 +4757,23 @@ var DecisionUtil = {
       variationTargetingVariables: variationTargetingVariables,
       // VWO generated UUID based on passed UserId and Account ID
       vwoUserId: vwoUserId
-    }; // check if the campaign is a part of group
+    };
 
+    // check if the campaign is a part of group
     var _CampaignUtil$isPartO = CampaignUtil.isPartOfGroup(settingsFile, campaign.id),
-        groupId = _CampaignUtil$isPartO.groupId,
-        groupName = _CampaignUtil$isPartO.groupName;
-
+      groupId = _CampaignUtil$isPartO.groupId,
+      groupName = _CampaignUtil$isPartO.groupName;
     if (groupId) {
       // append groupId and groupName, if campaign is a part of group
       decision['groupId'] = groupId;
       decision['groupName'] = groupName;
     }
-
     variationTargetingVariables = Object.assign({}, variationTargetingVariables, {
       _vwoUserId: campaign.isUserListEnabled ? vwoUserId : userId
-    }); // check if tbe campaign satisfies the whitelisting before checking for the group
+    });
 
+    // check if tbe campaign satisfies the whitelisting before checking for the group
     var whitelistedVariation = DecisionUtil._checkForWhitelisting(config, campaign, campaignKey, userId, variationTargetingVariables, decision);
-
     if (whitelistedVariation) {
       if (DataTypeUtil.isPromise(whitelistedVariation)) {
         return whitelistedVariation.then(function (data) {
@@ -5256,11 +4784,12 @@ var DecisionUtil = {
       } else {
         return whitelistedVariation;
       }
-    } // check if the campaign is present in the storage before checking for the group
+    }
 
+    // check if the campaign is present in the storage before checking for the group
 
-    var storedVariation; // check if asyncStorage, if yes then synchronously get the data and return promise
-
+    var storedVariation;
+    // check if asyncStorage, if yes then synchronously get the data and return promise
     if (config.asyncStorageConfig) {
       return new Promise(function (resolve) {
         return DecisionUtil._checkForUserStorage(config, settingsFile, campaign, campaignKey, userId, userStorageData, isTrackUserAPI, decision).then(function (response) {
@@ -5279,11 +4808,9 @@ var DecisionUtil = {
     } else {
       storedVariation = DecisionUtil._checkForUserStorage(config, settingsFile, campaign, campaignKey, userId, userStorageData, isTrackUserAPI, decision);
     }
-
     if (storedVariation) {
       return storedVariation;
     }
-
     return DecisionUtil.evaluateAndGetVariationWithoutStorage(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, isTrackUserAPI, newGoalIdentifier, decision, groupId, groupName);
   },
   evaluateAndGetVariationWithoutStorage: function evaluateAndGetVariationWithoutStorage(config, settingsFile, campaign, campaignKey, userId, customVariables, variationTargetingVariables, userStorageData, metaData, isTrackUserAPI, newGoalIdentifier, decision, groupId, groupName) {
@@ -5291,20 +4818,18 @@ var DecisionUtil = {
     if (!(DecisionUtil._checkForPreSegmentation(campaign, campaignKey, userId, customVariables, decision) && BucketingService.isUserPartOfCampaign(userId, campaign, true))) {
       return {};
     }
-
     if (groupId) {
       // mutually exclusive group exists
+
       // get the list of the all the campaigns in a group
       var campaignList = CampaignUtil.getGroupCampaigns(settingsFile, groupId);
-
       if (campaignList.length === 0) {
         // return if no campaigns are active in a group
         return {};
-      } // checking other campaigns for whitelisting and user storage.
+      }
 
-
+      // checking other campaigns for whitelisting and user storage.
       var isWhitelistedOrStoredVariation = DecisionUtil._checkForStorageAndWhitelisting(config, settingsFile, groupName, campaignList, campaign, userId, userStorageData, variationTargetingVariables, isTrackUserAPI);
-
       if (isWhitelistedOrStoredVariation) {
         // other campaigns satisfy the whitelisting or storage, therfore returning
         logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.MEG_CALLED_CAMPAIGN_NOT_WINNER, {
@@ -5313,25 +4838,21 @@ var DecisionUtil = {
           file: file,
           campaignKey: campaignKey
         }));
-
         if (DataTypeUtil.isPromise(isWhitelistedOrStoredVariation)) {
           return new Promise(function (resolve) {
             resolve(Object.assign({}));
           });
         }
-
         return {};
-      } // none of the group campaigns satisfy whitelisting or user storage
+      }
+
+      // none of the group campaigns satisfy whitelisting or user storage
       // check each campaign for pre-segmentation and traffic allocation.
-
-
       var inEligibleCampaignKeys = '';
       var eligibleCampaignKeys = '';
-
       var _DecisionUtil$getElig = DecisionUtil.getEligbleCampaigns(campaignList, userId, customVariables),
-          eligibleCampaigns = _DecisionUtil$getElig.eligibleCampaigns,
-          inEligibleCampaigns = _DecisionUtil$getElig.inEligibleCampaigns;
-
+        eligibleCampaigns = _DecisionUtil$getElig.eligibleCampaigns,
+        inEligibleCampaigns = _DecisionUtil$getElig.inEligibleCampaigns;
       inEligibleCampaigns.forEach(function (campaign) {
         inEligibleCampaignKeys = inEligibleCampaignKeys + campaign.key + ',';
       });
@@ -5351,10 +4872,10 @@ var DecisionUtil = {
         file: file,
         noOfEligibleCampaigns: eligibleCampaigns.length,
         noOfGroupCampaigns: inEligibleCampaigns.length + eligibleCampaigns.length
-      })); // Whether normalised/random implementation has to be done or advanced
+      }));
 
+      // Whether normalised/random implementation has to be done or advanced
       var megAlgoNumber = typeof settingsFile.groups[groupId].et !== 'undefined' ? settingsFile.groups[groupId].et : RandomAlgo;
-
       if (eligibleCampaigns.length === 1) {
         // if the called campaign is the only winner.
         return DecisionUtil.evaluateTrafficAndGetVariation(config, eligibleCampaigns[0], eligibleCampaigns[0].key, userId, metaData, newGoalIdentifier, decision);
@@ -5373,6 +4894,7 @@ var DecisionUtil = {
     }
   },
   // PRIVATE METHODS
+
   _evaluateWhitelisting: function _evaluateWhitelisting(campaign, campaignKey, userId, variationTargetingVariables) {
     var disableLogs = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : false;
     var whitelistedVariation;
@@ -5388,14 +4910,12 @@ var DecisionUtil = {
         }), disableLogs);
         return;
       }
-
       if (DataTypeUtil.isObject(variation.segments) && SegmentEvaluator(variation.segments, variationTargetingVariables, campaignKey, userId, variation.name)) {
         status = StatusEnum.PASSED;
         targetedVariations.push(FunctionUtil.cloneObject(variation));
       } else {
         status = StatusEnum.FAILED;
       }
-
       logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.SEGMENTATION_STATUS, {
         campaignKey: campaignKey,
         userId: userId,
@@ -5406,20 +4926,16 @@ var DecisionUtil = {
         variation: campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT && status === StatusEnum.PASSED ? 'and becomes part of the rollout' : "for ".concat(variation.name)
       }), disableLogs);
     });
-
     if (targetedVariations.length > 1) {
       CampaignUtil.scaleVariationWeights(targetedVariations);
-
       for (var i = 0, currentAllocation = 0, stepFactor = 0; i < targetedVariations.length; i++) {
         stepFactor = CampaignUtil.assignRangeValues(targetedVariations[i], currentAllocation);
         currentAllocation += stepFactor;
       }
-
       whitelistedVariation = BucketingService._getVariation(targetedVariations, BucketingService.calculateBucketValue(CampaignUtil.getBucketingSeed(userId, campaign)));
     } else {
       whitelistedVariation = targetedVariations[0];
     }
-
     if (whitelistedVariation) {
       return {
         variation: whitelistedVariation,
@@ -5428,7 +4944,6 @@ var DecisionUtil = {
       };
     }
   },
-
   /**
    * Get the User Variation mapping by calling get method of UserStorageService being provided
    *
@@ -5445,14 +4960,12 @@ var DecisionUtil = {
       campaignKey: campaignKey,
       goalIdentifier: null
     };
-
     if (!config.userStorageService) {
       logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.USER_STORAGE_SERVICE_NOT_CONFIGURED, {
         file: file
       }), disableLogs);
       return userStorageMap;
     }
-
     if (config.asyncStorageConfig) {
       try {
         return config.userStorageService.get(userId, campaignKey).then(function (data) {
@@ -5478,8 +4991,9 @@ var DecisionUtil = {
       }
     } else {
       try {
-        var data = config.userStorageService.get(userId, campaignKey) || {}; // if data found
+        var data = config.userStorageService.get(userId, campaignKey) || {};
 
+        // if data found
         logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.GETTING_DATA_USER_STORAGE_SERVICE, {
           file: file,
           userId: userId,
@@ -5496,7 +5010,6 @@ var DecisionUtil = {
       }
     }
   },
-
   /**
    * If UserStorageService is provided and variation was stored, save the assigned variation
    *
@@ -5508,29 +5021,24 @@ var DecisionUtil = {
    */
   _saveUserData: function _saveUserData(config, campaign, variationName, userId, metaData, goalIdentifier) {
     var isSaved = false;
-
     if (!config.userStorageService) {
       logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.USER_STORAGE_SERVICE_NOT_CONFIGURED, {
         file: file
       }));
       return isSaved;
     }
-
     try {
       var properties = {
         userId: userId,
         variationName: variationName,
         campaignKey: campaign.key
       };
-
       if (!DataTypeUtil.isUndefined(goalIdentifier)) {
         properties.goalIdentifier = goalIdentifier;
       }
-
       if (!DataTypeUtil.isUndefined(metaData)) {
         properties.metaData = metaData;
       }
-
       config.userStorageService.set(properties);
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SETTING_DATA_USER_STORAGE_SERVICE, {
         file: file,
@@ -5546,10 +5054,8 @@ var DecisionUtil = {
       }));
       isSaved = false;
     }
-
     return isSaved;
   },
-
   /**
    * Evaluate the campaign for whitelisting and store
    * This method would be run only for MEG campaigns
@@ -5570,13 +5076,11 @@ var DecisionUtil = {
     campaignList.some(function (groupCampaign) {
       if (groupCampaign.id === calledCampaign.id) {
         return;
-      } // create a local copy of the campaigns
+      }
+      // create a local copy of the campaigns
       // groupCampaign = FunctionUtil.cloneObject(groupCampaign);
       // checking other campaigns for whitelisting or user storage.
-
-
       var whitelistedVariation = DecisionUtil._checkForWhitelisting(config, groupCampaign, groupCampaign.key, userId, variationTargetingVariables);
-
       if (whitelistedVariation) {
         if (DataTypeUtil.isPromise(whitelistedVariation)) {
           return whitelistedVariation.then(function (data) {
@@ -5605,9 +5109,7 @@ var DecisionUtil = {
           return true;
         }
       }
-
       var storedVariation = DecisionUtil._checkForUserStorage(config, settingsFile, groupCampaign, groupCampaign.key, userId, userStorageData, isTrackUserAPI);
-
       if (storedVariation && DataTypeUtil.isPromise(storedVariation)) {
         otherCampaignWinner = true;
         logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE, {
@@ -5616,13 +5118,12 @@ var DecisionUtil = {
           groupName: groupName,
           userId: userId,
           type: 'user storage'
-        })); // return true;
-
+        }));
+        // return true;
         return new Promise(function (resolve) {
           resolve(true);
         });
       }
-
       if (storedVariation && DataTypeUtil.isObject(storedVariation) && Object.keys(storedVariation).length > 0) {
         // other campaign satisfy the user storage
         otherCampaignWinner = true;
@@ -5636,16 +5137,13 @@ var DecisionUtil = {
         return true;
       }
     });
-
     if (config.asyncStorageConfig) {
       return new Promise(function (resolve) {
         resolve(otherCampaignWinner);
       });
     }
-
     return otherCampaignWinner;
   },
-
   /**
    * Evaluate a campaign for pre-segmentation.
    *
@@ -5659,7 +5157,6 @@ var DecisionUtil = {
    */
   _checkForPreSegmentation: function _checkForPreSegmentation(campaign, campaignKey, userId, customVariables, decision) {
     var status;
-
     if (DataTypeUtil.isObject(campaign.segments) && !Object.keys(campaign.segments).length) {
       logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.SEGMENTATION_SKIPPED, {
         campaignKey: campaignKey,
@@ -5669,13 +5166,11 @@ var DecisionUtil = {
       return true;
     } else {
       var preSegmentationResult = SegmentEvaluator(campaign.segments, customVariables, campaignKey, userId, !decision);
-
       if (!preSegmentationResult) {
         status = StatusEnum.FAILED;
       } else {
         status = StatusEnum.PASSED;
       }
-
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SEGMENTATION_STATUS, {
         campaignKey: campaignKey,
         userId: userId,
@@ -5685,7 +5180,6 @@ var DecisionUtil = {
         segmentationType: SegmentationTypeEnum.PRE_SEGMENTATION,
         variation: ''
       }), !decision);
-
       if (status === StatusEnum.FAILED) {
         return false;
       } else {
@@ -5693,7 +5187,6 @@ var DecisionUtil = {
       }
     }
   },
-
   /**
    * Check if user is eligible for the camapign based on traffic percentage and assign variation.
    * @param {Object} config
@@ -5706,10 +5199,9 @@ var DecisionUtil = {
    * @returns {Object} variation assigned to the user
    */
   evaluateTrafficAndGetVariation: function evaluateTrafficAndGetVariation(config, campaign, campaignKey, userId, metaData, newGoalIdentifier, decision) {
-    var variation, variationName, variationId; // Use our core's VariationDecider utility to get the deterministic variation assigned to the userId for that campaign
-
+    var variation, variationName, variationId;
+    // Use our core's VariationDecider utility to get the deterministic variation assigned to the userId for that campaign
     var _VariationDecider$get = VariationDecider.getVariationAllotted(userId, campaign, config.settingsFile.accountId);
-
     variation = _VariationDecider$get.variation;
     variationName = _VariationDecider$get.variationName;
     variationId = _VariationDecider$get.variationId;
@@ -5718,14 +5210,15 @@ var DecisionUtil = {
       campaignKey: campaignKey,
       userId: userId,
       status: variationName ? "got variation:".concat(variationName) : 'did not get any variation'
-    })); // Check if variation-name has been assigned to the userId. If not, return no variation
+    }));
 
+    // Check if variation-name has been assigned to the userId. If not, return no variation
     if (variationName) {
       // If userStorageService is provided, look into it for the saved variation for the campaign and userId
       DecisionUtil._saveUserData(config, campaign, variationName, userId, metaData, newGoalIdentifier);
-    } // Executing the callback when SDK makes the decision
+    }
 
-
+    // Executing the callback when SDK makes the decision
     HooksManager.execute(Object.assign({
       fromUserStorageService: false,
       isUserWhitelisted: false
@@ -5741,7 +5234,6 @@ var DecisionUtil = {
       variationId: variationId
     };
   },
-
   /**
    * Evaluate a campaign for whitelisting
    *
@@ -5756,12 +5248,9 @@ var DecisionUtil = {
   _checkForWhitelisting: function _checkForWhitelisting(config, campaign, campaignKey, userId, variationTargetingVariables, decision) {
     var status;
     var variationName, variationId;
-
     if (campaign.isForcedVariationEnabled) {
       var whitelistingResult = DecisionUtil._evaluateWhitelisting(campaign, campaignKey, userId, variationTargetingVariables, !decision);
-
       var variationString;
-
       if (whitelistingResult) {
         status = StatusEnum.PASSED;
         variationString = whitelistingResult.variationName;
@@ -5769,7 +5258,6 @@ var DecisionUtil = {
         status = StatusEnum.FAILED;
         variationString = '';
       }
-
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.SEGMENTATION_STATUS, {
         campaignKey: campaignKey,
         userId: userId,
@@ -5779,11 +5267,10 @@ var DecisionUtil = {
         segmentationType: SegmentationTypeEnum.WHITELISTING,
         variation: campaign.type === CampaignTypeEnum.FEATURE_ROLLOUT ? '' : "for variation: ".concat(variationString)
       }), !decision);
-
       if (whitelistingResult) {
         variationName = whitelistingResult.variationName;
-        variationId = whitelistingResult.variationId; // Executing the callback when SDK has made a decision in case of whitelisting
-
+        variationId = whitelistingResult.variationId;
+        // Executing the callback when SDK has made a decision in case of whitelisting
         if (decision) {
           HooksManager.execute(Object.assign({
             fromUserStorageService: false,
@@ -5795,13 +5282,11 @@ var DecisionUtil = {
             variationId: variationId
           }, decision));
         }
-
         if (config.asyncStorageConfig) {
           return new Promise(function (resolve) {
             return resolve(whitelistingResult);
           });
         }
-
         return whitelistingResult;
       }
     } else {
@@ -5812,7 +5297,6 @@ var DecisionUtil = {
       }), !decision);
     }
   },
-
   /**
    * Check if the variation is present in the user storage
    *
@@ -5829,7 +5313,6 @@ var DecisionUtil = {
    */
   _checkForUserStorage: function _checkForUserStorage(config, settingsFile, campaign, campaignKey, userId, userStorageData, isTrackUserAPI, decision) {
     var userData;
-
     if (config.asyncStorageConfig) {
       return DecisionUtil._getStoredUserData(config, userId, campaignKey, userStorageData, !decision).then(function (userData) {
         userData = userData || {
@@ -5845,9 +5328,8 @@ var DecisionUtil = {
   },
   _processAfterGettingFromStorage: function _processAfterGettingFromStorage(config, settingsFile, campaign, campaignKey, userId, isTrackUserAPI, decision, userData) {
     var variationName = userData.variationName,
-        goalIdentifier = userData.goalIdentifier;
+      goalIdentifier = userData.goalIdentifier;
     var storedVariation;
-
     if (userData && userData.campaignKey && variationName) {
       storedVariation = CampaignUtil.getCampaignVariation(settingsFile, campaignKey, variationName);
     } else {
@@ -5858,9 +5340,9 @@ var DecisionUtil = {
         userId: userId
       }), !decision);
     }
+    var variationId;
 
-    var variationId; // If stored variation is found, simply return the same
-
+    // If stored variation is found, simply return the same
     if (storedVariation) {
       variationName = storedVariation.name;
       variationId = storedVariation.id;
@@ -5869,8 +5351,9 @@ var DecisionUtil = {
         campaignKey: campaignKey,
         userId: userId,
         variationName: variationName
-      }), !decision); // Executing the callback when SDK gets the decision from user storage service
+      }), !decision);
 
+      // Executing the callback when SDK gets the decision from user storage service
       if (decision) {
         HooksManager.execute(Object.assign({
           fromUserStorageService: !!variationName,
@@ -5882,7 +5365,6 @@ var DecisionUtil = {
           variationId: variationId
         }, decision));
       }
-
       return {
         variation: storedVariation,
         variationName: variationName,
@@ -5906,7 +5388,6 @@ var DecisionUtil = {
       return {};
     }
   },
-
   /**
    * Evaluate the list of campaigns for pre-segmentation and campaign traffic allocation and assign variation to the user.
    * This method will be used for MEG campaigns
@@ -5925,10 +5406,9 @@ var DecisionUtil = {
     var inEligibleCampaigns = [];
     campaignList.forEach(function (groupCampaign) {
       var isPartOfCampaign = DecisionUtil._checkForPreSegmentation(groupCampaign, groupCampaign.key, userId, customVariables) && BucketingService.isUserPartOfCampaign(userId, groupCampaign, true);
-
       if (isPartOfCampaign) {
-        groupCampaign = FunctionUtil.cloneObject(groupCampaign); // campaign satisfies the pre-segmentation
-
+        groupCampaign = FunctionUtil.cloneObject(groupCampaign);
+        // campaign satisfies the pre-segmentation
         eligibleCampaigns.push(groupCampaign);
       } else {
         inEligibleCampaigns.push(groupCampaign);
@@ -5939,7 +5419,6 @@ var DecisionUtil = {
       inEligibleCampaigns: inEligibleCampaigns
     };
   },
-
   /**
    * Equally distribute the traffic of campaigns and assign a winner campaign by murmur hash.
    *
@@ -5957,19 +5436,17 @@ var DecisionUtil = {
     // normalise the weights of all the shortlisted campaigns
     shortlistedCampaigns.forEach(function (campaign) {
       campaign.weight = Math.floor(100 / shortlistedCampaigns.length);
-    }); // re-distribute the traffic for each camapign
+    });
 
+    // re-distribute the traffic for each camapign
     CampaignUtil.setCampaignAllocation(shortlistedCampaigns);
-
     var winnerCampaign = BucketingService._getVariation(shortlistedCampaigns, BucketingService.calculateBucketValue(CampaignUtil.getBucketingSeed(userId, undefined, groupId)));
-
     logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.MEG_GOT_WINNER_CAMPAIGN, {
       userId: userId,
       groupName: groupName,
       file: file,
       campaignKey: winnerCampaign.key
     }));
-
     if (winnerCampaign.id === calledCampaign.id) {
       // if called campaign is the winner campaign, get the variation for the campaign
       return DecisionUtil.evaluateTrafficAndGetVariation(config, winnerCampaign, winnerCampaign.key, userId, metaData, newGoalIdentifier, decision);
@@ -5984,7 +5461,6 @@ var DecisionUtil = {
       return {};
     }
   },
-
   /** Assign the winner campaign by checking priority order and/or weightage distribution
    * @param {Object} config
    * @param {Object} settingsFile
@@ -6000,10 +5476,8 @@ var DecisionUtil = {
   _advancedAlgoFindWinningCampaign: function _advancedAlgoFindWinningCampaign(config, settingsFile, calledCampaign, shortlistedCampaigns, userId, groupName, groupId, metaData, newGoalIdentifier, decision) {
     var winnerCampaign = null;
     var found = false; // flag to check whether winnerCampaign has been found or not and helps to break from the outer loop
-
     var priorityOrder = typeof settingsFile.groups[groupId].p !== 'undefined' ? settingsFile.groups[groupId].p : {};
     var wt = typeof settingsFile.groups[groupId].wt !== 'undefined' ? settingsFile.groups[groupId].wt : {};
-
     for (var i = 0; i < priorityOrder.length; i++) {
       for (var j = 0; j < shortlistedCampaigns.length; j++) {
         if (shortlistedCampaigns[j].id === priorityOrder[i]) {
@@ -6012,18 +5486,16 @@ var DecisionUtil = {
           break;
         }
       }
-
       if (found === true) break;
-    } // If winnerCampaign not found through Priority, then go for weighted Random distribution and for that,
+    }
+
+    // If winnerCampaign not found through Priority, then go for weighted Random distribution and for that,
     // Store the list of campaigns (participatingCampaigns) out of shortlistedCampaigns and their corresponding weights present in weightage distribution array (wt)
-
-
     if (winnerCampaign === null) {
-      var participatingCampaignList = []; // iterate over shortlisted campaigns and add weights from the weight array
-
+      var participatingCampaignList = [];
+      // iterate over shortlisted campaigns and add weights from the weight array
       for (var _i = 0; _i < shortlistedCampaigns.length; _i++) {
         var campaignId = shortlistedCampaigns[_i].id;
-
         if (typeof wt[campaignId] !== 'undefined') {
           var clonedCampaign = FunctionUtil.cloneObject(shortlistedCampaigns[_i]);
           clonedCampaign.weight = wt[campaignId];
@@ -6036,11 +5508,9 @@ var DecisionUtil = {
        3. Get the winnerCampaign by checking the Start and End Bucket Allocations of each campaign
       */
 
-
       CampaignUtil.setCampaignAllocation(participatingCampaignList);
       winnerCampaign = BucketingService._getVariation(participatingCampaignList, BucketingService.calculateBucketValue(CampaignUtil.getBucketingSeed(userId, undefined, groupId)));
     }
-
     if (winnerCampaign != null) {
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.MEG_GOT_WINNER_CAMPAIGN, {
         userId: userId,
@@ -6048,10 +5518,9 @@ var DecisionUtil = {
         file: file,
         campaignKey: winnerCampaign.key
       }));
-    } // WinnerCampaign should not be null, in case when winnerCampaign hasn't been found through PriorityOrder and
+    }
+    // WinnerCampaign should not be null, in case when winnerCampaign hasn't been found through PriorityOrder and
     // also shortlistedCampaigns and wt array does not have a single campaign id in common
-
-
     if (winnerCampaign != null && winnerCampaign.id === calledCampaign.id) {
       // if called campaign is the winner campaign, get the variation for the campaign
       return DecisionUtil.evaluateTrafficAndGetVariation(config, winnerCampaign, winnerCampaign.key, userId, metaData, newGoalIdentifier, decision);
@@ -6093,37 +5562,29 @@ module.exports = DecisionUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var logger = logging.getLogger();
-
 var FunctionUtil = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUtil.js");
-
 var EventEnum = __webpack_require__(/*! ../enums/EventEnum */ "./lib/enums/EventEnum.js");
-
 var excludedProperties = ['url'];
 var file = FileNameEnum.EventDispatcherUtil;
 var EventDispatcher = {
   dispatchGetCall: function dispatchGetCall(properties, _ref) {
     var _this = this;
-
     var responseCallback = _ref.responseCallback;
     var customHeaders = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
     var parsedUrl;
     var queryParams = '?';
     queryParams += FunctionUtil.convertObjectKeysToString(properties, excludedProperties);
-
     try {
       // Require files only if required in respective Engine i.e. Node / Browser
       if (true) {
-        parsedUrl = new URL(properties.url);
-
-        __webpack_require__(/*! ./HttpXMLUtil */ "./lib/utils/HttpXMLUtil.js").sendCall(parsedUrl, queryParams, {
+        __webpack_require__(/*! ./HttpXMLUtil */ "./lib/utils/HttpXMLUtil.js").sendCall(properties, queryParams, {
           successCallback: responseCallback
         }, customHeaders);
       } else { var url; }
@@ -6135,7 +5596,6 @@ var EventDispatcher = {
         err: err
       }));
     }
-
     return false;
   },
   handleGetResponse: function handleGetResponse(properties, error, response) {
@@ -6153,7 +5613,6 @@ var EventDispatcher = {
         accountId: properties && properties.account_id
       };
       var params = {};
-
       if (baseParams.endPoint.includes('push')) {
         var customVariables = JSON.parse(properties.tags).u;
         params = Object.assign({}, baseParams, {
@@ -6167,22 +5626,20 @@ var EventDispatcher = {
         });
         params.mainKeys = "campaignId:".concat(params.campaignId, " and variationId:").concat(params.variationId);
       }
-
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.IMPRESSION_SUCCESS, params));
       return true;
     }
   },
   dispatchPostCall: function dispatchPostCall(properties, payload, _ref2) {
     var _this2 = this;
-
     var responseCallback = _ref2.responseCallback;
     var customHeaders = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
     var parsedUrl;
     var queryParams = '?';
     queryParams += FunctionUtil.convertObjectKeysToString(properties, excludedProperties);
-
     try {
       // Require files only if required in respective Engine i.e. Node / Browser
+
       if (true) {
         if (typeof XMLHttpRequest === 'undefined') {
           return __webpack_require__(/*! ./FetchUtil */ "./lib/utils/FetchUtil.js").send({
@@ -6192,7 +5649,6 @@ var EventDispatcher = {
             customHeaders: customHeaders
           }).then(function () {
             _this2.handlePostResponse(properties, payload);
-
             if (responseCallback) {
               responseCallback(null, {
                 status: 'success'
@@ -6200,13 +5656,11 @@ var EventDispatcher = {
             }
           })["catch"](function (error) {
             _this2.handlePostResponse(properties, payload, error);
-
             responseCallback(error, {
               status: 'failure'
             });
           });
         }
-
         return __webpack_require__(/*! ./XhrUtil */ "./lib/utils/XhrUtil.js").send({
           method: 'POST',
           url: "".concat(properties.url).concat(queryParams),
@@ -6215,7 +5669,6 @@ var EventDispatcher = {
           logger: logger
         }).then(function () {
           _this2.handlePostResponse(properties, payload);
-
           if (responseCallback) {
             responseCallback(null, {
               status: 'success'
@@ -6223,7 +5676,6 @@ var EventDispatcher = {
           }
         })["catch"](function (error) {
           _this2.handlePostResponse(properties, payload, error);
-
           responseCallback(error, {
             status: 'failure'
           });
@@ -6237,12 +5689,10 @@ var EventDispatcher = {
         err: err
       }));
     }
-
     return Promise.resolve(false);
   },
   handlePostResponse: function handlePostResponse(properties, payload, error) {
     var endPoint = properties.url;
-
     if (error) {
       logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.IMPRESSION_FAILED, {
         file: file,
@@ -6252,12 +5702,10 @@ var EventDispatcher = {
       return false;
     } else {
       var event = "".concat(properties.en, " event");
-
       if (properties.en === EventEnum.VWO_SYNC_VISITOR_PROP) {
         delete payload.d.visitor.props.vwo_fs_environment;
         event = "visitor property:".concat(JSON.stringify(payload.d.visitor.props));
       }
-
       logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.IMPRESSION_SUCCESS_FOR_EVENT_ARCH, {
         file: file,
         endPoint: endPoint,
@@ -6294,71 +5742,56 @@ module.exports = EventDispatcher;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var CampaignUtil = __webpack_require__(/*! ./CampaignUtil */ "./lib/utils/CampaignUtil.js");
-
 var DataTypeUtil = __webpack_require__(/*! ./DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var FeatureVariableTypeEnum = __webpack_require__(/*! ../enums/FeatureVariableTypeEnum */ "./lib/enums/FeatureVariableTypeEnum.js");
-
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var logger = logging.getLogger();
 var file = FileNameEnum.FeatureUtil;
 var FeatureUtil = {
   getVariableForFeature: function getVariableForFeature(campaign, variableKey) {
     var variableData = {};
-
     if (CampaignUtil.isFeatureRolloutCampaign(campaign)) {
       var variables = campaign.variables || [];
-
       for (var i = 0; i < variables.length; i++) {
         if (variables[i].key === variableKey) {
           variableData = variables[i];
           break;
         }
       }
-
       return variableData;
     }
-
     return variableData;
   },
   getVariableValueForVariation: function getVariableValueForVariation(campaign, variation, variableKey) {
     var variationVariable = {};
-
     if (CampaignUtil.isFeatureTestCampaign(campaign)) {
       if (!variation || !variation || !variation.variables) {
         return variationVariable;
       }
-
       if (!variation.isFeatureEnabled) {
         variation = CampaignUtil.getControlForCampaign(campaign);
       }
-
       for (var i = 0; i < variation.variables.length; i++) {
         var variable = variation.variables[i];
-
         if (variableKey === variable.key) {
           variationVariable = variable;
           break;
         }
       }
     }
-
     return variationVariable;
   },
   getTypeCastVariableValue: function getTypeCastVariableValue(variableValue, variableType) {
     var typeCastedValue;
-
     switch (variableType) {
       case FeatureVariableTypeEnum.INTEGER:
         typeCastedValue = parseInt(variableValue, 10);
-
         if (!DataTypeUtil.isNumber(typeCastedValue) || isNaN(typeCastedValue)) {
           logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.UNABLE_TO_CAST_VALUE, {
             file: file,
@@ -6367,12 +5800,9 @@ var FeatureUtil = {
           }));
           typeCastedValue = null;
         }
-
         break;
-
       case FeatureVariableTypeEnum.DOUBLE:
         typeCastedValue = parseFloat(variableValue);
-
         if (!DataTypeUtil.isNumber(typeCastedValue) || isNaN(typeCastedValue)) {
           logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.UNABLE_TO_CAST_VALUE, {
             file: file,
@@ -6381,9 +5811,7 @@ var FeatureUtil = {
           }));
           typeCastedValue = null;
         }
-
         break;
-
       case FeatureVariableTypeEnum.BOOLEAN:
         if (!DataTypeUtil.isBoolean(variableValue)) {
           logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.UNABLE_TO_CAST_VALUE, {
@@ -6395,9 +5823,7 @@ var FeatureUtil = {
         } else {
           typeCastedValue = variableValue;
         }
-
         break;
-
       case FeatureVariableTypeEnum.JSON:
         if (!DataTypeUtil.isObject(variableValue)) {
           logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.UNABLE_TO_CAST_VALUE, {
@@ -6409,14 +5835,11 @@ var FeatureUtil = {
         } else {
           typeCastedValue = variableValue;
         }
-
         break;
-
       default:
         typeCastedValue = variableValue;
         break;
     }
-
     return typeCastedValue;
   }
 };
@@ -6447,22 +5870,18 @@ module.exports = FeatureUtil;
  * limitations under the License.
  */
 var _require = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUtil.js"),
-    getCurrentTime = _require.getCurrentTime;
-
+  getCurrentTime = _require.getCurrentTime;
 var _require2 = __webpack_require__(/*! ./DataTypeUtil */ "./lib/utils/DataTypeUtil.js"),
-    isObject = _require2.isObject,
-    isFunction = _require2.isFunction;
-
+  isObject = _require2.isObject,
+  isFunction = _require2.isFunction;
 var FetchUtil = {
   _getStoredSettings: function _getStoredSettings(userStorageService) {
     var isStoredData = false;
     var parsedSettings;
-
     if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.getSettings)) {
       try {
         var settings = userStorageService.getSettings();
         parsedSettings = JSON.parse(settings);
-
         if (parsedSettings && isObject(parsedSettings) && Object.keys(parsedSettings).length > 3) {
           var info = "VWO-SDK - [INFO]: ".concat(getCurrentTime(), " VWO settings found in Storage Service.");
           console.info(info);
@@ -6476,12 +5895,10 @@ var FetchUtil = {
         }
       } catch (err) {
         var _error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " VWO settings found in Storage Service is not valid. ").concat(err);
-
         console.error(_error);
         isStoredData = false;
       }
     }
-
     return {
       isStoredData: isStoredData,
       parsedSettings: parsedSettings
@@ -6489,22 +5906,19 @@ var FetchUtil = {
   },
   send: function send() {
     var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-        method = _ref.method,
-        url = _ref.url,
-        payload = _ref.payload,
-        userStorageService = _ref.userStorageService,
-        _ref$customHeaders = _ref.customHeaders,
-        customHeaders = _ref$customHeaders === void 0 ? {} : _ref$customHeaders;
-
+      method = _ref.method,
+      url = _ref.url,
+      payload = _ref.payload,
+      userStorageService = _ref.userStorageService,
+      _ref$customHeaders = _ref.customHeaders,
+      customHeaders = _ref$customHeaders === void 0 ? {} : _ref$customHeaders;
     if (!url || !method) {
       return;
     }
-
     return new Promise(function (resolve, reject) {
       var _FetchUtil$_getStored = FetchUtil._getStoredSettings(userStorageService),
-          isStoredData = _FetchUtil$_getStored.isStoredData,
-          parsedSettings = _FetchUtil$_getStored.parsedSettings;
-
+        isStoredData = _FetchUtil$_getStored.isStoredData,
+        parsedSettings = _FetchUtil$_getStored.parsedSettings;
       if (isStoredData) {
         resolve(parsedSettings);
       } else {
@@ -6512,27 +5926,22 @@ var FetchUtil = {
           method: method,
           headers: customHeaders
         };
-
         if (method === 'POST') {
           options.body = JSON.stringify(payload);
         }
-
         return fetch(url, options).then(function (res) {
           // Some endpoints return empty strings as the response body; treat
           // as raw text and handle potential JSON parsing errors below
           return res.text().then(function (text) {
             var jsonData = {};
-
             try {
               jsonData = JSON.parse(text);
             } catch (err) {
               console.info("VWO-SDK - [INFO]: ".concat(getCurrentTime(), " VWO didn't send JSON response which is expected: ").concat(err));
             }
-
             if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.setSettings)) {
               userStorageService.setSettings(jsonData);
             }
-
             if (res.status === 200) {
               resolve(jsonData);
             } else {
@@ -6576,12 +5985,12 @@ module.exports = FetchUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var FunctionUtil = {
   cloneObject: function cloneObject(obj) {
     if (!obj) {
       return obj;
     }
-
     var clonedObj = JSON.parse(JSON.stringify(obj));
     return clonedObj;
   },
@@ -6599,13 +6008,11 @@ var FunctionUtil = {
       return string.match(new RegExp(regex));
     } catch (err) {
       var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
       var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
       var logger = logging.getLogger();
       var LogLevelEnum = logging.LogLevelEnum,
-          LogMessageEnum = logging.LogMessageEnum,
-          LogMessageUtil = logging.LogMessageUtil;
+        LogMessageEnum = logging.LogMessageEnum,
+        LogMessageUtil = logging.LogMessageUtil;
       var file = FileNameEnum.FunctionUtil;
       logger.log(LogLevelEnum.ERROR, LogMessageUtil.build(LogMessageEnum.ERROR_MESSAGES.SEGMENTATION_REGEX_CREATION_FAILED, {
         file: file,
@@ -6620,7 +6027,6 @@ var FunctionUtil = {
   convertObjectKeysToString: function convertObjectKeysToString(properties, excludedProperties) {
     var queryParams = '';
     excludedProperties = excludedProperties || [];
-
     for (var prop in properties) {
       if (properties.hasOwnProperty(prop)) {
         if (excludedProperties.indexOf(prop) === -1) {
@@ -6628,16 +6034,13 @@ var FunctionUtil = {
         }
       }
     }
-
     return queryParams;
   },
   objectValues: function objectValues(obj) {
     var values = [];
-
     for (var prop in obj) {
       values.push(obj[prop]);
     }
-
     return values;
   }
 };
@@ -6668,53 +6071,44 @@ module.exports = FunctionUtil;
  * limitations under the License.
  */
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var logger = logging.getLogger();
 var file = FileNameEnum.HttpXMLUtil;
-
 var noop = function noop() {};
-
-var printLog = function printLog(url, queryParams) {
-  var properties = new URLSearchParams(queryParams);
+var printLog = function printLog(properties) {
   var baseParams = {
     file: file,
-    endPoint: "https://".concat(url.host).concat(url.pathname),
-    accountId: properties && properties.get('account_id')
+    endPoint: properties.url,
+    accountId: properties && properties.account_id
   };
   var params = {};
-
   if (baseParams.endPoint.includes('push')) {
-    var customVariables = JSON.parse(properties.get('tags')).u;
+    var customVariables = JSON.parse(properties.tags).u;
     params = Object.assign({}, baseParams, {
       customVariables: customVariables
     });
     params.mainKeys = "customDimension:".concat(JSON.stringify(params.customVariables));
   } else {
     params = Object.assign({}, baseParams, {
-      campaignId: properties && properties.get('experiment_id'),
-      variationId: properties && properties.get('combination')
+      campaignId: properties && properties.experiment_id,
+      variationId: properties && properties.combination
     });
     params.mainKeys = "campaignId:".concat(params.campaignId, " and variationId:").concat(params.variationId);
   }
-
   logger.log(LogLevelEnum.INFO, LogMessageUtil.build(LogMessageEnum.INFO_MESSAGES.IMPRESSION_SUCCESS, params));
 };
-
 var HttpXMLUtil = {
-  sendCall: function sendCall(url, queryParams) {
+  sendCall: function sendCall(properties, queryParams) {
     var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
     var customHeaders = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
-    var endPoint = "https://".concat(url.host).concat(url.pathname).concat(queryParams);
+    var endPoint = "".concat(properties.url).concat(queryParams);
     var successCallback = options.successCallback,
-        errorCallback = options.errorCallback;
+      errorCallback = options.errorCallback;
     errorCallback = errorCallback || successCallback;
     var isCallbackCalled = false;
-
     if (typeof XMLHttpRequest === 'undefined') {
       // if (typeof Image === 'undefined') {
       fetch(endPoint, {
@@ -6724,7 +6118,6 @@ var HttpXMLUtil = {
         if (isCallbackCalled) {
           return;
         }
-
         isCallbackCalled = true;
         successCallback(null, {
           status: 'success'
@@ -6733,49 +6126,43 @@ var HttpXMLUtil = {
         if (isCallbackCalled) {
           return;
         }
-
         isCallbackCalled = true;
         errorCallback(null, {
           status: 'success'
         });
-        printLog(url, queryParams);
+        printLog(properties);
       });
       return;
     }
-
-    this.handleGetCall(url, queryParams, successCallback, errorCallback, endPoint, isCallbackCalled, customHeaders);
+    this.handleGetCall(properties, queryParams, successCallback, errorCallback, endPoint, isCallbackCalled, customHeaders);
   },
-  handleGetCall: function handleGetCall(url, queryParams, successCallback, errorCallback, endPoint, isCallbackCalled) {
+  handleGetCall: function handleGetCall(properties, queryParams, successCallback, errorCallback, endPoint, isCallbackCalled) {
     var customHeaders = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
     successCallback = successCallback || noop;
     errorCallback = errorCallback || noop;
     var xhr = new XMLHttpRequest();
-    xhr.open('GET', endPoint, true); // Set custom headers using setRequestHeader
-
+    xhr.open('GET', endPoint, true);
+    // Set custom headers using setRequestHeader
     for (var headerName in customHeaders) {
       if (customHeaders.hasOwnProperty(headerName)) {
         xhr.setRequestHeader(headerName, customHeaders[headerName]);
       }
     }
-
     console.log('Headers added to the request:', xhr.getAllResponseHeaders());
-
     xhr.onload = function () {
       if (xhr.status >= 200 && xhr.status < 300) {
         var response = xhr.responseText;
         successCallback(response);
-        printLog(url, queryParams);
+        printLog(properties);
       } else {
         errorCallback(xhr.statusText);
-        printLog(url, queryParams);
+        printLog(properties);
       }
     };
-
     xhr.onerror = function () {
       errorCallback(xhr.statusText);
-      printLog(url, queryParams);
+      printLog(properties);
     };
-
     xhr.send();
   }
 };
@@ -6790,8 +6177,10 @@ module.exports = HttpXMLUtil;
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -6807,29 +6196,20 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
-
 var UrlEnum = __webpack_require__(/*! ../enums/UrlEnum */ "./lib/enums/UrlEnum.js");
-
 var GoalTypeEnum = __webpack_require__(/*! ../enums/GoalTypeEnum */ "./lib/enums/GoalTypeEnum.js");
-
 var UuidUtil = __webpack_require__(/*! ./UuidUtil */ "./lib/utils/UuidUtil.js");
-
 var ValidateUtil = __webpack_require__(/*! ./ValidateUtil */ "./lib/utils/ValidateUtil.js");
-
 var FunctionUtil = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUtil.js");
-
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var FileNameEnum = __webpack_require__(/*! ../enums/FileNameEnum */ "./lib/enums/FileNameEnum.js");
-
 var DataTypeUtil = __webpack_require__(/*! ./DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var LogLevelEnum = logging.LogLevelEnum,
-    LogMessageEnum = logging.LogMessageEnum,
-    LogMessageUtil = logging.LogMessageUtil;
+  LogMessageEnum = logging.LogMessageEnum,
+  LogMessageUtil = logging.LogMessageUtil;
 var logger = logging.getLogger();
-
 var UrlService = __webpack_require__(/*! ../services/UrlService */ "./lib/services/UrlService.js");
 /**
  * Return primary properties required for every network call to VWO server
@@ -6838,14 +6218,13 @@ var UrlService = __webpack_require__(/*! ../services/UrlService */ "./lib/servic
  *
  * @returns primary properties
  */
-
-
 function getPrimaryProperties(configObj, userId) {
   return {
     sId: FunctionUtil.getCurrentUnixTimestamp(),
     u: UuidUtil.generateFor(userId, configObj.accountId)
   };
 }
+
 /**
  * Return base properties required for every network call to VWO server
  * @param {Object} configObj
@@ -6853,8 +6232,6 @@ function getPrimaryProperties(configObj, userId) {
  *
  * @returns base properties
  */
-
-
 function getBaseProperties(configObj, userId) {
   var accountId = configObj.accountId;
   return Object.assign({}, getPrimaryProperties(configObj, userId), ImpressionUtil.getReportingProperties(configObj), {
@@ -6863,7 +6240,6 @@ function getBaseProperties(configObj, userId) {
     ap: Constants.PLATFORM
   });
 }
-
 var ImpressionUtil = {
   /**
    * Build properties for the impression event
@@ -6884,7 +6260,6 @@ var ImpressionUtil = {
     }));
     return properties;
   },
-
   /**
    * Build properties for the bulk impression event
    *
@@ -6895,7 +6270,6 @@ var ImpressionUtil = {
   buildBatchEventForPushing: function buildBatchEventForPushing(configObj, tagKey, tagValue, userId) {
     if (false) { var properties; }
   },
-
   /**
    * Build properties for the impression event
    *
@@ -6924,7 +6298,6 @@ var ImpressionUtil = {
     }));
     return properties;
   },
-
   /**
    * Build properties for the bulk impression event
    *
@@ -6939,10 +6312,8 @@ var ImpressionUtil = {
   buildBatchEventForTrackingUser: function buildBatchEventForTrackingUser(configObj, campaignKey, variationId, userId) {
     var visitorUserAgent = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : '';
     var userIpAddress = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : '';
-
     if (false) { var properties; }
   },
-
   /**
    * Build properties for the impression event
    *
@@ -6968,18 +6339,15 @@ var ImpressionUtil = {
     properties.visitor_ip = userIpAddress;
     properties.url = Constants.HTTPS_PROTOCOL + UrlService.getBaseUrl() + UrlEnum.TRACK_GOAL;
     properties['goal_id'] = goalId;
-
     if (goal.type === GoalTypeEnum.REVENUE && ValidateUtil.isValidValue(revenue)) {
       properties['r'] = revenue;
     }
-
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_TRACK_GOAL, {
       file: FileNameEnum.ImpressionUtil,
       properties: this._getStringifiedLogProperties(properties)
     }));
     return properties;
   },
-
   /**
    * Build properties for the bulk impression event
    *
@@ -6997,10 +6365,8 @@ var ImpressionUtil = {
     var eventProperties = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
     var visitorUserAgent = arguments.length > 7 && arguments[7] !== undefined ? arguments[7] : '';
     var userIpAddress = arguments.length > 8 && arguments[8] !== undefined ? arguments[8] : '';
-
     if (false) { var properties; }
   },
-
   /**
    * Return an object containing properties required for segmenting reports
    * @param {Object} configObj
@@ -7008,11 +6374,9 @@ var ImpressionUtil = {
    */
   getReportingProperties: function getReportingProperties(configObj) {
     var _ref;
-
     var sdkKey = configObj.sdkKey;
     return _ref = {}, _defineProperty(_ref, Constants.SDK_QUERY_PARAM, Constants.SDK_NAME), _defineProperty(_ref, Constants.SDK_VERSION_QUERY_PARAM, Constants.SDK_VERSION), _defineProperty(_ref, "env", sdkKey), _ref;
   },
-
   /**
    * Builds generic properties for different tracking calls required by VWO servers.
    * @param {Object} configObj
@@ -7037,7 +6401,6 @@ var ImpressionUtil = {
     properties.url = Constants.HTTPS_PROTOCOL + UrlService.getBaseUrl() + UrlEnum.EVENTS;
     return properties;
   },
-
   /**
    * Builds generic payload required by all the different tracking calls.
    * @param {Object} configObj
@@ -7053,7 +6416,9 @@ var ImpressionUtil = {
       vwo_sdkName: Constants.SDK_NAME,
       vwo_sdkVersion: Constants.SDK_VERSION,
       vwo_envKey: sdkKey
-    }; // if (usageStats) {
+    };
+
+    // if (usageStats) {
     //   props = Object.assign({}, props, usageStats);
     // }
 
@@ -7076,7 +6441,6 @@ var ImpressionUtil = {
     };
     return properties;
   },
-
   /**
    * Builds payload to track the visitor.
    * @param {Object} configObj
@@ -7089,8 +6453,9 @@ var ImpressionUtil = {
   getTrackUserPayloadData: function getTrackUserPayloadData(configObj, userId, eventName, campaignId, variationId) {
     var properties = this.getEventBasePayload(configObj, userId, eventName);
     properties.d.event.props.id = campaignId;
-    properties.d.event.props.variation = variationId; // this is currently required by data-layer team, we can make changes on DACDN and remove it from here
+    properties.d.event.props.variation = variationId;
 
+    // this is currently required by data-layer team, we can make changes on DACDN and remove it from here
     properties.d.event.props.isFirst = 1;
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_EVENT_ARCH_TRACK_USER, {
       file: FileNameEnum.ImpressionUtil,
@@ -7100,7 +6465,6 @@ var ImpressionUtil = {
     }));
     return properties;
   },
-
   /**
    * Builds payload to track the Goal.
    * @param {Object} configObj
@@ -7127,24 +6491,19 @@ var ImpressionUtil = {
     properties.d.event.props.vwoMeta = {
       metric: metric
     };
-
     if (revenuePropList && revenueValue && revenuePropList.size > 0) {
       revenuePropList.forEach(function (revenueProp) {
         properties.d.event.props.vwoMeta[revenueProp] = revenueValue;
       });
     }
-
     properties.d.event.props.isCustomEvent = true;
-
     if (Object.keys(eventProperties).length > 0) {
       for (var prop in eventProperties) {
         properties.d.event.props[prop] = eventProperties[prop];
       }
     }
-
     return properties;
   },
-
   /**
    * Builds payload to appply post segmentation on VWO campaign reports.
    * @param {Object} configObj
@@ -7168,7 +6527,6 @@ var ImpressionUtil = {
     }));
     return properties;
   },
-
   /**
    * Remove the sensitive keys from the properties to te displayed in the log.
    * @param {Object} properties
@@ -7206,8 +6564,8 @@ module.exports = ImpressionUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var DataTypeUtil = __webpack_require__(/*! ./DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
 
+var DataTypeUtil = __webpack_require__(/*! ./DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
 var nargs = /\{([0-9a-zA-Z_]+)\}/g;
 var LogMessageUtil = {
   /**
@@ -7227,28 +6585,22 @@ var LogMessageUtil = {
       return template.replace(nargs, function (match, key, index) {
         var result;
         var isKey;
-
         if (template[index - 1] === '{' && template[index + match.length] === '}') {
           return key;
         } else {
           isKey = data.hasOwnProperty(key);
-
           if (isKey) {
             var value = data[key];
-
             if (DataTypeUtil.isFunction(value)) {
               value = data[key]();
             }
-
             result = value;
           } else {
             result = null;
           }
-
           if (result === null || result === undefined) {
             return '';
           }
-
           return result;
         }
       });
@@ -7283,6 +6635,7 @@ module.exports = LogMessageUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var ObjectUtil = {
   areObjectKeys: function areObjectKeys() {
     var obj = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
@@ -7292,7 +6645,6 @@ var ObjectUtil = {
     if (!ObjectUtil.areObjectKeys(obj)) {
       return;
     }
-
     var key = Object.keys(obj)[0];
     var value = obj[key];
     return {
@@ -7332,77 +6684,66 @@ module.exports = ObjectUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var DataTypeUtil = __webpack_require__(/*! ../utils/DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var _require = __webpack_require__(/*! ../utils/FunctionUtil */ "./lib/utils/FunctionUtil.js"),
-    matchWithRegex = _require.matchWithRegex;
-
+  matchWithRegex = _require.matchWithRegex;
 var _require2 = __webpack_require__(/*! ../utils/ObjectUtil */ "./lib/utils/ObjectUtil.js"),
-    getKeyValue = _require2.getKeyValue;
-
+  getKeyValue = _require2.getKeyValue;
 var SegmentEnum = __webpack_require__(/*! ../enums/segment */ "./lib/enums/segment/index.js");
-
 var _SegmentEnum$SegmentO = SegmentEnum.SegmentOperandValueTypeRegexes,
-    LOWER_MATCH = _SegmentEnum$SegmentO.LOWER_MATCH,
-    WILDCARD_MATCH = _SegmentEnum$SegmentO.WILDCARD_MATCH,
-    REGEX_MATCH = _SegmentEnum$SegmentO.REGEX_MATCH,
-    STARTING_STAR = _SegmentEnum$SegmentO.STARTING_STAR,
-    ENDING_STAR = _SegmentEnum$SegmentO.ENDING_STAR,
-    GREATER_THAN_MATCH = _SegmentEnum$SegmentO.GREATER_THAN_MATCH,
-    GREATER_THAN_EQUAL_TO_MATCH = _SegmentEnum$SegmentO.GREATER_THAN_EQUAL_TO_MATCH,
-    LESS_THAN_MATCH = _SegmentEnum$SegmentO.LESS_THAN_MATCH,
-    LESS_THAN_EQUAL_TO_MATCH = _SegmentEnum$SegmentO.LESS_THAN_EQUAL_TO_MATCH;
+  LOWER_MATCH = _SegmentEnum$SegmentO.LOWER_MATCH,
+  WILDCARD_MATCH = _SegmentEnum$SegmentO.WILDCARD_MATCH,
+  REGEX_MATCH = _SegmentEnum$SegmentO.REGEX_MATCH,
+  STARTING_STAR = _SegmentEnum$SegmentO.STARTING_STAR,
+  ENDING_STAR = _SegmentEnum$SegmentO.ENDING_STAR,
+  GREATER_THAN_MATCH = _SegmentEnum$SegmentO.GREATER_THAN_MATCH,
+  GREATER_THAN_EQUAL_TO_MATCH = _SegmentEnum$SegmentO.GREATER_THAN_EQUAL_TO_MATCH,
+  LESS_THAN_MATCH = _SegmentEnum$SegmentO.LESS_THAN_MATCH,
+  LESS_THAN_EQUAL_TO_MATCH = _SegmentEnum$SegmentO.LESS_THAN_EQUAL_TO_MATCH;
 var _SegmentEnum$SegmentO2 = SegmentEnum.SegmentOperandValues,
-    LOWER_VALUE = _SegmentEnum$SegmentO2.LOWER_VALUE,
-    STARTING_ENDING_STAR_VALUE = _SegmentEnum$SegmentO2.STARTING_ENDING_STAR_VALUE,
-    STARTING_STAR_VALUE = _SegmentEnum$SegmentO2.STARTING_STAR_VALUE,
-    ENDING_STAR_VALUE = _SegmentEnum$SegmentO2.ENDING_STAR_VALUE,
-    REGEX_VALUE = _SegmentEnum$SegmentO2.REGEX_VALUE,
-    EQUAL_VALUE = _SegmentEnum$SegmentO2.EQUAL_VALUE,
-    GREATER_THAN_VALUE = _SegmentEnum$SegmentO2.GREATER_THAN_VALUE,
-    GREATER_THAN_EQUAL_TO_VALUE = _SegmentEnum$SegmentO2.GREATER_THAN_EQUAL_TO_VALUE,
-    LESS_THAN_VALUE = _SegmentEnum$SegmentO2.LESS_THAN_VALUE,
-    LESS_THAN_EQUAL_TO_VALUE = _SegmentEnum$SegmentO2.LESS_THAN_EQUAL_TO_VALUE;
-
+  LOWER_VALUE = _SegmentEnum$SegmentO2.LOWER_VALUE,
+  STARTING_ENDING_STAR_VALUE = _SegmentEnum$SegmentO2.STARTING_ENDING_STAR_VALUE,
+  STARTING_STAR_VALUE = _SegmentEnum$SegmentO2.STARTING_STAR_VALUE,
+  ENDING_STAR_VALUE = _SegmentEnum$SegmentO2.ENDING_STAR_VALUE,
+  REGEX_VALUE = _SegmentEnum$SegmentO2.REGEX_VALUE,
+  EQUAL_VALUE = _SegmentEnum$SegmentO2.EQUAL_VALUE,
+  GREATER_THAN_VALUE = _SegmentEnum$SegmentO2.GREATER_THAN_VALUE,
+  GREATER_THAN_EQUAL_TO_VALUE = _SegmentEnum$SegmentO2.GREATER_THAN_EQUAL_TO_VALUE,
+  LESS_THAN_VALUE = _SegmentEnum$SegmentO2.LESS_THAN_VALUE,
+  LESS_THAN_EQUAL_TO_VALUE = _SegmentEnum$SegmentO2.LESS_THAN_EQUAL_TO_VALUE;
 function extractOperandValue(operand, regex) {
   return matchWithRegex(operand, regex) && matchWithRegex(operand, regex)[1];
 }
-
 function processValues(operandValue, tagValue) {
   // this is atomic, either both will be processed or none
   var processedOperandValue = parseFloat(operandValue, 10);
   var processedTagValue = parseFloat(tagValue, 10);
-
   if (!processedOperandValue || !processedTagValue) {
     return {
       operandValue: operandValue,
       tagValue: tagValue
     };
-  } // now we have surity that both are numbers
+  }
+  // now we have surity that both are numbers
   // now we can convert them independently to int type if they
   // are int rather than floats
-
-
   if (processedOperandValue === Math.floor(processedOperandValue)) {
     processedOperandValue = parseInt(processedOperandValue, 10);
   }
-
   if (processedTagValue === Math.floor(processedTagValue)) {
     processedTagValue = parseInt(processedTagValue, 10);
-  } // convert it back to string and return
-
-
+  }
+  // convert it back to string and return
   return {
     operandValue: processedOperandValue.toString(),
     tagValue: processedTagValue.toString()
   };
 }
-
 function preProcessTagValue(tagValue) {
   if (tagValue === undefined) {
     tagValue = '';
   }
-
   if (DataTypeUtil.isBoolean(tagValue)) {
     if (tagValue) {
       tagValue = true;
@@ -7410,28 +6751,25 @@ function preProcessTagValue(tagValue) {
       tagValue = false;
     }
   }
-
   if (tagValue !== null) {
     tagValue = tagValue.toString();
   }
-
   return tagValue;
 }
-
 function preProcessOperandValue(operand) {
   var operandType;
   var operandValue;
   var startingStar;
-  var endingStar; // Pre process operand value
-
+  var endingStar;
+  // Pre process operand value
   if (matchWithRegex(operand, LOWER_MATCH)) {
     operandType = LOWER_VALUE;
     operandValue = extractOperandValue(operand, LOWER_MATCH);
   } else if (matchWithRegex(operand, WILDCARD_MATCH)) {
     operandValue = extractOperandValue(operand, WILDCARD_MATCH);
     startingStar = matchWithRegex(operandValue, STARTING_STAR);
-    endingStar = matchWithRegex(operandValue, ENDING_STAR); // In case of wildcard, the operand type is further divided into contains, startswith and endswith
-
+    endingStar = matchWithRegex(operandValue, ENDING_STAR);
+    // In case of wildcard, the operand type is further divided into contains, startswith and endswith
     if (startingStar && endingStar) {
       operandType = STARTING_ENDING_STAR_VALUE;
     } else if (startingStar) {
@@ -7439,7 +6777,6 @@ function preProcessOperandValue(operand) {
     } else if (endingStar) {
       operandType = ENDING_STAR_VALUE;
     }
-
     operandValue = operandValue.replace(STARTING_STAR, '').replace(ENDING_STAR, '');
   } else if (matchWithRegex(operand, REGEX_MATCH)) {
     operandType = REGEX_VALUE;
@@ -7460,85 +6797,64 @@ function preProcessOperandValue(operand) {
     operandType = EQUAL_VALUE;
     operandValue = operand;
   }
-
   return {
     operandType: operandType,
     operandValue: operandValue
   };
 }
-
 function operandCustomVariablesParser(operand, customVariables) {
   // Extract custom_variable_key and custom_variable_value from operand
   var _getKeyValue = getKeyValue(operand),
-      key = _getKeyValue.key,
-      value = _getKeyValue.value;
-
+    key = _getKeyValue.key,
+    value = _getKeyValue.value;
   var operandKey = key;
   operand = value;
-
   if (!customVariables.hasOwnProperty(key)) {
     // For handling ".*" regex case when key is not present in customVariables and matches regex is used.
     return false;
   }
-
-  var tagValue = customVariables[operandKey]; // Pre process tag value
-
+  var tagValue = customVariables[operandKey];
+  // Pre process tag value
   tagValue = preProcessTagValue(tagValue);
-
   var _preProcessOperandVal = preProcessOperandValue(operand),
-      operandType = _preProcessOperandVal.operandType,
-      operandValue = _preProcessOperandVal.operandValue; // Process both operand and tag values
-
-
+    operandType = _preProcessOperandVal.operandType,
+    operandValue = _preProcessOperandVal.operandValue; // Process both operand and tag values
   var processedValues = processValues(operandValue, tagValue);
   tagValue = processedValues.tagValue;
   return extractResult(operandType, processedValues.operandValue, tagValue);
 }
-
 function operandUserParser(operand, customVariables) {
   var users = operand.split(',');
-
   for (var i = 0; i < users.length; i++) {
     if (users[i].trim() === customVariables._vwoUserId) {
       return true;
     }
   }
-
   return false;
 }
-
 function extractResult(operandType, operandValue, tagValue) {
   var result;
-
   switch (operandType) {
     case LOWER_VALUE:
       if (tagValue !== null) {
         result = operandValue.toLowerCase() === tagValue.toLowerCase();
       }
-
       break;
-
     case STARTING_ENDING_STAR_VALUE:
       if (tagValue !== null) {
         result = tagValue.indexOf(operandValue) > -1;
       }
-
       break;
-
     case STARTING_STAR_VALUE:
       if (tagValue !== null) {
         result = tagValue.endsWith(operandValue);
       }
-
       break;
-
     case ENDING_STAR_VALUE:
       if (tagValue !== null) {
         result = tagValue.startsWith(operandValue);
       }
-
       break;
-
     case REGEX_VALUE:
       try {
         var pattern = new RegExp(operandValue, 'g');
@@ -7546,9 +6862,7 @@ function extractResult(operandType, operandValue, tagValue) {
       } catch (err) {
         result = false;
       }
-
       break;
-
     case GREATER_THAN_VALUE:
       if (tagValue !== null) {
         try {
@@ -7557,9 +6871,7 @@ function extractResult(operandType, operandValue, tagValue) {
           result = false;
         }
       }
-
       break;
-
     case GREATER_THAN_EQUAL_TO_VALUE:
       if (tagValue !== null) {
         try {
@@ -7568,9 +6880,7 @@ function extractResult(operandType, operandValue, tagValue) {
           result = false;
         }
       }
-
       break;
-
     case LESS_THAN_VALUE:
       if (tagValue !== null) {
         try {
@@ -7579,9 +6889,7 @@ function extractResult(operandType, operandValue, tagValue) {
           result = false;
         }
       }
-
       break;
-
     case LESS_THAN_EQUAL_TO_VALUE:
       if (tagValue !== null) {
         try {
@@ -7590,16 +6898,12 @@ function extractResult(operandType, operandValue, tagValue) {
           result = false;
         }
       }
-
       break;
-
     default:
       result = tagValue === operandValue;
   }
-
   return result;
 }
-
 module.exports = {
   extractOperandValue: extractOperandValue,
   processValues: processValues,
@@ -7633,41 +6937,33 @@ module.exports = {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
-
 var UrlEnum = __webpack_require__(/*! ../enums/UrlEnum */ "./lib/enums/UrlEnum.js");
-
 var _require = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUtil.js"),
-    getRandomNumber = _require.getRandomNumber,
-    getCurrentTime = _require.getCurrentTime;
-
+  getRandomNumber = _require.getRandomNumber,
+  getCurrentTime = _require.getCurrentTime;
 var SettingsFileUtil = {
   get: function get(accountId, sdkKey, userStorageService) {
     var config = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
-
     if (!accountId || !sdkKey) {
       console.error('AccountId and sdkKey are required for fetching account settings. Aborting!');
       return;
     }
-
     var protocol = 'https';
     var port;
     var hostname = UrlEnum.BASE_URL;
     var path = UrlEnum.SETTINGS_URL;
-
     if (config.isViaWebhook) {
       path = UrlEnum.WEBHOOK_SETTINGS_URL;
     }
-
     path += "?a=".concat(accountId, "&") + "i=".concat(sdkKey, "&") + "r=".concat(getRandomNumber(), "&") + "platform=".concat(Constants.PLATFORM, "&") + "".concat(Constants.SDK_QUERY_PARAM, "=").concat(Constants.SDK_NAME, "&") + "".concat(Constants.SDK_VERSION_QUERY_PARAM, "=").concat(Constants.SDK_VERSION);
-
     if (config.hostname && config.path) {
       protocol = config.protocol;
       port = config.port;
       hostname = config.hostname || hostname;
       path = config.path || path;
     }
-
     if (true) {
       if (typeof XMLHttpRequest === 'undefined') {
         return __webpack_require__(/*! ./FetchUtil */ "./lib/utils/FetchUtil.js").send({
@@ -7676,7 +6972,6 @@ var SettingsFileUtil = {
           userStorageService: userStorageService
         });
       }
-
       return __webpack_require__(/*! ./XhrUtil */ "./lib/utils/XhrUtil.js").send({
         method: 'GET',
         url: "".concat(protocol, "://").concat(hostname).concat(path),
@@ -7689,19 +6984,16 @@ var SettingsFileUtil = {
     var contentType = res.headers['content-type'];
     var error;
     var rawData = '';
-
     if (!/^application\/json/.test(contentType)) {
       error = "Invalid content-type.\nExpected application/json but received ".concat(contentType);
     }
-
     if (error) {
-      console.error(error.message); // Consume response data to free up memory
-
+      console.error(error.message);
+      // Consume response data to free up memory
       res.resume();
       reject(error);
       return;
     }
-
     res.setEncoding('utf8');
     res.on('data', function (chunk) {
       rawData += chunk;
@@ -7713,14 +7005,12 @@ var SettingsFileUtil = {
   handleHttpResponse: function handleHttpResponse(statusCode, rawData, resolve, reject) {
     try {
       var parsedData = JSON.parse(rawData);
-
       if (statusCode !== 200) {
         var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(statusCode, " and message: ").concat(rawData);
         console.error(error);
         reject(error);
         return;
       }
-
       resolve(parsedData);
     } catch (err) {
       console.error("VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings - ").concat(err.message));
@@ -7754,15 +7044,13 @@ module.exports = SettingsFileUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var uuidv5 = __webpack_require__(/*! uuid/v5 */ "./node_modules/uuid/v5.js");
-
 var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
-
 var VWO_NAMESPACE = uuidv5(Constants.SEED_URL, uuidv5.URL);
 var UuidUtil = {
   generateFor: function generateFor(userId, accountId) {
     userId = "".concat(userId); // type-cast
-
     var hash = "".concat(accountId);
     var userIdNamespace = UuidUtil.generate(hash, VWO_NAMESPACE);
     var uuidForUserIdAccountId = UuidUtil.generate(userId, userIdNamespace);
@@ -7773,7 +7061,6 @@ var UuidUtil = {
     if (!name || !namespace) {
       return;
     }
-
     return uuidv5(name, namespace);
   }
 };
@@ -7803,6 +7090,7 @@ module.exports = UuidUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var VWOFeatureFlags = {
   init: function init(settingsFile) {
     VWOFeatureFlags.isEventArchEnabled = settingsFile.isEventArchEnabled;
@@ -7829,9 +7117,10 @@ module.exports = VWOFeatureFlags;
 /***/ (function(module, exports, __webpack_require__) {
 
 var _APIMethodArgumentsVa;
-
-function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
-
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
  *
@@ -7847,27 +7136,24 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var DataTypeUtil = __webpack_require__(/*! ./DataTypeUtil */ "./lib/utils/DataTypeUtil.js");
-
 var DataTypeEnum = __webpack_require__(/*! ../enums/DataTypeEnum */ "./lib/enums/DataTypeEnum.js");
-
 var ApiEnum = __webpack_require__(/*! ../enums/ApiEnum */ "./lib/enums/ApiEnum.js");
-
 var GoalTypeEnum = __webpack_require__(/*! ../enums/GoalTypeEnum */ "./lib/enums/GoalTypeEnum.js");
-
 var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _defineProperty(_APIMethodArgumentsVa, ApiEnum.ACTIVATE, function (_ref) {
   var campaignKey = _ref.campaignKey,
-      userId = _ref.userId,
-      _ref$customVariables = _ref.customVariables,
-      customVariables = _ref$customVariables === void 0 ? {} : _ref$customVariables,
-      _ref$variationTargeti = _ref.variationTargetingVariables,
-      variationTargetingVariables = _ref$variationTargeti === void 0 ? {} : _ref$variationTargeti,
-      _ref$userStorageData = _ref.userStorageData,
-      userStorageData = _ref$userStorageData === void 0 ? {} : _ref$userStorageData,
-      _ref$shouldTrackRetur = _ref.shouldTrackReturningUser,
-      shouldTrackReturningUser = _ref$shouldTrackRetur === void 0 ? false : _ref$shouldTrackRetur,
-      _ref$metaData = _ref.metaData,
-      metaData = _ref$metaData === void 0 ? {} : _ref$metaData;
+    userId = _ref.userId,
+    _ref$customVariables = _ref.customVariables,
+    customVariables = _ref$customVariables === void 0 ? {} : _ref$customVariables,
+    _ref$variationTargeti = _ref.variationTargetingVariables,
+    variationTargetingVariables = _ref$variationTargeti === void 0 ? {} : _ref$variationTargeti,
+    _ref$userStorageData = _ref.userStorageData,
+    userStorageData = _ref$userStorageData === void 0 ? {} : _ref$userStorageData,
+    _ref$shouldTrackRetur = _ref.shouldTrackReturningUser,
+    shouldTrackReturningUser = _ref$shouldTrackRetur === void 0 ? false : _ref$shouldTrackRetur,
+    _ref$metaData = _ref.metaData,
+    metaData = _ref$metaData === void 0 ? {} : _ref$metaData;
   return [{
     key: 'campaignKey',
     value: campaignKey,
@@ -7899,20 +7185,20 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
   }];
 }), _defineProperty(_APIMethodArgumentsVa, ApiEnum.TRACK, function (_ref2) {
   var campaignKey = _ref2.campaignKey,
-      userId = _ref2.userId,
-      goalIdentifier = _ref2.goalIdentifier,
-      _ref2$customVariables = _ref2.customVariables,
-      customVariables = _ref2$customVariables === void 0 ? {} : _ref2$customVariables,
-      _ref2$variationTarget = _ref2.variationTargetingVariables,
-      variationTargetingVariables = _ref2$variationTarget === void 0 ? {} : _ref2$variationTarget,
-      _ref2$userStorageData = _ref2.userStorageData,
-      userStorageData = _ref2$userStorageData === void 0 ? {} : _ref2$userStorageData,
-      _ref2$goalTypeToTrack = _ref2.goalTypeToTrack,
-      goalTypeToTrack = _ref2$goalTypeToTrack === void 0 ? GoalTypeEnum.ALL : _ref2$goalTypeToTrack,
-      _ref2$shouldTrackRetu = _ref2.shouldTrackReturningUser,
-      shouldTrackReturningUser = _ref2$shouldTrackRetu === void 0 ? false : _ref2$shouldTrackRetu,
-      _ref2$metaData = _ref2.metaData,
-      metaData = _ref2$metaData === void 0 ? {} : _ref2$metaData;
+    userId = _ref2.userId,
+    goalIdentifier = _ref2.goalIdentifier,
+    _ref2$customVariables = _ref2.customVariables,
+    customVariables = _ref2$customVariables === void 0 ? {} : _ref2$customVariables,
+    _ref2$variationTarget = _ref2.variationTargetingVariables,
+    variationTargetingVariables = _ref2$variationTarget === void 0 ? {} : _ref2$variationTarget,
+    _ref2$userStorageData = _ref2.userStorageData,
+    userStorageData = _ref2$userStorageData === void 0 ? {} : _ref2$userStorageData,
+    _ref2$goalTypeToTrack = _ref2.goalTypeToTrack,
+    goalTypeToTrack = _ref2$goalTypeToTrack === void 0 ? GoalTypeEnum.ALL : _ref2$goalTypeToTrack,
+    _ref2$shouldTrackRetu = _ref2.shouldTrackReturningUser,
+    shouldTrackReturningUser = _ref2$shouldTrackRetu === void 0 ? false : _ref2$shouldTrackRetu,
+    _ref2$metaData = _ref2.metaData,
+    metaData = _ref2$metaData === void 0 ? {} : _ref2$metaData;
   return [{
     key: 'campaignKey',
     value: campaignKey,
@@ -7952,17 +7238,17 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
   }];
 }), _defineProperty(_APIMethodArgumentsVa, ApiEnum.IS_FEATURE_ENABLED, function (_ref3) {
   var campaignKey = _ref3.campaignKey,
-      userId = _ref3.userId,
-      _ref3$customVariables = _ref3.customVariables,
-      customVariables = _ref3$customVariables === void 0 ? {} : _ref3$customVariables,
-      _ref3$variationTarget = _ref3.variationTargetingVariables,
-      variationTargetingVariables = _ref3$variationTarget === void 0 ? {} : _ref3$variationTarget,
-      _ref3$userStorageData = _ref3.userStorageData,
-      userStorageData = _ref3$userStorageData === void 0 ? {} : _ref3$userStorageData,
-      _ref3$shouldTrackRetu = _ref3.shouldTrackReturningUser,
-      shouldTrackReturningUser = _ref3$shouldTrackRetu === void 0 ? false : _ref3$shouldTrackRetu,
-      _ref3$metaData = _ref3.metaData,
-      metaData = _ref3$metaData === void 0 ? {} : _ref3$metaData;
+    userId = _ref3.userId,
+    _ref3$customVariables = _ref3.customVariables,
+    customVariables = _ref3$customVariables === void 0 ? {} : _ref3$customVariables,
+    _ref3$variationTarget = _ref3.variationTargetingVariables,
+    variationTargetingVariables = _ref3$variationTarget === void 0 ? {} : _ref3$variationTarget,
+    _ref3$userStorageData = _ref3.userStorageData,
+    userStorageData = _ref3$userStorageData === void 0 ? {} : _ref3$userStorageData,
+    _ref3$shouldTrackRetu = _ref3.shouldTrackReturningUser,
+    shouldTrackReturningUser = _ref3$shouldTrackRetu === void 0 ? false : _ref3$shouldTrackRetu,
+    _ref3$metaData = _ref3.metaData,
+    metaData = _ref3$metaData === void 0 ? {} : _ref3$metaData;
   return [{
     key: 'campaignKey',
     value: campaignKey,
@@ -7994,16 +7280,16 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
   }];
 }), _defineProperty(_APIMethodArgumentsVa, ApiEnum.GET_FEATURE_VARIABLE_VALUE, function (_ref4) {
   var campaignKey = _ref4.campaignKey,
-      variableKey = _ref4.variableKey,
-      userId = _ref4.userId,
-      _ref4$customVariables = _ref4.customVariables,
-      customVariables = _ref4$customVariables === void 0 ? {} : _ref4$customVariables,
-      _ref4$variationTarget = _ref4.variationTargetingVariables,
-      variationTargetingVariables = _ref4$variationTarget === void 0 ? {} : _ref4$variationTarget,
-      _ref4$userStorageData = _ref4.userStorageData,
-      userStorageData = _ref4$userStorageData === void 0 ? {} : _ref4$userStorageData,
-      _ref4$metaData = _ref4.metaData,
-      metaData = _ref4$metaData === void 0 ? {} : _ref4$metaData;
+    variableKey = _ref4.variableKey,
+    userId = _ref4.userId,
+    _ref4$customVariables = _ref4.customVariables,
+    customVariables = _ref4$customVariables === void 0 ? {} : _ref4$customVariables,
+    _ref4$variationTarget = _ref4.variationTargetingVariables,
+    variationTargetingVariables = _ref4$variationTarget === void 0 ? {} : _ref4$variationTarget,
+    _ref4$userStorageData = _ref4.userStorageData,
+    userStorageData = _ref4$userStorageData === void 0 ? {} : _ref4$userStorageData,
+    _ref4$metaData = _ref4.metaData,
+    metaData = _ref4$metaData === void 0 ? {} : _ref4$metaData;
   return [{
     key: 'campaignKey',
     value: campaignKey,
@@ -8035,9 +7321,9 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
   }];
 }), _defineProperty(_APIMethodArgumentsVa, ApiEnum.PUSH, function (_ref5) {
   var tagKey = _ref5.tagKey,
-      tagValue = _ref5.tagValue,
-      userId = _ref5.userId,
-      customDimensionMap = _ref5.customDimensionMap;
+    tagValue = _ref5.tagValue,
+    userId = _ref5.userId,
+    customDimensionMap = _ref5.customDimensionMap;
   return [{
     key: 'tagKey',
     value: tagKey,
@@ -8055,8 +7341,8 @@ var APIMethodArgumentsValidationEnum = (_APIMethodArgumentsVa = {}, _definePrope
     value: customDimensionMap,
     type: DataTypeEnum.OBJECT
   }];
-}), _APIMethodArgumentsVa); // both have same
-
+}), _APIMethodArgumentsVa);
+// both have same
 APIMethodArgumentsValidationEnum[ApiEnum.GET_VARIATION_NAME] = APIMethodArgumentsValidationEnum[ApiEnum.ACTIVATE];
 var ValidateUtil = {
   isValidValue: function isValidValue(value) {
@@ -8081,32 +7367,28 @@ var ValidateUtil = {
     var isValid = false;
     var args = APIMethodArgumentsValidationEnum[argsObj.method](argsObj);
     var validators = [];
-
     for (var i = 0; i < args.length; i++) {
       var argConfig = args[i];
       var argValue = argConfig.value;
-      var dataType = argConfig.type; // let value;
+      var dataType = argConfig.type;
+      // let value;
 
       switch (dataType) {
         case DataTypeEnum.NUMBER:
           validators.push(ValidateUtil.isValidNumber(argValue));
           break;
-
         case DataTypeEnum.STRING:
           validators.push(ValidateUtil.isValidString(argValue));
           break;
-
         case DataTypeEnum.BOOLEAN:
           validators.push(ValidateUtil.isValidBoolean(argValue));
           break;
         // case DataTypeEnum.FUNCTION:
         //   validators.push(ValidateUtil.isValidFunction(argValue));
         //   break;
-
         case DataTypeEnum.OBJECT:
           validators.push(ValidateUtil.isValidObject(argValue));
           break;
-
         case DataTypeEnum.STRING_NULL_UNDEFINED_ARRAY:
           var value = ValidateUtil.isValidString(argValue) || DataTypeUtil.isUndefined(argValue) || DataTypeUtil.isNull(argValue) || DataTypeUtil.isArray(argValue);
           validators.push(value);
@@ -8117,7 +7399,6 @@ var ValidateUtil = {
         //   break;
       }
     }
-
     isValid = validators.every(function (val) {
       return val;
     });
@@ -8150,27 +7431,22 @@ module.exports = ValidateUtil;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 var logging = __webpack_require__(/*! ../services/logging */ "./lib/services/logging/index.js");
-
 var LogLevelEnum = logging.LogLevelEnum;
-
 var _require = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUtil.js"),
-    getCurrentTime = _require.getCurrentTime;
-
+  getCurrentTime = _require.getCurrentTime;
 var _require2 = __webpack_require__(/*! ./DataTypeUtil */ "./lib/utils/DataTypeUtil.js"),
-    isObject = _require2.isObject,
-    isFunction = _require2.isFunction;
-
+  isObject = _require2.isObject,
+  isFunction = _require2.isFunction;
 var XhrUtil = {
   _getStoredSettings: function _getStoredSettings(userStorageService) {
     var isStoredData = false;
     var parsedSettings;
-
     if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.getSettings)) {
       try {
         var settings = userStorageService.getSettings();
         parsedSettings = JSON.parse(settings);
-
         if (parsedSettings && isObject(parsedSettings) && Object.keys(parsedSettings).length > 3) {
           var info = "VWO-SDK - [INFO]: ".concat(getCurrentTime(), " VWO settings found in Storage Service.");
           console.info(info);
@@ -8184,12 +7460,10 @@ var XhrUtil = {
         }
       } catch (err) {
         var _error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " VWO settings found in Storage Service is not valid. ").concat(err);
-
         console.error(_error);
         isStoredData = false;
       }
     }
-
     return {
       isStoredData: isStoredData,
       parsedSettings: parsedSettings
@@ -8197,29 +7471,24 @@ var XhrUtil = {
   },
   send: function send() {
     var _this = this;
-
     var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
-        method = _ref.method,
-        url = _ref.url,
-        payload = _ref.payload,
-        userStorageService = _ref.userStorageService,
-        customHeaders = _ref.customHeaders,
-        logger = _ref.logger;
-
+      method = _ref.method,
+      url = _ref.url,
+      payload = _ref.payload,
+      userStorageService = _ref.userStorageService,
+      customHeaders = _ref.customHeaders,
+      logger = _ref.logger;
     if (!url || !method) {
       return;
     }
-
     return new Promise(function (resolve, reject) {
       var _XhrUtil$_getStoredSe = XhrUtil._getStoredSettings(userStorageService),
-          isStoredData = _XhrUtil$_getStoredSe.isStoredData,
-          parsedSettings = _XhrUtil$_getStoredSe.parsedSettings;
-
+        isStoredData = _XhrUtil$_getStoredSe.isStoredData,
+        parsedSettings = _XhrUtil$_getStoredSe.parsedSettings;
       if (isStoredData) {
         resolve(parsedSettings);
       } else {
         var xhr = new XMLHttpRequest();
-
         _this.xhrHandler(xhr, method, url, payload, userStorageService, customHeaders, logger, resolve, reject);
       }
     });
@@ -8227,17 +7496,18 @@ var XhrUtil = {
   // send request function definition (to allow for retries)
   sendRequest: function sendRequest(xhr, retries, maxRetries, delay, logger, customHeaders, payload, method, url, resolve, reject) {
     var _this2 = this;
-
     // onload event
     xhr.onload = function () {
       // retry if error and less than max retries
       if (xhr.status < 200 || xhr.status >= 300) {
         if (retries < maxRetries) {
-          retries++; // log retried times
+          retries++;
 
+          // log retried times
           logger.log(LogLevelEnum.ERROR, 'Retrying with Status Code :' + xhr.status);
-          logger.log(LogLevelEnum.ERROR, 'Retrying with Response :' + xhr.responseText); // call send request again, after delay
+          logger.log(LogLevelEnum.ERROR, 'Retrying with Response :' + xhr.responseText);
 
+          // call send request again, after delay
           setTimeout(function () {
             _this2.sendRequest(xhr, retries, maxRetries, delay, logger, customHeaders, payload, method, url, resolve, reject);
           }, delay);
@@ -8251,50 +7521,42 @@ var XhrUtil = {
         // resolve the promise if all well
         resolve();
       }
-    }; // onerror event
+    };
 
-
+    // onerror event
     xhr.onerror = function () {
       reject("Error: ".concat(xhr.statusText, ", Status Code: ").concat(xhr.status));
-    }; // open connection and add headers if any, and then send
+    };
 
-
+    // open connection and add headers if any, and then send
     xhr.open(method, url, true);
-
     for (var newHeaderName in customHeaders) {
       if (customHeaders.hasOwnProperty(newHeaderName)) {
         xhr.setRequestHeader(newHeaderName, customHeaders[newHeaderName]);
       }
     }
-
     xhr.send(JSON.stringify(payload));
   },
   xhrHandler: function xhrHandler(xhr, method, url, payload, userStorageService) {
     var _this3 = this;
-
     var customHeaders = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};
     var logger = arguments.length > 6 ? arguments[6] : undefined;
     var resolve = arguments.length > 7 ? arguments[7] : undefined;
     var reject = arguments.length > 8 ? arguments[8] : undefined;
-
     if (method === 'GET') {
       try {
         xhr.onload = function () {
           _this3.xhrOnLoad(xhr, userStorageService, resolve);
         };
-
         xhr.onerror = function () {
           _this3.xhrOnError(xhr, reject);
         };
-
         xhr.open(method, url);
-
         for (var headerName in customHeaders) {
           if (customHeaders.hasOwnProperty(headerName)) {
             xhr.setRequestHeader(headerName, customHeaders[headerName]);
           }
         }
-
         xhr.send();
       } catch (e) {
         console.log(e.message);
@@ -8303,19 +7565,18 @@ var XhrUtil = {
       // retry params
       var retries = 0;
       var maxRetries = 5;
-      var delay = 1000; // send request
+      var delay = 1000;
 
+      // send request
       this.sendRequest(xhr, retries, maxRetries, delay, logger, customHeaders, payload, method, url, resolve, reject);
     }
   },
   xhrOnLoad: function xhrOnLoad(xhr, userStorageService, resolve) {
     try {
       var parsedXhrResponse = JSON.parse(xhr.response);
-
       if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.setSettings)) {
         userStorageService.setSettings(xhr.response);
       }
-
       resolve(parsedXhrResponse);
     } catch (err) {
       console.error(err);
@@ -9320,14 +8581,16 @@ function bytesToUuid(buf, offset) {
   var i = offset || 0;
   var bth = byteToHex;
   // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
-  return ([bth[buf[i++]], bth[buf[i++]], 
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]],
-	bth[buf[i++]], bth[buf[i++]],
-	bth[buf[i++]], bth[buf[i++]]]).join('');
+  return ([
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]]
+  ]).join('');
 }
 
 module.exports = bytesToUuid;
@@ -9533,10 +8796,10 @@ module.exports = JSON.parse("{\"CONFIG_BATCH_EVENT_LIMIT_EXCEEDED\":\"({file}): 
 /*!*******************************************************************!*\
   !*** ./node_modules/vwo-sdk-log-messages/src/error-messages.json ***!
   \*******************************************************************/
-/*! exports provided: CONFIG_PARAMETER_INVALID, CONFIG_POLLING_SDK_KEY_NOT_PROVIVED, CONFIG_CORRUPTED, SETTINGS_FILE_INVALID, SETTINGS_FILE_CORRUPTED, BATCH_QUEUE_EMPTY, API_HAS_CORRUPTED_SETTINGS_FILE, API_BAD_PARAMETERS, API_NOT_APPLICABLE, USER_ID_INVALID, CAMPAIGN_NOT_FOUND_FOR_GOAL, POLLING_FAILED, SEGMENTATION_REGEX_CREATION_FAILED, SEGMENTATION_ERROR, USER_STORAGE_SERVICE_GET_FAILED, USER_STORAGE_SERVICE_SET_FAILED, IMPRESSION_FAILED, TAG_KEY_LENGTH_EXCEEDED, TAG_VALUE_LENGTH_EXCEEDED, TRACK_API_GOAL_NOT_FOUND, TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL, UNABLE_TO_CAST_VALUE, VARIABLE_NOT_FOUND, MISSING_IMPORT_SETTINGS_MANDATORY_PARAMS, ACCOUNT_SETTINGS_NOT_FOUND, default */
+/*! exports provided: CONFIG_PARAMETER_INVALID, CONFIG_POLLING_SDK_KEY_NOT_PROVIVED, CONFIG_CORRUPTED, SETTINGS_FILE_INVALID, SETTINGS_FILE_CORRUPTED, BATCH_QUEUE_EMPTY, API_HAS_CORRUPTED_SETTINGS_FILE, API_BAD_PARAMETERS, API_NOT_APPLICABLE, USER_ID_INVALID, CAMPAIGN_NOT_FOUND_FOR_GOAL, POLLING_FAILED, SEGMENTATION_REGEX_CREATION_FAILED, SEGMENTATION_ERROR, USER_STORAGE_SERVICE_GET_FAILED, USER_STORAGE_SERVICE_SET_FAILED, IMPRESSION_FAILED, TAG_KEY_LENGTH_EXCEEDED, TAG_VALUE_LENGTH_EXCEEDED, TRACK_API_GOAL_NOT_FOUND, TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL, TRACK_API_EVENTS_REVENUE_NOT_PASSED, UNABLE_TO_CAST_VALUE, VARIABLE_NOT_FOUND, MISSING_IMPORT_SETTINGS_MANDATORY_PARAMS, ACCOUNT_SETTINGS_NOT_FOUND, default */
 /***/ (function(module) {
 
-module.exports = JSON.parse("{\"CONFIG_PARAMETER_INVALID\":\"({file}): {parameter} paased in {api} API is not correct. It should be of type:{type}\",\"CONFIG_POLLING_SDK_KEY_NOT_PROVIVED\":\"({file}): SDK Key is required along with pollingInterval to poll the settings-file\",\"CONFIG_CORRUPTED\":\"({file}): Config passed to {api} API is invalid. Please refer developer docs\",\"SETTINGS_FILE_INVALID\":\"({file}): Settings file passed while instantiating SDK instance is invalid\",\"SETTINGS_FILE_CORRUPTED\":\"({file}): Fetched settings-file doesn't match the desired schema. Please contact VWO Support for help\",\"BATCH_QUEUE_EMPTY\":\"{{file}}: No batch queue present for account:{accountId} when calling flushEvents API. Check batchEvents config in launch API\",\"API_HAS_CORRUPTED_SETTINGS_FILE\":\"({file}): {api} API has corrupted settings-file. Please check or reach out to VWO support\",\"API_BAD_PARAMETERS\":\"({file}): {api} API got bad parameters. Refer the developer docs\",\"API_NOT_APPLICABLE\":\"({file}): {api} API is not valid for Campaign:{campaignKey} having type:{campaignType} for User ID:{userId}\",\"USER_ID_INVALID\":\"({file}): Invalid User Id:{userId} passed to the API\",\"CAMPAIGN_NOT_FOUND_FOR_GOAL\":\"({file}): No such campaign found corresponding to goalIdentifier:{goalIdentifier}. Please verify from VWO app\",\"POLLING_FAILED\":\"({file}): Fetching of settings-file failed via polling for the accountId:{accountId}\",\"SEGMENTATION_REGEX_CREATION_FAILED\":\"({file}): Regular expression:{regex} used for targeting cound not be evaluated\",\"SEGMENTATION_ERROR\":\"({file}): Could not segment the User ID:{userId} for Campaign:{campaignKey}{variation} with customVariables:{customVariables}. Error message: {err}\",\"USER_STORAGE_SERVICE_GET_FAILED\":\"({file}): Getting data from User Storage Service failed for User ID:{userId}. Error: {error}\",\"USER_STORAGE_SERVICE_SET_FAILED\":\"({file}): Saving data into User Storage Service failed for User ID:{userId}. Error: {error}\",\"IMPRESSION_FAILED\":\"({file}): Impression event could not be sent to VWO - {endPoint}. Reason: {err}\",\"TAG_KEY_LENGTH_EXCEEDED\":\"({file}): Length of custom dimension key:{tagKey} for User Id:{userId} can not be greater than 255\",\"TAG_VALUE_LENGTH_EXCEEDED\":\"({file}): Length of custom dimension value:{tagValue} of tagKey:{tagKey} for User Id:{userId} can not be greater than 255\",\"TRACK_API_GOAL_NOT_FOUND\":\"({file}): Goal:{goalIdentifier} not found for Campaign:{campaignKey} and User Id:{userId}\",\"TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL\":\"({file}): Revenue value should be passed for revenue goal:{goalIdentifier} for Campaign:{campaignKey} and User Id:{userId}\",\"UNABLE_TO_CAST_VALUE\":\"({file}): Unable to cast value:{variableValue} to type:{variableType}, returning null\",\"VARIABLE_NOT_FOUND\":\"({file}): Variable:{variableKey} for User ID:{userId} is not found in settings-file, returning null\",\"MISSING_IMPORT_SETTINGS_MANDATORY_PARAMS\":\"AccountId and sdkKey are required for fetching account settings. Aborting!\",\"ACCOUNT_SETTINGS_NOT_FOUND\":\"({file}): Request failed for fetching account settings. Got Status Code: ${statusCode} and message: ${message}\"}");
+module.exports = JSON.parse("{\"CONFIG_PARAMETER_INVALID\":\"({file}): {parameter} paased in {api} API is not correct. It should be of type:{type}\",\"CONFIG_POLLING_SDK_KEY_NOT_PROVIVED\":\"({file}): SDK Key is required along with pollingInterval to poll the settings-file\",\"CONFIG_CORRUPTED\":\"({file}): Config passed to {api} API is invalid. Please refer developer docs\",\"SETTINGS_FILE_INVALID\":\"({file}): Settings file passed while instantiating SDK instance is invalid\",\"SETTINGS_FILE_CORRUPTED\":\"({file}): Fetched settings-file doesn't match the desired schema. Please contact VWO Support for help\",\"BATCH_QUEUE_EMPTY\":\"{{file}}: No batch queue present for account:{accountId} when calling flushEvents API. Check batchEvents config in launch API\",\"API_HAS_CORRUPTED_SETTINGS_FILE\":\"({file}): {api} API has corrupted settings-file. Please check or reach out to VWO support\",\"API_BAD_PARAMETERS\":\"({file}): {api} API got bad parameters. Refer the developer docs\",\"API_NOT_APPLICABLE\":\"({file}): {api} API is not valid for Campaign:{campaignKey} having type:{campaignType} for User ID:{userId}\",\"USER_ID_INVALID\":\"({file}): Invalid User Id:{userId} passed to the API\",\"CAMPAIGN_NOT_FOUND_FOR_GOAL\":\"({file}): No such campaign found corresponding to goalIdentifier:{goalIdentifier}. Please verify from VWO app\",\"POLLING_FAILED\":\"({file}): Fetching of settings-file failed via polling for the accountId:{accountId}\",\"SEGMENTATION_REGEX_CREATION_FAILED\":\"({file}): Regular expression:{regex} used for targeting cound not be evaluated\",\"SEGMENTATION_ERROR\":\"({file}): Could not segment the User ID:{userId} for Campaign:{campaignKey}{variation} with customVariables:{customVariables}. Error message: {err}\",\"USER_STORAGE_SERVICE_GET_FAILED\":\"({file}): Getting data from User Storage Service failed for User ID:{userId}. Error: {error}\",\"USER_STORAGE_SERVICE_SET_FAILED\":\"({file}): Saving data into User Storage Service failed for User ID:{userId}. Error: {error}\",\"IMPRESSION_FAILED\":\"({file}): Impression event could not be sent to VWO - {endPoint}. Reason: {err}\",\"TAG_KEY_LENGTH_EXCEEDED\":\"({file}): Length of custom dimension key:{tagKey} for User Id:{userId} can not be greater than 255\",\"TAG_VALUE_LENGTH_EXCEEDED\":\"({file}): Length of custom dimension value:{tagValue} of tagKey:{tagKey} for User Id:{userId} can not be greater than 255\",\"TRACK_API_GOAL_NOT_FOUND\":\"({file}): Goal:{goalIdentifier} not found for Campaign:{campaignKey} and User Id:{userId}\",\"TRACK_API_REVENUE_NOT_PASSED_FOR_REVENUE_GOAL\":\"({file}): Revenue value should be passed for revenue goal:{goalIdentifier} for Campaign:{campaignKey} and User Id:{userId}\",\"TRACK_API_EVENTS_REVENUE_NOT_PASSED\":\"({file}): Revenue value should be passed either in options or as an event property for revenue goal:{goalIdentifier} for Campaign:{campaignKey} and User Id:{userId}\",\"UNABLE_TO_CAST_VALUE\":\"({file}): Unable to cast value:{variableValue} to type:{variableType}, returning null\",\"VARIABLE_NOT_FOUND\":\"({file}): Variable:{variableKey} for User ID:{userId} is not found in settings-file, returning null\",\"MISSING_IMPORT_SETTINGS_MANDATORY_PARAMS\":\"AccountId and sdkKey are required for fetching account settings. Aborting!\",\"ACCOUNT_SETTINGS_NOT_FOUND\":\"({file}): Request failed for fetching account settings. Got Status Code: ${statusCode} and message: ${message}\"}");
 
 /***/ }),
 
@@ -9544,10 +8807,10 @@ module.exports = JSON.parse("{\"CONFIG_PARAMETER_INVALID\":\"({file}): {paramete
 /*!******************************************************************!*\
   !*** ./node_modules/vwo-sdk-log-messages/src/info-messages.json ***!
   \******************************************************************/
-/*! exports provided: CONFIG_VALID, CONFIG_PARAMETER_USED, CONFIG_RETURN_PROMISE, CONFIG_ASYNC_RETURN_PROMISE, SDK_INITIALIZED, POLLING_SUCCESS, POLLING_SETTINGS_FILE_UPDATED, POLLING_SETTINGS_FILE_NOT_UPDATED, DECISION_NO_VARIATION_ALLOTED, EVENT_BATCH_DEFAULTS, EVENT_QUEUE, EVENT_BATCH_After_FLUSHING, CAMPAIGN_NOT_ACTIVATED, CAMPAIGN_USER_ALREADY_TRACKED, CAMPAIGN_GOAL_ALREADY_TRACKED, GOT_STORED_VARIATION, GETTING_DATA_USER_STORAGE_SERVICE, SETTING_DATA_USER_STORAGE_SERVICE, IMPRESSION_SUCCESS, IMPRESSION_SUCCESS_FOR_EVENT_ARCH, IMPRESSION_BATCH_SUCCESS, IMPRESSION_BATCH_FAILED, MEG_ELIGIBLE_CAMPAIGNS, OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE, SEGMENTATION_STATUS, MEG_CALLED_CAMPAIGN_NOT_WINNER, MEG_GOT_WINNER_CAMPAIGN, FEATURE_STATUS, FEATURE_VARIABLE_VALUE, FEATURE_VARIABLE_DEFAULT_VALUE, USER_NOT_PART_OF_CAMPAIGN, USER_VARIATION_STATUS, USER_CAMPAIGN_ELIGIBILITY, USER_VARIATION_ALLOCATION_STATUS, OPT_OUT_API_CALLED, API_NOT_ENABLED, INITIATING_ACTIVATE, INITIATING_GET_VARIATION, INITIATING_GET_FEATURE_VARIATION, INITIATING_IS_FEATURE_ENABLED, INITIATING_PUSH_DIMENSION, default */
+/*! exports provided: CONFIG_VALID, CONFIG_PARAMETER_USED, CONFIG_RETURN_PROMISE, SDK_INITIALIZED, POLLING_SUCCESS, POLLING_SETTINGS_FILE_UPDATED, POLLING_SETTINGS_FILE_NOT_UPDATED, DECISION_NO_VARIATION_ALLOTED, EVENT_BATCH_DEFAULTS, EVENT_QUEUE, EVENT_BATCH_After_FLUSHING, CAMPAIGN_NOT_ACTIVATED, CAMPAIGN_USER_ALREADY_TRACKED, CAMPAIGN_GOAL_ALREADY_TRACKED, GOT_STORED_VARIATION, GETTING_DATA_USER_STORAGE_SERVICE, SETTING_DATA_USER_STORAGE_SERVICE, IMPRESSION_SUCCESS, IMPRESSION_SUCCESS_FOR_EVENT_ARCH, IMPRESSION_BATCH_SUCCESS, IMPRESSION_BATCH_FAILED, MEG_ELIGIBLE_CAMPAIGNS, OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE, SEGMENTATION_STATUS, MEG_CALLED_CAMPAIGN_NOT_WINNER, MEG_GOT_WINNER_CAMPAIGN, FEATURE_STATUS, FEATURE_VARIABLE_VALUE, FEATURE_VARIABLE_DEFAULT_VALUE, USER_NOT_PART_OF_CAMPAIGN, USER_VARIATION_STATUS, USER_CAMPAIGN_ELIGIBILITY, USER_VARIATION_ALLOCATION_STATUS, OPT_OUT_API_CALLED, API_NOT_ENABLED, INITIATING_ACTIVATE, INITIATING_GET_VARIATION, INITIATING_GET_FEATURE_VARIATION, INITIATING_IS_FEATURE_ENABLED, INITIATING_PUSH_DIMENSION, default */
 /***/ (function(module) {
 
-module.exports = JSON.parse("{\"CONFIG_VALID\":\"({file}): SDK configuration and account settings-file are valid\",\"CONFIG_PARAMETER_USED\":\"({file}): {parameter} paased in launch API having type:{type}\",\"CONFIG_RETURN_PROMISE\":\"({file}): {method} API returns a promise as returnPromiseFor is set to true for this API\",\"CONFIG_ASYNC_RETURN_PROMISE\":\"({file}): {method} API returns a promise as asyncStorageConfig is passed to this API\",\"SDK_INITIALIZED\":\"({file}): SDK is properly initialzed with the passed configuration\",\"POLLING_SUCCESS\":\"({file}): settings-file fetched successfully via polling for the accountId:{accountId}\",\"POLLING_SETTINGS_FILE_UPDATED\":\"({file}): SDK instance is updated with the latest settings-file for the accountId:{accountId}\",\"POLLING_SETTINGS_FILE_NOT_UPDATED\":\"{file}: settings-file fetched via polling is same as earlier fetched settings\",\"DECISION_NO_VARIATION_ALLOTED\":\"({file}): Variation was not assigned to the User ID:{userId} for Campaign:{campaignKey}\",\"EVENT_BATCH_DEFAULTS\":\"({file}): {parameter} not passed in SDK configuration, setting it default to {defaultValue}\",\"EVENT_QUEUE\":\"({file}): Event with payload:{event} pushed to the {queueType} queue\",\"EVENT_BATCH_After_FLUSHING\":\"({file}): Event queue having {length} events has been flushed {manually}\",\"CAMPAIGN_NOT_ACTIVATED\":\"({file}): Activate the campaign:{campaignKey} first for User ID:{userId} to {reason}\",\"CAMPAIGN_USER_ALREADY_TRACKED\":\"({file}): User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for \\\"{api}\\\" API. No tracking call is made to VWO server\",\"CAMPAIGN_GOAL_ALREADY_TRACKED\":\"({file}): Goal:{goalIdentifier} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. No tracking call is made to VWO server\",\"GOT_STORED_VARIATION\":\"({file}): Got stored variation from User Storage Service for User ID:{userId} for Campaign:{campaignKey} as Variation:{variationName}\",\"GETTING_DATA_USER_STORAGE_SERVICE\":\"({file}): Read data from User Storage Service for User ID:{userId} and Campaign:{campaignKey}\",\"SETTING_DATA_USER_STORAGE_SERVICE\":\"({file}): Set data into User Storage Service for User ID:{userId} and Campaign:{campaignKey}\",\"IMPRESSION_SUCCESS\":\"({file}): Impression event - {endPoint} was successfully received by VWO having main keys: Account ID:{accountId}, {mainKeys}\",\"IMPRESSION_SUCCESS_FOR_EVENT_ARCH\":\"({file}): Impression for {event} - {endPoint} was successfully received by VWO for Account ID:{accountId}\",\"IMPRESSION_BATCH_SUCCESS\":\"({file}): Impression event - {endPoint} was successfully received by VWO having Account ID:{accountId}\",\"IMPRESSION_BATCH_FAILED\":\"({file}): Batch events couldn\\\"t be received by VWO. Calling Flush Callback with error and data\",\"MEG_ELIGIBLE_CAMPAIGNS\":\"({file}): Got {noOfEligibleCampaigns} eligible winners out of {noOfGroupCampaigns} campaigns from the Group:{groupName} and for User ID:{userId}\",\"OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE\":\"({file}): Campaign:{campaignKey} of Group:{groupName} satisfies {type} for User ID:{userId}\",\"SEGMENTATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}\",\"MEG_CALLED_CAMPAIGN_NOT_WINNER\":\"({file}): Campaign:{campaignKey} does not qualify from the mutually exclusive group:{groupName} for User ID:{userId}\",\"MEG_GOT_WINNER_CAMPAIGN\":\"({file}): Campaign:{campaignKey} is selected from the mutually exclusive group:{groupName} for the User ID:{userId}\",\"FEATURE_STATUS\":\"({file}): Campaign:{campaignKey} is {status} for user ID:{userId}\",\"FEATURE_VARIABLE_VALUE\":\"({file}): For User ID:{userId}, value for variable:{variableKey} of feature:{campaignKey} is:{variableValue}\",\"FEATURE_VARIABLE_DEFAULT_VALUE\":\"({file}): Feature is not enabled for variation:{variationName}. Returning default value for the variable:{variableKey}\",\"USER_NOT_PART_OF_CAMPAIGN\":\"({file}): User ID:{userId} did not qualify for Campaign:{campaignKey}\",\"USER_VARIATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} {status}\",\"USER_CAMPAIGN_ELIGIBILITY\":\"({file}): User ID:{userId} for Campaign:{campaignKey} is {status} to become part of campaign\",\"USER_VARIATION_ALLOCATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} {status}\",\"OPT_OUT_API_CALLED\":\"({file}): You have opted out for not tracking i.e. all API calls will stop functioning and will simply early return\",\"API_NOT_ENABLED\":\"({file}): {api} API is disabled as you opted out for tracking. Reinitialize the SDK to enable the normal functioning of all APIs.\",\"INITIATING_ACTIVATE\":\"({file}): Initiating activation of user {userId} for campaign {campaignKey}.\",\"INITIATING_GET_VARIATION\":\"({file}): Initiating getVariation of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_GET_FEATURE_VARIATION\":\"({file}): Initiating getFeatureVariable for variable key '{variableKey}' of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_IS_FEATURE_ENABLED\":\"({file}): Initiating isFeatureEnabled of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_PUSH_DIMENSION\":\"({file}): Initiating push segment of user '{userId}' with tag name `{tagKey}` and tag value '{tagValue}'.\"}");
+module.exports = JSON.parse("{\"CONFIG_VALID\":\"({file}): SDK configuration and account settings-file are valid\",\"CONFIG_PARAMETER_USED\":\"({file}): {parameter} paased in launch API having type:{type}\",\"CONFIG_RETURN_PROMISE\":\"({file}): {method} API returns a promise as returnPromiseFor is set to true for this API\",\"SDK_INITIALIZED\":\"({file}): SDK is properly initialzed with the passed configuration\",\"POLLING_SUCCESS\":\"({file}): settings-file fetched successfully via polling for the accountId:{accountId}\",\"POLLING_SETTINGS_FILE_UPDATED\":\"({file}): SDK instance is updated with the latest settings-file for the accountId:{accountId}\",\"POLLING_SETTINGS_FILE_NOT_UPDATED\":\"{file}: settings-file fetched via polling is same as earlier fetched settings\",\"DECISION_NO_VARIATION_ALLOTED\":\"({file}): Variation was not assigned to the User ID:{userId} for Campaign:{campaignKey}\",\"EVENT_BATCH_DEFAULTS\":\"({file}): {parameter} not passed in SDK configuration, setting it default to {defaultValue}\",\"EVENT_QUEUE\":\"({file}): Event with payload:{event} pushed to the {queueType} queue\",\"EVENT_BATCH_After_FLUSHING\":\"({file}): Event queue having {length} events has been flushed {manually}\",\"CAMPAIGN_NOT_ACTIVATED\":\"({file}): Activate the campaign:{campaignKey} first for User ID:{userId} to {reason}\",\"CAMPAIGN_USER_ALREADY_TRACKED\":\"({file}): User ID:{userId} for Campaign:{campaignKey} has already been tracked earlier for \\\"{api}\\\" API. No tracking call is made to VWO server\",\"CAMPAIGN_GOAL_ALREADY_TRACKED\":\"({file}): Goal:{goalIdentifier} of Campaign:{campaignKey} for User ID:{userId} has already been tracked earlier. No tracking call is made to VWO server\",\"GOT_STORED_VARIATION\":\"({file}): Got stored variation from User Storage Service for User ID:{userId} for Campaign:{campaignKey} as Variation:{variationName}\",\"GETTING_DATA_USER_STORAGE_SERVICE\":\"({file}): Read data from User Storage Service for User ID:{userId} and Campaign:{campaignKey}\",\"SETTING_DATA_USER_STORAGE_SERVICE\":\"({file}): Set data into User Storage Service for User ID:{userId} and Campaign:{campaignKey}\",\"IMPRESSION_SUCCESS\":\"({file}): Impression event - {endPoint} was successfully received by VWO having main keys: Account ID:{accountId}, {mainKeys}\",\"IMPRESSION_SUCCESS_FOR_EVENT_ARCH\":\"({file}): Impression for {event} - {endPoint} was successfully received by VWO for Account ID:{accountId}\",\"IMPRESSION_BATCH_SUCCESS\":\"({file}): Impression event - {endPoint} was successfully received by VWO having Account ID:{accountId}\",\"IMPRESSION_BATCH_FAILED\":\"({file}): Batch events couldn\\\"t be received by VWO. Calling Flush Callback with error and data\",\"MEG_ELIGIBLE_CAMPAIGNS\":\"({file}): Got {noOfEligibleCampaigns} eligible winners out of {noOfGroupCampaigns} campaigns from the Group:{groupName} and for User ID:{userId}\",\"OTHER_CAMPAIGN_SATISFIES_WHITELISTING_STORAGE\":\"({file}): Campaign:{campaignKey} of Group:{groupName} satisfies {type} for User ID:{userId}\",\"SEGMENTATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} with variables:{customVariables} {status} {segmentationType} {variation}\",\"MEG_CALLED_CAMPAIGN_NOT_WINNER\":\"({file}): Campaign:{campaignKey} does not qualify from the mutually exclusive group:{groupName} for User ID:{userId}\",\"MEG_GOT_WINNER_CAMPAIGN\":\"({file}): Campaign:{campaignKey} is selected from the mutually exclusive group:{groupName} for the User ID:{userId}\",\"FEATURE_STATUS\":\"({file}): Campaign:{campaignKey} is {status} for user ID:{userId}\",\"FEATURE_VARIABLE_VALUE\":\"({file}): For User ID:{userId}, value for variable:{variableKey} of feature:{campaignKey} is:{variableValue}\",\"FEATURE_VARIABLE_DEFAULT_VALUE\":\"({file}): Feature is not enabled for variation:{variationName}. Returning default value for the variable:{variableKey}\",\"USER_NOT_PART_OF_CAMPAIGN\":\"({file}): User ID:{userId} did not qualify for Campaign:{campaignKey}\",\"USER_VARIATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} {status}\",\"USER_CAMPAIGN_ELIGIBILITY\":\"({file}): User ID:{userId} for Campaign:{campaignKey} is {status} to become part of campaign\",\"USER_VARIATION_ALLOCATION_STATUS\":\"({file}): User ID:{userId} for Campaign:{campaignKey} {status}\",\"OPT_OUT_API_CALLED\":\"({file}): You have opted out for not tracking i.e. all API calls will stop functioning and will simply early return\",\"API_NOT_ENABLED\":\"({file}): {api} API is disabled as you opted out for tracking. Reinitialize the SDK to enable the normal functioning of all APIs.\",\"INITIATING_ACTIVATE\":\"({file}): Initiating activation of user {userId} for campaign {campaignKey}.\",\"INITIATING_GET_VARIATION\":\"({file}): Initiating getVariation of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_GET_FEATURE_VARIATION\":\"({file}): Initiating getFeatureVariable for variable key '{variableKey}' of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_IS_FEATURE_ENABLED\":\"({file}): Initiating isFeatureEnabled of user '{userId}' for campaign '{campaignKey}'.\",\"INITIATING_PUSH_DIMENSION\":\"({file}): Initiating push segment of user '{userId}' with tag name `{tagKey}` and tag value '{tagValue}'.\"}");
 
 /***/ }),
 
