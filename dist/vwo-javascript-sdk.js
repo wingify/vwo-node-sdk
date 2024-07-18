@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.68.1
+ * vwo-javascript-sdk - v1.69.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -2101,7 +2101,7 @@ var packageFile = {};
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.68.1"
+    version: "1.69.0"
   };
 } else {}
 module.exports = {
@@ -7494,8 +7494,14 @@ var XhrUtil = {
     });
   },
   // send request function definition (to allow for retries)
-  sendRequest: function sendRequest(xhr, retries, maxRetries, delay, logger, customHeaders, payload, method, url, resolve, reject) {
+  sendRequest: function sendRequest(retries, maxRetries, logger, customHeaders, payload, method, url, resolve, reject) {
     var _this2 = this;
+    var delay = 1000 * (retries + 1);
+    var xhr = new XMLHttpRequest();
+
+    // Configure timeout
+    xhr.timeout = 5000; // Set timeout to 5 seconds (5000 ms)
+
     // onload event
     xhr.onload = function () {
       // retry if error and less than max retries
@@ -7504,28 +7510,47 @@ var XhrUtil = {
           retries++;
 
           // log retried times
-          logger.log(LogLevelEnum.ERROR, 'Retrying with Status Code :' + xhr.status);
-          logger.log(LogLevelEnum.ERROR, 'Retrying with Response :' + xhr.responseText);
+          logger.log(LogLevelEnum.ERROR, "Retrying with Status Code : ".concat(xhr.status, ", and Response : ").concat(xhr.responseText));
 
           // call send request again, after delay
           setTimeout(function () {
-            _this2.sendRequest(xhr, retries, maxRetries, delay, logger, customHeaders, payload, method, url, resolve, reject);
+            _this2.sendRequest(retries, maxRetries, logger, customHeaders, payload, method, url, resolve, reject);
           }, delay);
         } else {
           // log errors with status (clean up later)
-          logger.log(LogLevelEnum.ERROR, 'Request failed with Status Code :' + xhr.status);
-          logger.log(LogLevelEnum.ERROR, 'Request failed with Response :' + xhr.responseText);
+          logger.log(LogLevelEnum.ERROR, "Request failed with Status Code : ".concat(xhr.status, " and Response : ").concat(xhr.responseText));
           reject("Got Error: ".concat(xhr.statusText, " and Status Code: ").concat(xhr.status));
         }
       } else {
         // resolve the promise if all well
-        resolve();
+        resolve(xhr.responseText);
       }
     };
 
     // onerror event
     xhr.onerror = function () {
-      reject("Error: ".concat(xhr.statusText, ", Status Code: ").concat(xhr.status));
+      if (retries < maxRetries) {
+        retries++;
+        logger.log(LogLevelEnum.ERROR, 'Retrying due to network error');
+        setTimeout(function () {
+          _this2.sendRequest(retries, maxRetries, logger, customHeaders, payload, method, url, resolve, reject);
+        }, delay);
+      } else {
+        reject("Network error: ".concat(xhr.statusText, ", Status Code: ").concat(xhr.status));
+      }
+    };
+
+    // ontimeout event
+    xhr.ontimeout = function () {
+      if (retries < maxRetries) {
+        retries++;
+        logger.log(LogLevelEnum.ERROR, 'Retrying due to timeout');
+        setTimeout(function () {
+          _this2.sendRequest(retries, maxRetries, logger, customHeaders, payload, method, url, resolve, reject);
+        }, delay);
+      } else {
+        reject("Timeout error: ".concat(xhr.statusText, ", Status Code: ").concat(xhr.status));
+      }
     };
 
     // open connection and add headers if any, and then send
@@ -7565,10 +7590,9 @@ var XhrUtil = {
       // retry params
       var retries = 0;
       var maxRetries = 5;
-      var delay = 1000;
 
       // send request
-      this.sendRequest(xhr, retries, maxRetries, delay, logger, customHeaders, payload, method, url, resolve, reject);
+      this.sendRequest(retries, maxRetries, logger, customHeaders, payload, method, url, resolve, reject);
     }
   },
   xhrOnLoad: function xhrOnLoad(xhr, userStorageService, resolve) {
