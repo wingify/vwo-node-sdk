@@ -380,6 +380,17 @@ declare module 'vwo-node-sdk' {
      * This key should be passed along with pollingInterval to fetch settigns file at regular intervals.
      */
     sdkKey?: string;
+
+    /**
+     * Integration configurations for callback functionality
+     */
+    integrations?: {
+      /**
+       * Callback function that receives VWO specific properties
+       * @param properties Object containing VWO specific information
+       */
+      callback?: (properties: Record<string, any>) => void;
+    };
   }
 
   // For synchronous code
