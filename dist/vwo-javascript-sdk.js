@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.70.1
+ * vwo-javascript-sdk - v1.71.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -2330,7 +2330,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.70.1"
+    version: "1.71.0"
   };
 } else {}
 
@@ -6492,60 +6492,82 @@ var FetchUtil = {
         payload = _ref.payload,
         userStorageService = _ref.userStorageService,
         _ref$customHeaders = _ref.customHeaders,
-        customHeaders = _ref$customHeaders === void 0 ? {} : _ref$customHeaders;
+        customHeaders = _ref$customHeaders === void 0 ? {} : _ref$customHeaders,
+        _ref$retries = _ref.retries,
+        retries = _ref$retries === void 0 ? 5 : _ref$retries,
+        _ref$delay = _ref.delay,
+        delay = _ref$delay === void 0 ? 1000 : _ref$delay;
 
     if (!url || !method) {
       return;
     }
 
-    return new Promise(function (resolve, reject) {
-      var _FetchUtil$_getStored = FetchUtil._getStoredSettings(userStorageService),
-          isStoredData = _FetchUtil$_getStored.isStoredData,
-          parsedSettings = _FetchUtil$_getStored.parsedSettings;
+    var attemptRequest = function attemptRequest(attempt) {
+      return new Promise(function (resolve, reject) {
+        var _FetchUtil$_getStored = FetchUtil._getStoredSettings(userStorageService),
+            isStoredData = _FetchUtil$_getStored.isStoredData,
+            parsedSettings = _FetchUtil$_getStored.parsedSettings;
 
-      if (isStoredData) {
-        resolve(parsedSettings);
-      } else {
-        var options = {
-          method: method,
-          headers: customHeaders
-        };
+        if (isStoredData) {
+          resolve(parsedSettings);
+        } else {
+          var options = {
+            method: method,
+            headers: customHeaders
+          };
 
-        if (method === 'POST') {
-          options.body = JSON.stringify(payload);
-        }
+          if (method === 'POST') {
+            options.body = JSON.stringify(payload);
+          }
 
-        return fetch(url, options).then(function (res) {
-          // Some endpoints return empty strings as the response body; treat
-          // as raw text and handle potential JSON parsing errors below
-          return res.text().then(function (text) {
-            var jsonData = {};
+          fetch(url, options).then(function (res) {
+            return res.text().then(function (text) {
+              var jsonData = {};
 
-            try {
-              jsonData = JSON.parse(text);
-            } catch (err) {
-              console.info("VWO-SDK - [INFO]: ".concat(getCurrentTime(), " VWO didn't send JSON response which is expected: ").concat(err));
-            }
+              try {
+                jsonData = JSON.parse(text);
+              } catch (err) {
+                console.info("VWO-SDK - [INFO]: ".concat(getCurrentTime(), " VWO didn't send JSON response which is expected: ").concat(err));
+              }
 
-            if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.setSettings)) {
-              userStorageService.setSettings(jsonData);
-            }
+              if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.setSettings)) {
+                userStorageService.setSettings(jsonData);
+              }
 
-            if (res.status === 200) {
-              resolve(jsonData);
+              if (res.status === 200) {
+                resolve(jsonData);
+              } else {
+                var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(res.status);
+                console.error(error);
+
+                if (attempt < retries) {
+                  setTimeout(function () {
+                    console.warn("VWO-SDK - [WARNING]: ".concat(getCurrentTime(), " Retrying request in ").concat(delay / 1000, " seconds (Attempt ").concat(attempt + 1, "/").concat(retries, ")"));
+                    attemptRequest(attempt + 1).then(resolve)["catch"](reject);
+                  }, delay * Math.pow(2, attempt)); // Exponential backoff
+                } else {
+                  reject(error);
+                }
+              }
+            });
+          })["catch"](function (err) {
+            var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Error: ").concat(err);
+            console.error(error);
+
+            if (attempt < retries) {
+              setTimeout(function () {
+                console.warn("VWO-SDK - [WARNING]: ".concat(getCurrentTime(), " Retrying request in ").concat(delay / 1000, " seconds (Attempt ").concat(attempt + 1, "/").concat(retries, ")"));
+                attemptRequest(attempt + 1).then(resolve)["catch"](reject);
+              }, delay * Math.pow(2, attempt)); // Exponential backoff
             } else {
-              var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(res.status);
-              console.error(error);
               reject(error);
             }
           });
-        })["catch"](function (err) {
-          var error = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed for fetching account settings. Got Status Code: ").concat(err);
-          console.error(error);
-          reject(error);
-        });
-      }
-    });
+        }
+      });
+    };
+
+    return attemptRequest(0);
   }
 };
 module.exports = FetchUtil;
@@ -6675,6 +6697,9 @@ var LogLevelEnum = logging.LogLevelEnum,
 var logger = logging.getLogger();
 var file = FileNameEnum.HttpXMLUtil;
 
+var _require = __webpack_require__(/*! ./FunctionUtil */ "./lib/utils/FunctionUtil.js"),
+    getCurrentTime = _require.getCurrentTime;
+
 var noop = function noop() {};
 
 var printLog = function printLog(properties) {
@@ -6713,30 +6738,52 @@ var HttpXMLUtil = {
     var isCallbackCalled = false;
 
     if (typeof XMLHttpRequest === 'undefined') {
-      // if (typeof Image === 'undefined') {
-      fetch(endPoint, {
-        method: 'GET',
-        headers: customHeaders
-      }).then(function () {
-        if (isCallbackCalled) {
-          return;
-        }
+      var maxRetries = 5; // Number of retry attempts
 
-        isCallbackCalled = true;
-        successCallback(null, {
-          status: 'success'
-        });
-      })["catch"](function (_err) {
-        if (isCallbackCalled) {
-          return;
-        }
+      var initialDelay = 1000; // Initial retry delay in ms (1 second)
 
-        isCallbackCalled = true;
-        errorCallback(null, {
-          status: 'success'
+      var attempt = 0;
+
+      var makeRequest = function makeRequest() {
+        var delay = initialDelay * Math.pow(2, attempt); // Exponential backoff (1s, 2s, 4s, 8s, 16s)
+
+        fetch(endPoint, {
+          method: 'GET',
+          headers: customHeaders
+        }).then(function () {
+          if (isCallbackCalled) {
+            return;
+          }
+
+          isCallbackCalled = true;
+          successCallback(null, {
+            status: 'success'
+          });
+        })["catch"](function (_err) {
+          if (isCallbackCalled) {
+            return;
+          }
+
+          console.error("VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed. Attempt ").concat(attempt + 1, "/").concat(maxRetries));
+
+          if (attempt < maxRetries) {
+            console.warn("VWO-SDK - [WARNING]: ".concat(getCurrentTime(), " Retrying request in ").concat(delay / 1000, " seconds (Attempt ").concat(attempt + 1, "/").concat(maxRetries, ")"));
+            setTimeout(function () {
+              attempt++;
+              makeRequest();
+            }, delay);
+          } else {
+            isCallbackCalled = true;
+            errorCallback(null, {
+              status: 'success'
+            });
+            printLog(properties);
+          }
         });
-        printLog(properties);
-      });
+      };
+
+      makeRequest(); // Initial request
+
       return;
     }
 
@@ -6746,32 +6793,58 @@ var HttpXMLUtil = {
     var customHeaders = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : {};
     successCallback = successCallback || noop;
     errorCallback = errorCallback || noop;
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', endPoint, true); // Set custom headers using setRequestHeader
+    var maxRetries = 5;
+    var initialDelay = 1000;
+    var attempt = 0;
 
-    for (var headerName in customHeaders) {
-      if (customHeaders.hasOwnProperty(headerName)) {
-        xhr.setRequestHeader(headerName, customHeaders[headerName]);
-      }
-    }
+    var makeXHRRequest = function makeXHRRequest() {
+      var xhr = new XMLHttpRequest();
+      var delay = initialDelay * Math.pow(2, attempt); // Exponential backoff
 
-    xhr.onload = function () {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        var response = xhr.responseText;
-        successCallback(response);
-        printLog(properties);
-      } else {
-        errorCallback(xhr.statusText);
-        printLog(properties);
+      xhr.open('GET', endPoint, true); // Set custom headers using setRequestHeader
+
+      for (var headerName in customHeaders) {
+        if (customHeaders.hasOwnProperty(headerName)) {
+          xhr.setRequestHeader(headerName, customHeaders[headerName]);
+        }
       }
+
+      xhr.onload = function () {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          var response = xhr.responseText;
+          successCallback(response);
+          printLog(properties);
+        } else if (attempt < maxRetries) {
+          console.warn("VWO-SDK - [WARNING]: ".concat(getCurrentTime(), " Request failed with status ").concat(xhr.status, " (").concat(xhr.statusText, "). Retrying request in ").concat(delay / 1000, " seconds (attempt ").concat(attempt + 1, " of ").concat(maxRetries, ")"));
+          setTimeout(function () {
+            attempt++;
+            makeXHRRequest();
+          }, delay);
+        } else {
+          console.error("VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed after ").concat(maxRetries, " attempts"));
+          errorCallback(xhr.statusText);
+          printLog(properties);
+        }
+      };
+
+      xhr.onerror = function () {
+        if (attempt < maxRetries) {
+          console.warn("VWO-SDK - [WARNING]: ".concat(getCurrentTime(), " Request failed with status ").concat(xhr.status, " (").concat(xhr.statusText, "). Retrying in ").concat(delay / 1000, " seconds (attempt ").concat(attempt + 1, " of ").concat(maxRetries, ")"));
+          setTimeout(function () {
+            attempt++;
+            makeXHRRequest();
+          }, delay);
+        } else {
+          console.error("VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed after ").concat(maxRetries, " attempts"));
+          errorCallback(xhr.statusText);
+          printLog(properties);
+        }
+      };
+
+      xhr.send();
     };
 
-    xhr.onerror = function () {
-      errorCallback(xhr.statusText);
-      printLog(properties);
-    };
-
-    xhr.send();
+    makeXHRRequest(); // Initial request
   }
 };
 module.exports = HttpXMLUtil;
@@ -8198,13 +8271,13 @@ var XhrUtil = {
         url = _ref.url,
         payload = _ref.payload,
         userStorageService = _ref.userStorageService,
-        customHeaders = _ref.customHeaders,
-        logger = _ref.logger;
+        _ref$customHeaders = _ref.customHeaders,
+        customHeaders = _ref$customHeaders === void 0 ? {} : _ref$customHeaders,
+        logger = _ref.logger,
+        _ref$maxRetries = _ref.maxRetries,
+        maxRetries = _ref$maxRetries === void 0 ? 5 : _ref$maxRetries;
 
-    if (!url || !method) {
-      return;
-    }
-
+    if (!url || !method) return;
     return new Promise(function (resolve, reject) {
       var _XhrUtil$_getStoredSe = XhrUtil._getStoredSettings(userStorageService),
           isStoredData = _XhrUtil$_getStoredSe.isStoredData,
@@ -8213,17 +8286,115 @@ var XhrUtil = {
       if (isStoredData) {
         resolve(parsedSettings);
       } else {
-        var xhr = new XMLHttpRequest();
-
-        _this.xhrHandler(xhr, method, url, payload, userStorageService, customHeaders, logger, resolve, reject);
+        if (method === 'GET') {
+          // Implement retry mechanism for GET requests
+          _this.sendGetRequestWithRetry(0, maxRetries, logger, customHeaders, method, url, userStorageService, resolve, reject);
+        } else if (method === 'POST') {
+          // Use the existing retry logic for POST requests (no changes)
+          _this.sendRequest(0, maxRetries, logger, customHeaders, payload, method, url, resolve, reject);
+        }
       }
     });
   },
-  // send request function definition (to allow for retries)
-  sendRequest: function sendRequest(retries, maxRetries, logger, customHeaders, payload, method, url, resolve, reject) {
+
+  /**
+   * Sends a GET request with retry mechanism using exponential backoff
+   * @param {*} attempt - The current attempt number
+   * @param {*} maxRetries - The maximum number of retries
+   * @param {*} logger - The logger instance
+   * @param {*} customHeaders - Additional headers to include in the request
+   * @param {*} method - The HTTP method (GET, POST, etc.)
+   * @param {*} url - The URL to request
+   * @param {*} userStorageService - The user storage service instance
+   * @param {*} resolve - The resolve function of the Promise
+   * @param {*} reject - The reject function of the Promise
+   */
+  sendGetRequestWithRetry: function sendGetRequestWithRetry(attempt, maxRetries, logger, customHeaders, method, url, userStorageService, resolve, reject) {
     var _this2 = this;
 
-    var delay = 1000 * (retries + 1);
+    var delay = 1000 * Math.pow(2, attempt); // Exponential backoff (1s, 2s, 4s, 8s, 16s)
+
+    var xhr = new XMLHttpRequest();
+    xhr.timeout = 5000; // Set timeout to 5 seconds
+
+    xhr.onload = function () {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          var parsedXhrResponse = JSON.parse(xhr.response);
+
+          if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.setSettings)) {
+            userStorageService.setSettings(xhr.response);
+          }
+
+          resolve(parsedXhrResponse);
+        } catch (err) {
+          console.error("VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " JSON parse error: ").concat(err));
+          reject(err);
+        }
+      } else {
+        console.error("VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Request failed with status ").concat(xhr.status, ", response: ").concat(xhr.responseText));
+
+        _this2.retryGetRequest(attempt, maxRetries, delay, logger, method, url, customHeaders, userStorageService, resolve, reject, xhr);
+      }
+    };
+
+    xhr.onerror = function () {
+      console.error("VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Network error while calling ").concat(url));
+
+      _this2.retryGetRequest(attempt, maxRetries, delay, logger, method, url, customHeaders, userStorageService, resolve, reject, xhr);
+    };
+
+    xhr.ontimeout = function () {
+      console.error("VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " Timeout error while calling ").concat(url));
+
+      _this2.retryGetRequest(attempt, maxRetries, delay, logger, method, url, customHeaders, userStorageService, resolve, reject, xhr);
+    };
+
+    xhr.open(method, url);
+
+    for (var header in customHeaders) {
+      if (customHeaders.hasOwnProperty(header)) {
+        xhr.setRequestHeader(header, customHeaders[header]);
+      }
+    }
+
+    xhr.send();
+  },
+
+  /**
+   * Retries the GET request with exponential backoff if the request fails
+   * @param {*} attempt - The current attempt number
+   * @param {*} maxRetries - The maximum number of retries
+   * @param {*} delay - The delay in milliseconds before retrying
+   * @param {*} logger - The logger instance
+   * @param {*} method - The HTTP method (GET, POST, etc.)
+   * @param {*} url - The URL to request
+   * @param {*} customHeaders - Additional headers to include in the request
+   * @param {*} userStorageService - The user storage service instance
+   * @param {*} resolve - The resolve function of the Promise
+   * @param {*} reject - The reject function of the Promise
+   * @param {*} xhr - The XMLHttpRequest instance
+   */
+  retryGetRequest: function retryGetRequest(attempt, maxRetries, delay, logger, method, url, customHeaders, userStorageService, resolve, reject, xhr) {
+    var _this3 = this;
+
+    if (attempt < maxRetries) {
+      console.warn("VWO-SDK - [WARNING]: ".concat(getCurrentTime(), " Retrying GET request to ").concat(url, " in ").concat(delay / 1000, " seconds (Attempt ").concat(attempt + 1, "/").concat(maxRetries, ")"));
+      setTimeout(function () {
+        _this3.sendGetRequestWithRetry(attempt + 1, maxRetries, logger, customHeaders, method, url, userStorageService, resolve, reject);
+      }, delay);
+    } else {
+      var errorMsg = "VWO-SDK - [ERROR]: ".concat(getCurrentTime(), " GET request to ").concat(url, " failed after ").concat(maxRetries, " retries. Status: ").concat(xhr.status, ", Response: ").concat(xhr.responseText);
+      console.error(errorMsg);
+      reject(errorMsg);
+    }
+  },
+  // send request function definition (to allow for retries)
+  sendRequest: function sendRequest(retries, maxRetries, logger, customHeaders, payload, method, url, resolve, reject) {
+    var _this4 = this;
+
+    var delay = 1000 * Math.pow(2, retries); // Exponential backoff (1s, 2s, 4s, 8s, 16s)
+
     var xhr = new XMLHttpRequest(); // Configure timeout
 
     xhr.timeout = 5000; // Set timeout to 5 seconds (5000 ms)
@@ -8235,10 +8406,10 @@ var XhrUtil = {
         if (retries < maxRetries) {
           retries++; // log retried times
 
-          logger.log(LogLevelEnum.ERROR, "Retrying with Status Code : ".concat(xhr.status, ", and Response : ").concat(xhr.responseText)); // call send request again, after delay
+          logger.log(LogLevelEnum.ERROR, "Error with Status Code : ".concat(xhr.status, ", and Response : ").concat(xhr.responseText, ". Retrying request in ").concat(delay / 1000, " seconds (Attempt ").concat(retries + 1, "/").concat(maxRetries, ")")); // call send request again, after delay
 
           setTimeout(function () {
-            _this2.sendRequest(retries, maxRetries, logger, customHeaders, payload, method, url, resolve, reject);
+            _this4.sendRequest(retries, maxRetries, logger, customHeaders, payload, method, url, resolve, reject);
           }, delay);
         } else {
           // log errors with status (clean up later)
@@ -8255,9 +8426,9 @@ var XhrUtil = {
     xhr.onerror = function () {
       if (retries < maxRetries) {
         retries++;
-        logger.log(LogLevelEnum.ERROR, 'Retrying due to network error');
+        logger.log(LogLevelEnum.ERROR, "Network error: ".concat(xhr.statusText, ", Status Code: ").concat(xhr.status, ". Retrying request in ").concat(delay / 1000, " seconds (Attempt ").concat(retries + 1, "/").concat(maxRetries, ")"));
         setTimeout(function () {
-          _this2.sendRequest(retries, maxRetries, logger, customHeaders, payload, method, url, resolve, reject);
+          _this4.sendRequest(retries, maxRetries, logger, customHeaders, payload, method, url, resolve, reject);
         }, delay);
       } else {
         reject("Network error: ".concat(xhr.statusText, ", Status Code: ").concat(xhr.status));
@@ -8268,9 +8439,9 @@ var XhrUtil = {
     xhr.ontimeout = function () {
       if (retries < maxRetries) {
         retries++;
-        logger.log(LogLevelEnum.ERROR, 'Retrying due to timeout');
+        logger.log(LogLevelEnum.ERROR, "Timeout error: ".concat(xhr.statusText, ", Status Code: ").concat(xhr.status, ". Retrying request in ").concat(delay / 1000, " seconds (Attempt ").concat(retries + 1, "/").concat(maxRetries, ")"));
         setTimeout(function () {
-          _this2.sendRequest(retries, maxRetries, logger, customHeaders, payload, method, url, resolve, reject);
+          _this4.sendRequest(retries, maxRetries, logger, customHeaders, payload, method, url, resolve, reject);
         }, delay);
       } else {
         reject("Timeout error: ".concat(xhr.statusText, ", Status Code: ").concat(xhr.status));
@@ -8287,44 +8458,6 @@ var XhrUtil = {
     }
 
     xhr.send(JSON.stringify(payload));
-  },
-  xhrHandler: function xhrHandler(xhr, method, url, payload, userStorageService) {
-    var _this3 = this;
-
-    var customHeaders = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : {};
-    var logger = arguments.length > 6 ? arguments[6] : undefined;
-    var resolve = arguments.length > 7 ? arguments[7] : undefined;
-    var reject = arguments.length > 8 ? arguments[8] : undefined;
-
-    if (method === 'GET') {
-      try {
-        xhr.onload = function () {
-          _this3.xhrOnLoad(xhr, userStorageService, resolve);
-        };
-
-        xhr.onerror = function () {
-          _this3.xhrOnError(xhr, reject);
-        };
-
-        xhr.open(method, url);
-
-        for (var headerName in customHeaders) {
-          if (customHeaders.hasOwnProperty(headerName)) {
-            xhr.setRequestHeader(headerName, customHeaders[headerName]);
-          }
-        }
-
-        xhr.send();
-      } catch (e) {
-        console.log(e.message);
-      }
-    } else if (method === 'POST') {
-      // retry params
-      var retries = 0;
-      var maxRetries = 5; // send request
-
-      this.sendRequest(retries, maxRetries, logger, customHeaders, payload, method, url, resolve, reject);
-    }
   },
   xhrOnLoad: function xhrOnLoad(xhr, userStorageService, resolve) {
     try {
