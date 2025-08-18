@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.73.0] - 2025-08-18
+
+### Added
+
+- Added support for redirecting all network calls through a custom proxy URL for browser environments. This feature allows users to route all SDK network requests (settings, tracking, etc.) through their own proxy server. This is particularly useful for bypassing ad-blockers that may interfere with VWO's default network requests.
+
+```javascript
+const settingsFile = await vwoSdk.getSettingsFile(accountId, sdkKey, null, { proxyUrl: 'http://localhost:3000' });
+
+// If you are not calling getSettingsFile and are using locally stored settings, 
+// you can pass the proxyUrl directly in the launch method.
+const clientInstance = vwoSdk.launch({
+  settingsFile: localSettings,       // local json parsed settings
+  proxyUrl: 'http://localhost:3000', // your custome proxy url here
+});
+```
+
 ## [1.72.0] - 2025-02-25
 
 ### Feat

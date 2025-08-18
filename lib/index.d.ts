@@ -22,7 +22,14 @@ declare module 'vwo-node-sdk' {
    *
    * @returns           Settings file.
    */
-  export function getSettingsFile(accountId: string, apiKey: string, userStorageService?: VWOUserStorageConfig): Promise<object>;
+  export function getSettingsFile(accountId: string, apiKey: string, userStorageService?: VWOUserStorageConfig, config?: VWOGetSettingsFileExternalConfig): Promise<object>;
+
+  /**
+   * VWO Get Settings File Configuration
+   */
+  export interface VWOGetSettingsFileExternalConfig {
+    proxyUrl?: string;
+  }
 
   /**
    * Creates an instance of the VWO
@@ -391,6 +398,11 @@ declare module 'vwo-node-sdk' {
        */
       callback?: (properties: Record<string, any>) => void;
     };
+
+    /**
+     * Proxy URL for the VWO SDK
+     */
+    proxyUrl?: string;
   }
 
   // For synchronous code

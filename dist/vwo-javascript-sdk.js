@@ -1,5 +1,5 @@
 /*!
- * vwo-javascript-sdk - v1.71.0
+ * vwo-javascript-sdk - v1.73.0
  * URL - https://github.com/wingify/vwo-node-sdk
  * 
  * Copyright 2019-2022 Wingify Software Pvt. Ltd.
@@ -204,6 +204,12 @@ function () {
     this.logger = config.logger;
     this.returnPromiseFor = config.returnPromiseFor;
     this.asyncStorageConfig = config.asyncStorageConfig;
+    this.proxyUrl = config.proxyUrl; // set proxy url in the settings file if it is provided
+
+    if (config.settingsFile && DataTypeUtil.isObject(config.settingsFile) && this.proxyUrl) {
+      config.settingsFile.proxyUrl = this.proxyUrl;
+    }
+
     this.optOut = false;
 
     if (this.userStorageService === undefined && config.asyncStorageConfig) {
@@ -2330,7 +2336,7 @@ var packageFile = {}; // For javascript-sdk, to keep the build size low
 if (true) {
   packageFile = {
     name: "vwo-javascript-sdk",
-    version: "1.71.0"
+    version: "1.73.0"
   };
 } else {}
 
@@ -2350,7 +2356,8 @@ module.exports = {
   HTTP_PROTOCOL: 'http://',
   HTTPS_PROTOCOL: 'https://',
   SDK_QUERY_PARAM: 'sdk',
-  SDK_VERSION_QUERY_PARAM: 'sdk-v'
+  SDK_VERSION_QUERY_PARAM: 'sdk-v',
+  SERVER_SIDE: 'server-side'
 };
 
 /***/ }),
@@ -6942,7 +6949,7 @@ var ImpressionUtil = {
    */
   buildEventForPushing: function buildEventForPushing(configObj, tagKey, tagValue, userId) {
     var properties = Object.assign({}, getBaseProperties(configObj, userId));
-    properties.url = Constants.HTTPS_PROTOCOL + UrlService.getBaseUrl() + UrlEnum.PUSH;
+    properties.url = this._buildUrlWithProxy(configObj, UrlEnum.PUSH);
     properties.tags = JSON.stringify({
       u: _defineProperty({}, encodeURIComponent(tagKey), encodeURIComponent(tagValue))
     });
@@ -6985,7 +6992,7 @@ var ImpressionUtil = {
     properties.ed = JSON.stringify({
       p: 'server'
     });
-    properties.url = Constants.HTTPS_PROTOCOL + UrlService.getBaseUrl() + UrlEnum.TRACK_USER;
+    properties.url = this._buildUrlWithProxy(configObj, UrlEnum.TRACK_USER);
     logger.log(LogLevelEnum.DEBUG, LogMessageUtil.build(LogMessageEnum.DEBUG_MESSAGES.IMPRESSION_FOR_TRACK_USER, {
       file: FileNameEnum.ImpressionUtil,
       properties: this._getStringifiedLogProperties(properties)
@@ -7034,7 +7041,7 @@ var ImpressionUtil = {
     }, getBaseProperties(configObj, userId));
     properties.visitor_ua = visitorUserAgent;
     properties.visitor_ip = userIpAddress;
-    properties.url = Constants.HTTPS_PROTOCOL + UrlService.getBaseUrl() + UrlEnum.TRACK_GOAL;
+    properties.url = this._buildUrlWithProxy(configObj, UrlEnum.TRACK_GOAL);
     properties['goal_id'] = goalId;
 
     if (goal.type === GoalTypeEnum.REVENUE && ValidateUtil.isValidValue(revenue)) {
@@ -7102,7 +7109,7 @@ var ImpressionUtil = {
       visitor_ua: visitorUserAgent,
       visitor_ip: userIpAddress
     }, usageStats);
-    properties.url = Constants.HTTPS_PROTOCOL + UrlService.getBaseUrl() + UrlEnum.EVENTS;
+    properties.url = this._buildUrlWithProxy(config, UrlEnum.EVENTS);
     return properties;
   },
 
@@ -7246,6 +7253,28 @@ var ImpressionUtil = {
     var logProperties = Object.assign({}, properties);
     delete logProperties.env;
     return JSON.stringify(logProperties);
+  },
+
+  /**
+   * Builds the url with proxy url if it is provided
+   * @param {Object} configObj
+   * @param {String} event
+   * @returns {String} url with proxy url if it is provided
+   */
+  _buildUrlWithProxy: function _buildUrlWithProxy(configObj, event) {
+    var url = Constants.HTTPS_PROTOCOL + UrlService.getBaseUrl() + event; // if we are in browser environment and not in serverless environment
+
+    if ( true && typeof XMLHttpRequest !== 'undefined') {
+      if (configObj.proxyUrl) {
+        if (configObj.collectionPrefix) {
+          url = configObj.proxyUrl + '/' + configObj.collectionPrefix + event;
+        } else {
+          url = configObj.proxyUrl + event;
+        }
+      }
+    }
+
+    return url;
   }
 };
 module.exports = ImpressionUtil;
@@ -7736,18 +7765,26 @@ var SettingsFileUtil = {
       path = config.path || path;
     }
 
+    var url;
+
+    if (config.proxyUrl) {
+      url = "".concat(config.proxyUrl).concat(path);
+    } else {
+      url = "".concat(protocol, "://").concat(hostname).concat(path);
+    }
+
     if (true) {
       if (typeof XMLHttpRequest === 'undefined') {
         return __webpack_require__(/*! ./FetchUtil */ "./lib/utils/FetchUtil.js").send({
           method: 'GET',
-          url: "".concat(protocol, "://").concat(hostname).concat(path),
+          url: url,
           userStorageService: userStorageService
         });
       }
 
       return __webpack_require__(/*! ./XhrUtil */ "./lib/utils/XhrUtil.js").send({
         method: 'GET',
-        url: "".concat(protocol, "://").concat(hostname).concat(path),
+        url: url,
         userStorageService: userStorageService
       });
     } else { var https, http; }
@@ -8229,6 +8266,10 @@ var _require2 = __webpack_require__(/*! ./DataTypeUtil */ "./lib/utils/DataTypeU
     isObject = _require2.isObject,
     isFunction = _require2.isFunction;
 
+var UrlEnum = __webpack_require__(/*! ../enums/UrlEnum */ "./lib/enums/UrlEnum.js");
+
+var Constants = __webpack_require__(/*! ../constants */ "./lib/constants/index.js");
+
 var XhrUtil = {
   _getStoredSettings: function _getStoredSettings(userStorageService) {
     var isStoredData = false;
@@ -8320,10 +8361,16 @@ var XhrUtil = {
     xhr.onload = function () {
       if (xhr.status >= 200 && xhr.status < 300) {
         try {
-          var parsedXhrResponse = JSON.parse(xhr.response);
+          var parsedXhrResponse = JSON.parse(xhr.response); // set proxy url in the settings file
+
+          if (!url.includes(UrlEnum.BASE_URL)) {
+            // remove the endpoint from the url and set it in the settings file
+            parsedXhrResponse.proxyUrl = url.split(Constants.SERVER_SIDE)[0];
+          }
 
           if (userStorageService && isObject(userStorageService) && isFunction(userStorageService.setSettings)) {
-            userStorageService.setSettings(xhr.response);
+            // set the updated settings file with proxy url in the user storage service
+            userStorageService.setSettings(JSON.stringify(parsedXhrResponse));
           }
 
           resolve(parsedXhrResponse);
